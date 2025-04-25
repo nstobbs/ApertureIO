@@ -139,4 +139,5 @@ DashGPU
 DashRenderer
 GPUDash
 Iris
-ApertureIO
+apertureIO::Device
+Aio::Device
