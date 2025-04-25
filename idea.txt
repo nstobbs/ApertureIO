@@ -1,0 +1,142 @@
+DashGPU Idea
+
+GPU Abstraction Layer. For General Purpose GPU Processing to deliver 2D/3D Content.
+Feature Set
+    GPU Abstractions
+        Instance
+        Device
+            Device Selections
+            API Selection - I think for now the focus just on using Vulkan
+        Buffer
+            FrameBuffers*
+            IndexBuffers*
+            VertexBuffers*
+            
+            Device Memory
+
+            Data Layout / Format
+                Vertex Layout
+                Pos:Vec3 Dir:3Vec3 Nor:Vec3 Color:Vec3
+                Image Layout
+                R:Float G:Float B:Float
+
+        Pipeline
+            Descriptors
+            Descriptor Sets Layouts
+            Descriptor Sets
+            Pipeline Layout
+            
+        Textures
+            Images
+            ImageViews
+        SwapChains
+            Surfaces?
+        Shaders
+            Fragment Shaders
+            Vertex Shaders
+            Compute Shaders
+        Commands
+            Render Commands
+            Compute Commands
+            Transfer Commands?
+        Queues
+            Graphics Queue
+            Compute Queue
+            Transfer Queue? - Research More..
+        Synchronize
+            Fences
+            Semaphore
+        Render Targets - Research More..
+            Render Passes - Research More..
+            Depth Testing
+            General New Passes like Normals, Wireframe
+
+        
+        Usage:
+            Interface for for submit commands to the GPU and
+            allocating GPU related Objects like Buffers.
+
+    Our Functions
+    GPUContext ApertureIO::Context
+        whole data like our rendering context. Like our vulkan instance.
+        Will handle stuff like extension, API version and even what API
+        we are using.
+
+    GPUDevice ApertureIO::Device
+        This will be related to a logical device that we will be working with.
+        The user can have multiple devices in one applications. But they can't 
+        share resources or workload. *note might restricts this to one GPU but this
+        will be the active GPU for using.
+    
+    GPUCommand ApertureIO::Command
+        This will be Commands that we can submitted to the GPUDevice like
+        Draw, DrawInstanced, Dispatch, Clear, Copy,    
+
+    GPUBuffer ApertureIO::Buffer
+        A buffer that storage data that the GPUDevice can use.
+        This will mostly likely only be stuff like vertex buffers,
+        index buffers and storage buffers. 
+        
+        *Uniform buffers will be handled within the shader.
+
+    GPUSwapChain ApertureIO::SwapChain
+        This object interacts with the windows and presents
+        the rendered framebuffer to the screen.
+    
+    Shader AND ShaderLibrary ApertureIO::Shader
+        Objects for storing, compiling, binding shaders.
+        Users can using SetUniform4 and a Name to create
+        UniformBuffers with that shader.
+        
+        *note deffo need to look into how we can use shared
+        files for defining the structs for our shaders and applications.
+
+
+
+    RenderGraph or ProcessGraph
+    ApertureIO::ProcessGraph
+        Research:
+        https://poniesandlight.co.uk/reflect/island_rendergraph_1/
+        https://logins.github.io/graphics/2021/05/31/RenderGraphs.html
+        https://apoorvaj.io/render-graphs-1/
+
+        ProcessGraph for organizing Render Passes and Compute Passes.
+        Usage:
+            Users should be able to implement different types of render passes 
+            and compute passes and define the path of execution by they placement
+            within the graph.
+
+            Each point of the graph will have arguments that controls the results of that
+            pass. They will also take a output render target or storage buffer and maybe an 
+            input target/buffer for passes like blurs.
+
+            On every frame, we will travel thought the graph starting from the top and 
+            working our way down to the bottom. 
+
+            States - Research More..
+            We will need to have states on these points on the graph, so that we
+            know what the status is of the points. Like if it's ready for render / compute
+            or is it waiting or somethng like that.
+
+            Memory Management - because the graph will already know every resources it needs before
+            execution and when it needs it. It can manage the resources by reusing the same resources
+            when it knows a pass doesn't need it anymore.
+
+            Hash - We will be storing an hash of each pass based off it's arguments
+            generated hash. This will mean we can check to see if we need to rebuild
+            the graph or if we can just reuse the same graphs.  
+
+            Debug Features:
+                Export Image of the Graph
+
+////////////////////////////////////////////////////////////////////////
+////////////////////// Pointless Stuff Under here //////////////////////
+////////////////////////////////////////////////////////////////////////
+
+Library Name
+DashGFX
+DashGPU
+DashRenderer
+GPUDash
+Iris
+ApertureIO
