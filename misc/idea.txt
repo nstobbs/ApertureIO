@@ -8,7 +8,6 @@ Feature Set
             Device Selections
             API Selection - I think for now the focus just on using Vulkan
         Buffer
-            FrameBuffers*
             IndexBuffers*
             VertexBuffers*
             
@@ -19,6 +18,12 @@ Feature Set
                 Pos:Vec3 Dir:3Vec3 Nor:Vec3 Color:Vec3
                 Image Layout
                 R:Float G:Float B:Float
+
+        FrameBuffers
+            Render Targets - Research More..
+            Render Passes - Research More..
+            Depth Testing
+            General New Passes like Normals, Wireframe
 
         Pipeline
             Descriptors
@@ -46,11 +51,6 @@ Feature Set
         Synchronize
             Fences
             Semaphore
-        Render Targets - Research More..
-            Render Passes - Research More..
-            Depth Testing
-            General New Passes like Normals, Wireframe
-
         
         Usage:
             Interface for for submit commands to the GPU and
@@ -77,11 +77,40 @@ Feature Set
         This will mostly likely only be stuff like vertex buffers,
         index buffers and storage buffers. 
         
+        Something to think about here is using bindless
+        descriptor set instead of having to manually deal
+        with creating an DescriptorSetLayout. This means that
+        we can just need to set how many slots that pipeline 
+        will need. But we will need to be more careful as 
+        we wont have any protection for accessing memory that
+        we shouldn't be.
+
         *Uniform buffers will be handled within the shader.
 
-    GPUSwapChain ApertureIO::SwapChain
-        This object interacts with the windows and presents
-        the rendered framebuffer to the screen.
+        READ MORE HERE:
+        https://dev.to/gasim/implementing-bindless-design-in-vulkan-34no
+
+    GPUFrameBuffer ApertureIO::FrameBuffer
+        The framebuffer will be used as our image that
+        we will be writing to.
+        This can be set with active window for direct window rendering.
+        This could also just be set as a image to write to disk for 
+        graphics and compute rendering. (This means it wouldn't need 
+        a swapchain for it).
+        The user should be able to set n layers and channels like with
+        EXRs files. 
+
+        // this doesn't need to be an object to use!!! 
+        GPUSwapChain ApertureIO::SwapChain
+            This object interacts with the windows and presents
+            the rendered framebuffer to the screen.
+
+    // Think about if you really want this or not
+    GPUTexture ApertureIO::Texture
+        This would be an READ only format for textures.
+        To be used within an shader.
+        Think of it as the Read node inside of Nuke.
+        For Reading textures.
     
     Shader AND ShaderLibrary ApertureIO::Shader
         Objects for storing, compiling, binding shaders.
@@ -141,3 +170,17 @@ GPUDash
 Iris
 apertureIO::Device
 Aio::Device
+
+////////////////////////////////////////////////////////////////////////
+////////////////////// Things I need to think about ////////////////////
+////////////////////////////////////////////////////////////////////////
+
+Windows
+I don't really want to have to manage the window object and i really
+dont want to abstract it too. So think about what information I need to know
+related to the window. The main thing is the surface object.
+
+So I don't need to create the surface but i expect the window api to
+create the window for us.
+
+Fuck it, we are gonna manage the window........
