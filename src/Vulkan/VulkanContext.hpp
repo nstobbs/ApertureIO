@@ -22,7 +22,7 @@ class VulkanContext : public Context
     void init() override; // TODO replace void to bool so we can check that the init errored!
     
     /* Getter Functions */
-    VkInstance getVkInstance();
+    VkInstance getVkInstance(); //TODO Should be a pointer to the instance
     
     private:
     std::vector<const char*> getRequiredExtensions();

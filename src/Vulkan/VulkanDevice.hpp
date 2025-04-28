@@ -20,8 +20,8 @@ class VulkanDevice : public Device
 
     VulkanContext* _pVulkanContext;
 
-    VkDevice _logicalDevice;
-    VkPhysicalDevice _phyiscalDevice;
+    vkb::PhysicalDevice _physicalDevice;
+    vkb::Device _device;
 };
 
 } // End namespace ApertureIO

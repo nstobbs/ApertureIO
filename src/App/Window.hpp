@@ -21,8 +21,6 @@ class Window
     uint32_t _width = 640;
     uint32_t _height = 480;
     GLFWwindow* _pWindow;
-    
-
 };
 
 } // End ApertureIO namespace 

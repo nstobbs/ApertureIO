@@ -17,6 +17,9 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Base/Device.hpp
                           ../src/Base/Device.cpp
 
+                          ../src/Base/FrameBuffer.hpp
+                          ../src/Base/FrameBuffer.cpp
+
                           ../src/Vulkan/VulkanCommon.hpp
 
                           ../src/Vulkan/VulkanContext.hpp
@@ -24,6 +27,9 @@ add_executable(ApertureIO ../src/main.cpp
 
                           ../src/Vulkan/VulkanDevice.hpp
                           ../src/Vulkan/VulkanDevice.cpp
+
+                          ../src/Vulkan/VulkanFrameBuffer.hpp
+                          ../src/Vulkan/VulkanFrameBuffer.cpp
 
                           ../deps/vk-bootstrap/src/VkBootstrap.h
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp

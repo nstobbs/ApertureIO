@@ -60,7 +60,7 @@ Feature Set
     GPUContext ApertureIO::Context
         whole data like our rendering context. Like our vulkan instance.
         Will handle stuff like extension, API version and even what API
-        we are using.
+        we are using, Current Frame, Frames In Flight Settings
 
     GPUDevice ApertureIO::Device
         This will be related to a logical device that we will be working with.
@@ -175,12 +175,26 @@ Aio::Device
 ////////////////////// Things I need to think about ////////////////////
 ////////////////////////////////////////////////////////////////////////
 
-Windows
+Window
 I don't really want to have to manage the window object and i really
 dont want to abstract it too. So think about what information I need to know
 related to the window. The main thing is the surface object.
+
+Framebuffers / Window / SwapChains
+To render to a window using vulkan, we need to setup 
+a swapchain connected to the surface from the window.
+This will also have to be an framebuffer as it will be the
+used as the render target for our rendering.
+Context knows about the current window we are trying to renderer to.
+From that we can always get the the surface...
+
+Context -> (Active)Window Surface
+Output Target Framebuffer -> Context
+If Output Target Framebuffer:
+    Stores Swapchain Info
 
 So I don't need to create the surface but i expect the window api to
 create the window for us.
 
 Fuck it, we are gonna manage the window........
+

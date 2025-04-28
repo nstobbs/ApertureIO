@@ -26,7 +26,22 @@ Window* Context::getActiveWindowPtr()
     return _pActiveWindow;
 };
 
+uint32_t Context::getCurrentFrame()
+{
+    return CurrentFrame;
+};
+
+void Context::nextFrame()
+{
+    CurrentFrame = (CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+};
+
 /* Setting Function */
+void Context::setMaxFramesInFlight(uint32_t value)
+{
+    MAX_FRAMES_IN_FLIGHT = value;
+};
+
 void Context::setRendererAPI(RendererAPI API)
 {
     _rendererAPI = API;
