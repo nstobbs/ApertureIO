@@ -22,19 +22,23 @@ class FrameBuffer
     public:
     static FrameBuffer* CreateFrameBuffer(Device* pDevice, Context* pContext); // For SwapChain.
     static FrameBuffer* CreateFrameBuffer(Device* pDevice); // Default
+
     virtual bool init() = 0; // TODO Does a framebuffer need an init function?
+
+    virtual void Bind() = 0;
+    virtual void Unbind() = 0;
     
     void createLayer(char* name, FrameBufferPixelFormat format);
+
+    friend class VulkanFrameBuffer; // TODO: not sure if I like this really.
 
     private:
     char* name = "";
     bool isSwapChainTarget = false;
 
-    // Surface
     unsigned int _width;
     unsigned int _height;
 
-    // Layers
     unsigned int _layerCount;
     std::unordered_map<char*, FrameBufferPixelFormat> _layers;
 };

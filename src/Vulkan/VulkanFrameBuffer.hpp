@@ -18,9 +18,30 @@ class VulkanFrameBuffer : public FrameBuffer
 
     bool init() override;
 
+    void Bind() override;
+    void Unbind() override;
+
     private:
+    /* Private Functions */
+    VkRenderPass CreateRenderPass();
+
+    /* Private Data */
     VulkanDevice* _pDevice;
     VulkanContext* _pContext;
+
+    //TODO we should know the sizes at construction time.
+    //So this should be an fixed size array instead? 
+    std::vector<VkFramebuffer> _framebuffers;
+    VkRenderPass _renderPass;
+
+    // This data needs to be set before creating the renderPass
+    std::vector<VkImage> _images;
+    std::vector<VkImageView> _imageViews;
+    std::vector<VkFormat> _formats;
+    VkExtent2D _extent;
+
+    // if it is a swapchain store it.
+    VkSwapchainKHR _swapchain;
 }; 
 }
 

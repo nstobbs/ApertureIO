@@ -16,6 +16,8 @@ class VulkanDevice : public Device
     VulkanDevice(Context* context);
     bool init() override;
 
+    friend class VulkanFrameBuffer;
+
     private:
 
     VulkanContext* _pVulkanContext;
