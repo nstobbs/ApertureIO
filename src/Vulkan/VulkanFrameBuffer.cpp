@@ -74,6 +74,7 @@ VkRenderPass VulkanFrameBuffer::CreateRenderPass()
                 layerInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
                 layerRef.attachment = layerCount;
+                break;
         };
 
         descriptions.push_back(layerInfo);
