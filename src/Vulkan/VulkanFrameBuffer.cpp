@@ -22,7 +22,8 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _swapchain = swapchain.swapchain;
     _extent = swapchain.extent;
     // framebuffers for swapchains must have the swapchain format at index 0.
-    _formats.push_back(swapchain.image_format); //TODO: Maybe come back and think about this again?
+    _formats.push_back(swapchain.image_format); 
+    _layers.emplace("Color_Output", COLOR_RGBA_8888);
 
     /* Create the RenderPass */
 };
@@ -75,6 +76,9 @@ VkRenderPass VulkanFrameBuffer::CreateRenderPass()
 
                 layerRef.attachment = layerCount;
                 break;
+            
+            case DEPTH_D32_S8:
+                // TODO Add Depth-Testing
         };
 
         descriptions.push_back(layerInfo);
