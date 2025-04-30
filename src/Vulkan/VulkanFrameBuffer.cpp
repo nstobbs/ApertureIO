@@ -9,6 +9,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _pContext = dynamic_cast<VulkanContext*>(context);
 
     vkb::SwapchainBuilder swapchainBuilder { _pDevice->_device };
+    swapchainBuilder.set_desired_min_image_count(context->getMaxFramesInFlight());
     auto swapchainResult = swapchainBuilder.build();
     if (!swapchainResult)
     {
@@ -22,10 +23,15 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _swapchain = swapchain.swapchain;
     _extent = swapchain.extent;
     // framebuffers for swapchains must have the swapchain format at index 0.
-    _formats.push_back(swapchain.image_format); 
-    _layers.emplace("Color_Output", COLOR_RGBA_8888);
+    _formats.push_back(swapchain.image_format);
+    char* name = "Colour_Output";
+    _layers.insert(std::make_pair(name, COLOR_RGBA_8888));
 
     /* Create the RenderPass */
+    _renderPass = CreateVkRenderPass();
+
+    /* Create the FrameBuffer*/
+    _framebuffers = CreateVkFramebuffers();
 };
 
 
@@ -41,7 +47,7 @@ bool VulkanFrameBuffer::init()
     return false;
 };
 
-VkRenderPass VulkanFrameBuffer::CreateRenderPass()
+VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 {
     /*
     TODO: Check how we want to setup LoadOp and StoreOps 
@@ -57,9 +63,10 @@ VkRenderPass VulkanFrameBuffer::CreateRenderPass()
     attachment for each layer.  */
     uint32_t layerCount = 0;
     for (auto layer : _layers)
-    {
+    {   
         VkAttachmentDescription layerInfo{};
         VkAttachmentReference layerRef{};
+        
         switch(layer.second)
         {   
             case COLOR_RGBA_8888:
@@ -76,14 +83,77 @@ VkRenderPass VulkanFrameBuffer::CreateRenderPass()
 
                 layerRef.attachment = layerCount;
                 break;
-            
-            case DEPTH_D32_S8:
-                // TODO Add Depth-Testing
-        };
+        }
 
         descriptions.push_back(layerInfo);
         references.push_back(layerRef);
         layerCount++;
     }
+
+    /*TODO: Comes back here and do a better handling of the subpass
+    as this wont be dymanic at all.
+    Subpasses seems like extra steps we can add to our framebuffer overall.
+    Not sure if I really want to handle the framebuffer like that. So for now
+    we could just have basic filling out the details but no subpasses for 
+    actually rendering.
+    */
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; //TODO double check what this means...
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &references[0]; //TODO fix / improve me...
+    subpass.pDepthStencilAttachment = nullptr;
+
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = static_cast<uint32_t>(descriptions.size());
+    renderPassInfo.pAttachments = descriptions.data();
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
+    
+    VkRenderPass renderPass;
+    //TODO need to start using assert to test the results and shutdown if not like here!
+    auto result = vkCreateRenderPass(_pDevice->getVkDevice(), &renderPassInfo, nullptr, &renderPass);
+    if(!result)
+    {
+        std::cout << "Failed to renderpass :(\n";
+    }
+
+    return renderPass;
 };
+
+std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
+{
+    auto imageCount = _imageViews.size();
+    std::vector<VkFramebuffer> framebuffers;
+
+    for (size_t i = 0; i < imageCount; i++)
+    {
+        /* TODO we need to know the order of imageViews
+        and what attachment should be connected to them.
+        This means keeping better track of these data types
+        before we start creating framebuffers with them.*/
+    };
+    return framebuffers;
+};
+
+void VulkanFrameBuffer::Bind()
+{
+
+};
+
+void VulkanFrameBuffer::Unbind()
+{
+
+};
+
 } // End ApertureIO namespace

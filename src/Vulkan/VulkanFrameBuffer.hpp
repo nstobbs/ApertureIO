@@ -23,7 +23,9 @@ class VulkanFrameBuffer : public FrameBuffer
 
     private:
     /* Private Functions */
-    VkRenderPass CreateRenderPass();
+    VkRenderPass CreateVkRenderPass();
+    std::vector<VkFramebuffer> CreateVkFramebuffers();
+    std::vector<VkFramebuffer> RebuildVkFramebuffers();
 
     /* Private Data */
     VulkanDevice* _pDevice;

@@ -18,6 +18,7 @@ class Context
 
     RendererAPI getRendererAPI();
     Window* getActiveWindowPtr();
+    uint32_t getMaxFramesInFlight();
 
     uint32_t getCurrentFrame();
     void nextFrame();

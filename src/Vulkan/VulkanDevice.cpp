@@ -1,3 +1,5 @@
+#define VMA_IMPLEMENTATION
+
 #include "VulkanDevice.hpp"
 namespace ApertureIO {
 
@@ -12,6 +14,7 @@ bool VulkanDevice::init()
     VkInstance instance = _pVulkanContext->getVkInstance();
     VkSurfaceKHR surface;
 
+    //TODO shouldn't be using platform spec code instead of here.
     auto result = glfwCreateWindowSurface(instance, window, NULL, &surface);
     if (result != VK_SUCCESS)
     {
@@ -52,7 +55,25 @@ bool VulkanDevice::init()
 
     _device = builderResult.value();
     volkLoadDevice(_device.device); // TODO remove this if you want to support more than one device.
+
+    // Init VMA for memory allocation
+    VmaAllocatorCreateInfo allocatorCreateInfo{};
+    allocatorCreateInfo.physicalDevice = _device.physical_device;
+    allocatorCreateInfo.device = _device.device;
+    allocatorCreateInfo.instance = instance;
+    allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+    //allocatorCreateInfo.flags =  
+    VmaVulkanFunctions vkFunctions;
+    vmaImportVulkanFunctionsFromVolk(&allocatorCreateInfo, &vkFunctions);
+    allocatorCreateInfo.pVulkanFunctions = &vkFunctions;
+
+    vmaCreateAllocator(&allocatorCreateInfo, &_allocator);
     return true;
+};
+
+VkDevice VulkanDevice::getVkDevice()
+{
+    return _device.device;
 };
 
 }

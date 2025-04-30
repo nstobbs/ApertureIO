@@ -36,6 +36,11 @@ void Context::nextFrame()
     CurrentFrame = (CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 };
 
+uint32_t Context::getMaxFramesInFlight()
+{
+    return MAX_FRAMES_IN_FLIGHT;
+};
+
 /* Setting Function */
 void Context::setMaxFramesInFlight(uint32_t value)
 {

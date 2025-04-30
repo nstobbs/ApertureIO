@@ -16,6 +16,8 @@ class VulkanDevice : public Device
     VulkanDevice(Context* context);
     bool init() override;
 
+    VkDevice getVkDevice();
+
     friend class VulkanFrameBuffer;
 
     private:
@@ -24,6 +26,7 @@ class VulkanDevice : public Device
 
     vkb::PhysicalDevice _physicalDevice;
     vkb::Device _device;
+    VmaAllocator _allocator;
 };
 
 } // End namespace ApertureIO

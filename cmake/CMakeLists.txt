@@ -33,5 +33,6 @@ add_executable(ApertureIO ../src/main.cpp
 
                           ../deps/vk-bootstrap/src/VkBootstrap.h
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
-                          ../deps/vk-bootstrap/src/VkBootstrapDispatch.h)
+                          ../deps/vk-bootstrap/src/VkBootstrapDispatch.h
+                          ../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h)
 target_link_libraries(ApertureIO PRIVATE volk::volk glfw)
