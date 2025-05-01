@@ -17,6 +17,8 @@ void VulkanContext::init()
     builder.set_app_name("Test");
     builder.set_engine_name("ApertureIO");
     builder.require_api_version(1,3,0);
+    builder.enable_validation_layers();
+    builder.enable_extensions(getRequiredExtensions());
 
     // build instance
     auto builderResult = builder.build();

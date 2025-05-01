@@ -29,8 +29,11 @@ bool VulkanDevice::init()
     /* Set the Required Extensions that I need */
     // Need to double check these. I'm sure I'm doing something
     // wrong here or volk is doing it for me.
+    //phyiscalDevicePicker.add_required_extension("VK_LAYER_KHRONOS_validation");
     for (auto ext : _pVulkanContext->getRequiredExtensions())
     {
+        /* TODO setting required extensions seems to break 
+        the physical device selection process.*/
         //phyiscalDevicePicker.add_required_extension(ext);
         //std::cout << "Added Extension " << ext << "\n";
     }

@@ -5,6 +5,7 @@ namespace ApertureIO {
 VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
 {
     // create with swap chain
+    isSwapChainTarget = true;
     _pDevice = dynamic_cast<VulkanDevice*>(device);
     _pContext = dynamic_cast<VulkanContext*>(context);
 
@@ -26,6 +27,13 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _formats.push_back(swapchain.image_format);
     char* name = "Colour_Output";
     _layers.insert(std::make_pair(name, COLOR_RGBA_8888));
+    _layerCount++;
+    /* Image Layout when using as a swapchain.
+    the image layout in arrays will be 
+    (as if framesInFlight was 2)
+    {layer1}  * n {layer2} {layer2} {layer3} {layer3}  
+    else we are using image layout as 
+    {layer1} {layer2} {layer3} ...*/
 
     /* Create the RenderPass */
     _renderPass = CreateVkRenderPass();
@@ -130,20 +138,67 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 
     return renderPass;
 };
-
+// TODO: Come back and see if you can make these loops better 
 std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
 {
-    auto imageCount = _imageViews.size();
+    VkDevice device = _pDevice->getVkDevice();
     std::vector<VkFramebuffer> framebuffers;
-
-    for (size_t i = 0; i < imageCount; i++)
+    if (isSwapChainTarget)
     {
-        /* TODO we need to know the order of imageViews
-        and what attachment should be connected to them.
-        This means keeping better track of these data types
-        before we start creating framebuffers with them.*/
-    };
-    return framebuffers;
+        // create for each frameInFlight;
+        auto numInFlight = _pContext->getMaxFramesInFlight();
+        for (int i = 0; i < numInFlight; i++)
+        {
+            std::vector<VkImageView> layerAttachments;
+            for (int layer = 0; layer < static_cast<int>(_layerCount); layer++)
+            {
+                auto index = i + layer;
+                layerAttachments.push_back(_imageViews[index]);
+            };
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = _renderPass;
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(_layerCount);
+            framebufferInfo.pAttachments = layerAttachments.data();
+            framebufferInfo.width = _extent.width;
+            framebufferInfo.height = _extent.height;
+            framebufferInfo.layers = 1; // TODO Double check this and fix it.
+
+            
+            VkFramebuffer framebuffer;
+            if(vkCreateFramebuffer(device, &framebufferInfo, nullptr,&framebuffer) != VK_SUCCESS)
+            {
+                throw std::runtime_error("Failed to Create FrameBuffer!");
+            };
+
+        };
+
+    } else {
+        // create one framebuffer
+        // TODO: this should be in a functions and not repeated!
+        std::vector<VkImageView> layerAttachments;
+        for (int layer = 0; layer < _layerCount; layer++)
+        {
+            layerAttachments.push_back(_imageViews[layer]);
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = _renderPass;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(_layerCount);
+        framebufferInfo.pAttachments = layerAttachments.data();
+        framebufferInfo.width = _extent.width;
+        framebufferInfo.height = _extent.height;
+        framebufferInfo.layers = 1; // TODO Double check this and fix it.
+
+        
+        VkFramebuffer framebuffer;
+        if(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to Create FrameBuffer!");
+        };
+}
 };
 
 void VulkanFrameBuffer::Bind()

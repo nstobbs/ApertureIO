@@ -39,7 +39,7 @@ class FrameBuffer
     unsigned int _width;
     unsigned int _height;
 
-    unsigned int _layerCount;
+    unsigned int _layerCount = 0;
     std::unordered_map<char*, FrameBufferPixelFormat> _layers;
 };
 
