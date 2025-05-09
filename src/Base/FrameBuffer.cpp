@@ -10,9 +10,13 @@ FrameBuffer* FrameBuffer::CreateFrameBuffer(Device* pDevice, Context* pContext)
     {
         case eVulkan:
             VulkanFrameBuffer* framebuffer = new VulkanFrameBuffer(pDevice, pContext);
-            framebuffer->isSwapChainTarget = true;
             return framebuffer;
     }
+};
+
+void FrameBuffer::setName(char* name)
+{
+    _name = name;
 };
 
 } // End ApertureIO namespace

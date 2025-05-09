@@ -23,6 +23,10 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _imageViews = swapchain.get_image_views().value();
     _swapchain = swapchain.swapchain;
     _extent = swapchain.extent;
+
+    _width = _extent.width;
+    _height = _extent.height;
+
     // framebuffers for swapchains must have the swapchain format at index 0.
     _formats.push_back(swapchain.image_format);
     char* name = "Colour_Output";
@@ -52,7 +56,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device)
 bool VulkanFrameBuffer::init()
 {
     std::cout << ":0\n";
-    return false;
+    return true;
 };
 
 VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
@@ -90,6 +94,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
                 layerInfo.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
                 layerRef.attachment = layerCount;
+                layerRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 break;
         }
 
@@ -131,7 +136,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
     VkRenderPass renderPass;
     //TODO need to start using assert to test the results and shutdown if not like here!
     auto result = vkCreateRenderPass(_pDevice->getVkDevice(), &renderPassInfo, nullptr, &renderPass);
-    if(!result)
+    if(result != VK_SUCCESS)
     {
         std::cout << "Failed to renderpass :(\n";
     }
@@ -147,7 +152,7 @@ std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
     {
         // create for each frameInFlight;
         auto numInFlight = _pContext->getMaxFramesInFlight();
-        for (int i = 0; i < numInFlight; i++)
+        for (uint32_t i = 0; i < numInFlight; i++)
         {
             std::vector<VkImageView> layerAttachments;
             for (int layer = 0; layer < static_cast<int>(_layerCount); layer++)
@@ -156,49 +161,44 @@ std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
                 layerAttachments.push_back(_imageViews[index]);
             };
 
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = _renderPass;
-            framebufferInfo.attachmentCount = static_cast<uint32_t>(_layerCount);
-            framebufferInfo.pAttachments = layerAttachments.data();
-            framebufferInfo.width = _extent.width;
-            framebufferInfo.height = _extent.height;
-            framebufferInfo.layers = 1; // TODO Double check this and fix it.
-
-            
-            VkFramebuffer framebuffer;
-            if(vkCreateFramebuffer(device, &framebufferInfo, nullptr,&framebuffer) != VK_SUCCESS)
-            {
-                throw std::runtime_error("Failed to Create FrameBuffer!");
-            };
-
+            auto framebuffer = CreateVkFramebuffer(layerAttachments, _layerCount);
+            framebuffers.push_back(framebuffer);
         };
 
     } else {
         // create one framebuffer
         // TODO: this should be in a functions and not repeated!
         std::vector<VkImageView> layerAttachments;
-        for (int layer = 0; layer < _layerCount; layer++)
+        for (uint32_t layer = 0; layer < _layerCount; layer++)
         {
             layerAttachments.push_back(_imageViews[layer]);
         };
 
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = _renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(_layerCount);
-        framebufferInfo.pAttachments = layerAttachments.data();
-        framebufferInfo.width = _extent.width;
-        framebufferInfo.height = _extent.height;
-        framebufferInfo.layers = 1; // TODO Double check this and fix it.
+        auto framebuffer = CreateVkFramebuffer(layerAttachments, _layerCount);
+        framebuffers.push_back(framebuffer);
+    }
 
-        
-        VkFramebuffer framebuffer;
-        if(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS)
-        {
-            throw std::runtime_error("Failed to Create FrameBuffer!");
-        };
-}
+    return framebuffers;
+};
+
+VkFramebuffer VulkanFrameBuffer::CreateVkFramebuffer(std::vector<VkImageView> layerAttachments, uint32_t layerCount)
+{
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = _renderPass;
+    framebufferInfo.attachmentCount = static_cast<uint32_t>(layerCount);
+    framebufferInfo.pAttachments = layerAttachments.data();
+    framebufferInfo.width = _extent.width;
+    framebufferInfo.height = _extent.height;
+    framebufferInfo.layers = 1; // TODO Double check this and fix it.
+
+    VkFramebuffer framebuffer;
+    if(vkCreateFramebuffer(_pDevice->getVkDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to Create FrameBuffer!");
+    };
+    
+    return framebuffer;
 };
 
 void VulkanFrameBuffer::Bind()

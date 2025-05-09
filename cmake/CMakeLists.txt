@@ -5,8 +5,11 @@ set(CXX_STANDARD_REQUIRED 20)
 
 find_package(volk)
 find_package(glfw3)
+find_package(glm)
 
 add_executable(ApertureIO ../src/main.cpp
+
+                          ../src/ApertureIO.hpp
 
                           ../src/App/Window.hpp
                           ../src/App/Window.cpp
@@ -20,6 +23,16 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Base/FrameBuffer.hpp
                           ../src/Base/FrameBuffer.cpp
 
+                          ../src/Base/Buffers.hpp
+                          ../src/Base/Buffers.cpp
+
+                          ../src/Base/BufferLayout.hpp
+                          ../src/Base/BufferLayout.cpp
+
+                          ../src/Base/Shader.hpp
+                        
+                          ../src/Base/Command.hpp
+
                           ../src/Vulkan/VulkanCommon.hpp
 
                           ../src/Vulkan/VulkanContext.hpp
@@ -31,8 +44,13 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Vulkan/VulkanFrameBuffer.hpp
                           ../src/Vulkan/VulkanFrameBuffer.cpp
 
+                          ../src/Vulkan/VulkanBuffers.hpp
+                          ../src/Vulkan/VulkanBuffers.cpp
+
+                          ../src/Vulkan/VulkanCommand.hpp
+
                           ../deps/vk-bootstrap/src/VkBootstrap.h
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
                           ../deps/vk-bootstrap/src/VkBootstrapDispatch.h
                           ../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h)
-target_link_libraries(ApertureIO PRIVATE volk::volk glfw)
+target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm)

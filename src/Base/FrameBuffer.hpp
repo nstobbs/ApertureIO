@@ -29,11 +29,12 @@ class FrameBuffer
     virtual void Unbind() = 0;
     
     void createLayer(char* name, FrameBufferPixelFormat format);
+    void setName(char* name);
 
     friend class VulkanFrameBuffer; // TODO: not sure if I like this really.
 
     private:
-    char* name = "";
+    char* _name = "";
     bool isSwapChainTarget = false;
 
     unsigned int _width;

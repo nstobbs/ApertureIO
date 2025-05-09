@@ -17,6 +17,10 @@ class VulkanDevice : public Device
     bool init() override;
 
     VkDevice getVkDevice();
+    VmaAllocator getVmaAllocator();
+    VkQueue getPresentVkQueue();
+    VkQueue getComputeVkQueue();
+    VkQueue getGraphicVkQueue();
 
     friend class VulkanFrameBuffer;
 

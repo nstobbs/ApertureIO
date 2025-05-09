@@ -74,9 +74,46 @@ bool VulkanDevice::init()
     return true;
 };
 
+/* Getter Functions*/
+
 VkDevice VulkanDevice::getVkDevice()
 {
     return _device.device;
+};
+
+VmaAllocator VulkanDevice::getVmaAllocator()
+{
+    return _allocator;
+};
+
+VkQueue VulkanDevice::getPresentVkQueue()
+{
+    auto result = _device.get_queue(vkb::QueueType::present);
+    if (!result)
+    {
+        throw std::runtime_error("fail to get present queue.");
+    }
+    return result.value();
+};
+
+VkQueue VulkanDevice::getComputeVkQueue()
+{
+    auto result = _device.get_queue(vkb::QueueType::compute);
+    if (!result)
+    {
+        throw std::runtime_error("fail to get compute queue.");
+    }
+    return result.value();
+};
+
+VkQueue VulkanDevice::getGraphicVkQueue()
+{
+    auto result = _device.get_queue(vkb::QueueType::graphics);
+    if (!result)
+    {
+        throw std::runtime_error("fail to get graphics queue.");
+    }
+    return result.value();
 };
 
 }
