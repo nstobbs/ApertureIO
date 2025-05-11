@@ -135,7 +135,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
     
     VkRenderPass renderPass;
     //TODO need to start using assert to test the results and shutdown if not like here!
-    auto result = vkCreateRenderPass(_pDevice->getVkDevice(), &renderPassInfo, nullptr, &renderPass);
+    auto result = vkCreateRenderPass(_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &renderPass);
     if(result != VK_SUCCESS)
     {
         std::cout << "Failed to renderpass :(\n";
@@ -146,7 +146,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 // TODO: Come back and see if you can make these loops better 
 std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
 {
-    VkDevice device = _pDevice->getVkDevice();
+    VkDevice device = _pDevice->GetVkDevice();
     std::vector<VkFramebuffer> framebuffers;
     if (isSwapChainTarget)
     {
@@ -193,7 +193,7 @@ VkFramebuffer VulkanFrameBuffer::CreateVkFramebuffer(std::vector<VkImageView> la
     framebufferInfo.layers = 1; // TODO Double check this and fix it.
 
     VkFramebuffer framebuffer;
-    if(vkCreateFramebuffer(_pDevice->getVkDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS)
+    if(vkCreateFramebuffer(_pDevice->GetVkDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to Create FrameBuffer!");
     };

@@ -3,14 +3,19 @@
 
 #include <vector>
 
-#include "VulkanCommon.hpp"
 #include "../Base/Command.hpp"
+#include "../Base/Context.hpp"
+
+#include "VulkanCommon.hpp"
+#include "VulkanBuffers.hpp"
 
 namespace ApertureIO {
 
 class VulkanCommand : public Command
 {
     public:
+    VulkanCommand(Context* context);
+    
     void StartCommand(Device* pDevice) override;
     void EndCommand(Device* pDevice) override;
     void Draw(Device* pDevice) override;
@@ -18,13 +23,15 @@ class VulkanCommand : public Command
     void DispatchCompute(Device* pDevice) override;
     void Clear(Device* pDevice) override; //TODO maybe move this into framebuffer??
 
-    private:
-    VkCommandPool _commandPool;
-    std::vector<VkCommandBuffer> _commandBuffers;
+    static void CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t size);
 
-    std::vector<VkFence> _fences;
-    std::vector<VkSemaphore> _semaphores;
+    private:
+    void createCommandBuffers(VulkanDevice* pDevice);
+
+    static VkCommandBuffer beginSingleTimeCommandBuffer(VulkanDevice* pDevice);
+    static void endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandBuffer commandBuffer);
     
+    Context* _pContext;
 };
 } // End of ApertureIO Namespace
 

@@ -86,7 +86,7 @@ int main()
     indexBufferInfo.layout = indexLayout;
     indexBufferInfo.count = static_cast<uint32_t>(indices.size());
 
-    //ApertureIO::Buffer* indexbuffer = ApertureIO::Buffer::CreateBuffer(&indexBufferInfo);
+    ApertureIO::Buffer* indexbuffer = ApertureIO::Buffer::CreateBuffer(&indexBufferInfo);
 
     // Main Loop Stuff Happens Here!
     while(!glfwWindowShouldClose(Window.getWindowPtr()))

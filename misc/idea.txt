@@ -198,3 +198,6 @@ create the window for us.
 
 Fuck it, we are gonna manage the window........
 
+For the Maths, should just use glm directly like we normally do 
+instead of trying to abstract that stuff too..
+

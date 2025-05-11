@@ -16,13 +16,14 @@ class VulkanDevice : public Device
     VulkanDevice(Context* context);
     bool init() override;
 
-    VkDevice getVkDevice();
-    VmaAllocator getVmaAllocator();
-    VkQueue getPresentVkQueue();
-    VkQueue getComputeVkQueue();
-    VkQueue getGraphicVkQueue();
+    VkDevice GetVkDevice();
+    VmaAllocator GetVmaAllocator();
+    VkQueue GetPresentVkQueue();
+    VkQueue GetComputeVkQueue();
+    VkQueue GetGraphicVkQueue();
 
     friend class VulkanFrameBuffer;
+    friend class VulkanCommand;
 
     private:
 
@@ -31,6 +32,21 @@ class VulkanDevice : public Device
     vkb::PhysicalDevice _physicalDevice;
     vkb::Device _device;
     VmaAllocator _allocator;
+
+    VkDescriptorPool _descriptorPool;
+
+    /* Device Global Bindless DescriptorSet */
+    VkDescriptorSet createBindlessLayout();
+
+    VkDescriptorSet _descriptorSet;
+    VkDescriptorSetLayout _descriptorSetLayout;
+    
+    /* CommandsBuffers and Sync */
+    VkCommandPool _commandPool;
+    std::vector<VkCommandBuffer> _commandBuffers;
+
+    std::vector<VkFence> _fences;
+    std::vector<VkSemaphore> _semaphores;
 };
 
 } // End namespace ApertureIO

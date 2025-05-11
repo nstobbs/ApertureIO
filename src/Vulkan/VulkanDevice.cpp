@@ -71,22 +71,33 @@ bool VulkanDevice::init()
     allocatorCreateInfo.pVulkanFunctions = &vkFunctions;
 
     vmaCreateAllocator(&allocatorCreateInfo, &_allocator);
+
+    /* Create Command Pool */
+    VkCommandPoolCreateInfo commandPoolInfo{};
+    commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    commandPoolInfo.queueFamilyIndex = _device.get_queue_index(vkb::QueueType::graphics).value();
+    VK_ASSERT(vkCreateCommandPool(GetVkDevice(), &commandPoolInfo, nullptr, &_commandPool), VK_SUCCESS, "Create Graphics Command Pool");
+
+    /* Create Descriptor Pool */
+    //TODO Use PhysicalDevice to find limits and set them here.
+    
+
     return true;
 };
 
 /* Getter Functions*/
 
-VkDevice VulkanDevice::getVkDevice()
+VkDevice VulkanDevice::GetVkDevice()
 {
     return _device.device;
 };
 
-VmaAllocator VulkanDevice::getVmaAllocator()
+VmaAllocator VulkanDevice::GetVmaAllocator()
 {
     return _allocator;
 };
 
-VkQueue VulkanDevice::getPresentVkQueue()
+VkQueue VulkanDevice::GetPresentVkQueue()
 {
     auto result = _device.get_queue(vkb::QueueType::present);
     if (!result)
@@ -96,7 +107,7 @@ VkQueue VulkanDevice::getPresentVkQueue()
     return result.value();
 };
 
-VkQueue VulkanDevice::getComputeVkQueue()
+VkQueue VulkanDevice::GetComputeVkQueue()
 {
     auto result = _device.get_queue(vkb::QueueType::compute);
     if (!result)
@@ -106,7 +117,7 @@ VkQueue VulkanDevice::getComputeVkQueue()
     return result.value();
 };
 
-VkQueue VulkanDevice::getGraphicVkQueue()
+VkQueue VulkanDevice::GetGraphicVkQueue()
 {
     auto result = _device.get_queue(vkb::QueueType::graphics);
     if (!result)

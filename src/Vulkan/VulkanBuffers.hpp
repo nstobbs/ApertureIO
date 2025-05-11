@@ -13,6 +13,7 @@ namespace ApertureIO {
 class VulkanBuffer : public Buffer
 {
     public:
+    ~VulkanBuffer();
     VulkanBuffer(Device* device, void* pData, BufferLayout layout, uint32_t vertexCount, bool hostAccess);
 
     void Bind() override;

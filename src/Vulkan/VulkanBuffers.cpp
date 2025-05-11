@@ -1,4 +1,5 @@
 #include "VulkanBuffers.hpp"
+#include "VulkanCommand.hpp"
 
 namespace ApertureIO {
 
@@ -16,19 +17,15 @@ VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uin
     allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE; // TODO: check this flag as well.
     allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
 
-    VmaAllocator allocator = _pDevice->getVmaAllocator();
+    VmaAllocator allocator = _pDevice->GetVmaAllocator();
     VkBuffer buffer;
     VmaAllocation allocation;
-    vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
-    vmaCopyMemoryToAllocation(allocator, pData, _allocation, 0, size);
-
-    /* Seems like we still need to manually move the buffer from the slow part of the gpu 
-    and move it to the more performance side.
-    Could add in the buffer create stuct if we need to access via the cpu with the buffer.
-    */
+    VK_ASSERT(vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr), VK_SUCCESS, "Create Host + Device Buffer");
+    VK_ASSERT(vmaCopyMemoryToAllocation(allocator, pData, allocation, 0, size), VK_SUCCESS, "Copy From Host to Buffer");
 
    if (!hostAccess)
    {
+        /* Create A Device Only Buffer and Copy theSlow Buffer Over*/
         VkBufferCreateInfo extraBufferInfo{};
         extraBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         extraBufferInfo.size = size;
@@ -41,9 +38,19 @@ VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uin
        // extraAllocInfo.flags = VMA_ALLOCATION_CREATE
        VkBuffer extraBuffer;
        VmaAllocation extraAllocation;
-       vmaCreateBuffer(allocator, &extraBufferInfo, &extraAllocInfo, &extraBuffer, &extraAllocation, nullptr);
-       /* TODO: Need commands buffers before we can copy the buffer across the gpu...*/
-   };
+       VK_ASSERT(vmaCreateBuffer(allocator, &extraBufferInfo, &extraAllocInfo, &extraBuffer, &extraAllocation, nullptr), VK_SUCCESS, "Create Device Only Buffer");
+       
+       VulkanCommand::CopyBuffer(_pDevice, buffer, extraBuffer, size);
+       _buffer = extraBuffer;
+       _allocation = extraAllocation;
+
+       // free the uneeded buffer
+       vmaDestroyBuffer(allocator, buffer, allocation);
+   }
+   else {
+        _buffer = buffer;
+        _allocation = allocation;
+   }
 };
 
 void VulkanBuffer::Bind()
@@ -54,6 +61,11 @@ void VulkanBuffer::Bind()
 void VulkanBuffer::Unbind()
 {
 
+};
+
+VulkanBuffer::~VulkanBuffer()
+{
+    vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
 
 } // End ApertureIO namespace

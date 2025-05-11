@@ -20,6 +20,13 @@ void VulkanContext::init()
     builder.enable_validation_layers();
     builder.enable_extensions(getRequiredExtensions());
 
+    // system info
+    auto systemInfo = vkb::SystemInfo::get_system_info().value();
+    if (systemInfo.is_extension_available("VK_KHR_get_physical_device_properties2"))
+    {
+        builder.enable_extension("VK_KHR_get_physical_device_properties2");
+    };
+
     // build instance
     auto builderResult = builder.build();
     if (!builderResult)

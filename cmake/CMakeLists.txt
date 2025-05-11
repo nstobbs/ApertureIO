@@ -34,6 +34,7 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Base/Command.hpp
 
                           ../src/Vulkan/VulkanCommon.hpp
+                          ../src/Vulkan/VulkanCommon.cpp
 
                           ../src/Vulkan/VulkanContext.hpp
                           ../src/Vulkan/VulkanContext.cpp
@@ -47,7 +48,10 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Vulkan/VulkanBuffers.hpp
                           ../src/Vulkan/VulkanBuffers.cpp
 
+                          ../src/Vulkan/VulkanShader.hpp
+
                           ../src/Vulkan/VulkanCommand.hpp
+                          ../src/Vulkan/VulkanCommand.cpp
 
                           ../deps/vk-bootstrap/src/VkBootstrap.h
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
