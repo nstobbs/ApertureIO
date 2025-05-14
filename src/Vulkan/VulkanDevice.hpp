@@ -36,10 +36,10 @@ class VulkanDevice : public Device
     VkDescriptorPool _descriptorPool;
 
     /* Device Global Bindless DescriptorSet */
-    VkDescriptorSet createBindlessLayout();
+    void createBindlessLayout();
 
-    VkDescriptorSet _descriptorSet;
-    VkDescriptorSetLayout _descriptorSetLayout;
+    VkDescriptorSet _bindlessDescriptorSet;
+    VkDescriptorSetLayout _bindlessLayout;
     
     /* CommandsBuffers and Sync */
     VkCommandPool _commandPool;

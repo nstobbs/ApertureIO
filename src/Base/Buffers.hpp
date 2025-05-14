@@ -21,7 +21,6 @@ struct BufferCreateInfo
 class Buffer
 {
     public:
-    /* TODO: really shouldn't need to pass the context around like this.*/
     static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
 
     virtual void Bind() = 0;
@@ -31,7 +30,8 @@ class Buffer
     BufferLayout _layout;
 };
 
-class IndexBuffer
+// TODO: Rethink about buffers. Could we have a base buffer class that can be used to create index and vertex buffers from, as well as normal buffers??
+class IndexBuffer : public Buffer
 {
     public:
     static IndexBuffer* CreateIndexBuffer();

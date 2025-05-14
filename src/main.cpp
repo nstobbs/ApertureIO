@@ -21,8 +21,8 @@ int main()
     can start creating the the GPUDevice */
 
     /* The Device handles all of the commands, memory, processing of the selected graphics api*/
-    ApertureIO::Device* gpu = ApertureIO::Device::CreateDevice(context);
-    if (!gpu->init())
+    ApertureIO::Device* GPU = ApertureIO::Device::CreateDevice(context);
+    if (!GPU->init())
     {
         std::cout << "failed to start ApertureIO::Device :(\n";
         return EXIT_FAILURE;
@@ -30,7 +30,7 @@ int main()
 
     /* The FrameBuffer is a render Target for any shaders to render to. This can be hook with an window for rendering
     to the screen directly. */
-    ApertureIO::FrameBuffer* framebuffer = ApertureIO::FrameBuffer::CreateFrameBuffer(gpu, context);
+    ApertureIO::FrameBuffer* framebuffer = ApertureIO::FrameBuffer::CreateFrameBuffer(GPU, context);
     char* name = "SwapChain_FrameBuffer1";
     framebuffer->setName(name);
     if (!framebuffer->init()) //TODO: Does a FrameBuffer need a Init Function?
@@ -56,7 +56,7 @@ int main()
 
     ApertureIO::BufferCreateInfo bufferInfo{};
     bufferInfo.context = context;
-    bufferInfo.device = gpu;
+    bufferInfo.device = GPU;
     bufferInfo.hostAccess = false;
     bufferInfo.data = vertices.data();
     bufferInfo.layout = vertexLayout;
@@ -80,7 +80,7 @@ int main()
 
     ApertureIO::BufferCreateInfo indexBufferInfo{};
     indexBufferInfo.context = context;
-    indexBufferInfo.device = gpu;
+    indexBufferInfo.device = GPU;
     indexBufferInfo.hostAccess = false;
     indexBufferInfo.data = indices.data();
     indexBufferInfo.layout = indexLayout;
