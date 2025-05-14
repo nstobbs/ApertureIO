@@ -125,12 +125,12 @@ bool VulkanDevice::init()
     descriptorPoolCreateInfo.maxSets = maxLimit; // TODO: This is deffo too high, think we only need one set really
     VK_ASSERT(vkCreateDescriptorPool(GetVkDevice(), &descriptorPoolCreateInfo, nullptr,&_descriptorPool), VK_SUCCESS, "Create Descriptor Pool");
     
-    createBindlessLayout();
+    createAndAllocateBindlessResources();
     return true;
 };
 
 /* From https://dev.to/gasim/implementing-bindless-design-in-vulkan-34no */
-void VulkanDevice::createBindlessLayout()
+void VulkanDevice::createAndAllocateBindlessResources()
 {
     std::array<VkDescriptorSetLayoutBinding, 3> bindings{};
     std::array<VkDescriptorBindingFlags, 3> flags{};
@@ -167,7 +167,13 @@ void VulkanDevice::createBindlessLayout()
     VK_ASSERT(vkCreateDescriptorSetLayout(GetVkDevice(), &createInfo, nullptr, &_bindlessLayout), VK_SUCCESS, "Create Bindless Layout");
 
     /* Creating the Descriptor Set*/
-    
+    VkDescriptorSetAllocateInfo allocateInfo{};
+    allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocateInfo.descriptorPool = _descriptorPool;
+    allocateInfo.descriptorSetCount = 1;
+    allocateInfo.pSetLayouts = &_bindlessLayout;
+
+    VK_ASSERT(vkAllocateDescriptorSets(GetVkDevice(), &allocateInfo, &_bindlessDescriptorSet), VK_SUCCESS, "Allocate Bindless Descriptor Set");
 };
 
 /* Getter Functions*/

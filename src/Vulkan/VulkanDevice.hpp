@@ -36,7 +36,7 @@ class VulkanDevice : public Device
     VkDescriptorPool _descriptorPool;
 
     /* Device Global Bindless DescriptorSet */
-    void createBindlessLayout();
+    void createAndAllocateBindlessResources();
 
     VkDescriptorSet _bindlessDescriptorSet;
     VkDescriptorSetLayout _bindlessLayout;
