@@ -4,7 +4,7 @@
 #include "VulkanCommon.hpp"
 #include "../Base/Shader.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanShader : public Shader
 {
@@ -25,6 +25,6 @@ class VulkanShader : public Shader
     int hash; //TODO: might be useful to use hashing so that we know when to rebuild the graphics pipeline.
 };
 
-}; // End of ApertureIO namespace
+}; // End of Aio namespace
 
 #endif

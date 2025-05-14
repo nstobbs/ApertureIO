@@ -1,7 +1,7 @@
 #include "Context.hpp"
 #include "../Vulkan/VulkanContext.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 Context* Context::CreateContext()
 {   
@@ -58,4 +58,4 @@ void Context::setActiveWindow(Window* window)
 };
 
 
-} // End ApertureIO namespace
+} // End Aio namespace

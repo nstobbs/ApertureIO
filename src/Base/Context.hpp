@@ -4,7 +4,7 @@
 
 #include "../App/Window.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 enum RendererAPI {
     eNone = 0,
@@ -36,6 +36,6 @@ class Context
     uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     uint32_t CurrentFrame = 0;
 };
-} //End ApertureIO namespace
+} //End Aio namespace
 
 #endif

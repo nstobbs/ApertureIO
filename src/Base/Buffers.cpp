@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace ApertureIO {
+namespace Aio {
 
 Buffer* Buffer::CreateBuffer(BufferCreateInfo* createInfo)
 {

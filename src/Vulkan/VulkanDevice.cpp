@@ -3,7 +3,7 @@
 #include <array>
 
 #include "VulkanDevice.hpp"
-namespace ApertureIO {
+namespace Aio {
 
 VulkanDevice::VulkanDevice(Context* context)
 {

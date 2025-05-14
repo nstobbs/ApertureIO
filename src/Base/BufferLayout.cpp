@@ -1,6 +1,6 @@
 #include "BufferLayout.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 void BufferLayout::AddBufferElement(BufferElement element)
 {
@@ -39,4 +39,4 @@ size_t BufferLayout::GetStride()
 {
     return calculateStride();
 };
-} // End of ApertureIO namespace
+} // End of Aio namespace

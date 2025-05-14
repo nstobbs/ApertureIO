@@ -9,7 +9,7 @@
 #include "VulkanCommon.hpp"
 #include "VulkanBuffers.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanCommand : public Command
 {
@@ -33,6 +33,6 @@ class VulkanCommand : public Command
     
     Context* _pContext;
 };
-} // End of ApertureIO Namespace
+} // End of Aio Namespace
 
 #endif

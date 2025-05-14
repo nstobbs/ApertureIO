@@ -7,7 +7,7 @@
 #include "Context.hpp"
 #include "Device.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 //TODO Do you want to mix color and depth formats with data formating?
 enum FrameBufferPixelFormat
@@ -44,6 +44,6 @@ class FrameBuffer
     std::unordered_map<char*, FrameBufferPixelFormat> _layers;
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace
 
 #endif

@@ -1,7 +1,7 @@
 #include "Command.hpp"
 #include "../Vulkan/VulkanCommand.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 Command* Command::CreateCommand(Context* context)
 {
@@ -13,4 +13,4 @@ Command* Command::CreateCommand(Context* context)
     };
 };
 
-}; // End of ApertureIO namespace
+}; // End of Aio namespace

@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-namespace ApertureIO {
+namespace Aio {
 
 Window::Window()
 {
@@ -23,4 +23,4 @@ Window::~Window()
     glfwTerminate();
 }
 
-} // End ApertureIO namespace
+} // End Aio namespace

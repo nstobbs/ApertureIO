@@ -1,7 +1,7 @@
 #include "VulkanCommand.hpp"
 #include "VulkanDevice.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 void VulkanCommand::createCommandBuffers(VulkanDevice* pDevice)
 {
@@ -80,4 +80,4 @@ void VulkanCommand::StartCommand(Device* pDevice)
     auto device = dynamic_cast<VulkanDevice*>(pDevice); 
     createCommandBuffers(device);
 };
-}; // End of ApertureIO namespace
+}; // End of Aio namespace

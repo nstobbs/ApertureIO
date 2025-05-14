@@ -1,7 +1,7 @@
 #include "FrameBuffer.hpp"
 #include "../Vulkan/VulkanFrameBuffer.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 FrameBuffer* FrameBuffer::CreateFrameBuffer(Device* pDevice, Context* pContext)
 {
@@ -19,5 +19,5 @@ void FrameBuffer::setName(char* name)
     _name = name;
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace
 

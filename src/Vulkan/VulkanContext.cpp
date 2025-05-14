@@ -1,7 +1,7 @@
 #include "VulkanContext.hpp"
 #include <iostream>
 
-namespace ApertureIO {
+namespace Aio {
 
 void VulkanContext::init()
 {
@@ -58,4 +58,4 @@ std::vector<const char*> VulkanContext::getRequiredExtensions()
     return extensions;
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace

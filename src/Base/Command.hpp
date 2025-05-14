@@ -4,7 +4,7 @@
 #include "Device.hpp"
 #include "Context.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class Command
 {

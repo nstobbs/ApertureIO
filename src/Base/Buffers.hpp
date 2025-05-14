@@ -6,7 +6,7 @@
 #include "Context.hpp"
 #include "BufferLayout.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 struct BufferCreateInfo
 {
@@ -59,6 +59,6 @@ class VertexArray
     Buffer* _pIndexBuffer;
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace
 
 #endif

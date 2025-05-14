@@ -1,6 +1,6 @@
 #include "VulkanFrameBuffer.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
 {
@@ -216,4 +216,4 @@ void VulkanFrameBuffer::Unbind()
 
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace

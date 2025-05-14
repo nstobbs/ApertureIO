@@ -3,7 +3,7 @@
 
 #include "Context.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class Device
 {
@@ -14,5 +14,5 @@ class Device
     private:
     bool _started;
 };
-} // End ApertureIO namespace
+} // End Aio namespace
 #endif

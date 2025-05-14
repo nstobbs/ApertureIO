@@ -8,45 +8,45 @@
 int main()
 {
     /* Window to Render to...*/
-    ApertureIO::Window Window;
+    Aio::Window Window;
     
     /* The Context handles all of the instance loading, extensions, validation layers and other stuff related to the
     selected graphics api */
-    ApertureIO::Context* context = ApertureIO::Context::CreateContext();
+    Aio::Context* context = Aio::Context::CreateContext();
     context->setActiveWindow(&Window);
-    context->setRendererAPI(ApertureIO::eVulkan); // TODO current this isn't needed for this system rn
+    context->setRendererAPI(Aio::eVulkan); // TODO current this isn't needed for this system rn
     context->init();
 
     /* We will need to have a window created before we 
     can start creating the the GPUDevice */
 
     /* The Device handles all of the commands, memory, processing of the selected graphics api*/
-    ApertureIO::Device* GPU = ApertureIO::Device::CreateDevice(context);
+    Aio::Device* GPU = Aio::Device::CreateDevice(context);
     if (!GPU->init())
     {
-        std::cout << "failed to start ApertureIO::Device :(\n";
+        std::cout << "failed to start Aio::Device :(\n";
         return EXIT_FAILURE;
     }
 
     /* The FrameBuffer is a render Target for any shaders to render to. This can be hook with an window for rendering
     to the screen directly. */
-    ApertureIO::FrameBuffer* framebuffer = ApertureIO::FrameBuffer::CreateFrameBuffer(GPU, context);
+    Aio::FrameBuffer* framebuffer = Aio::FrameBuffer::CreateFrameBuffer(GPU, context);
     char* name = "SwapChain_FrameBuffer1";
     framebuffer->setName(name);
     if (!framebuffer->init()) //TODO: Does a FrameBuffer need a Init Function?
     {
-        std::cout << "failed to create ApertureIO::FrameBuffer :(\n";
+        std::cout << "failed to create Aio::FrameBuffer :(\n";
         return EXIT_FAILURE;
     }
 
     /* Define the Buffer Layout And Create a Buffer to store and handle this data.*/
     /* Vertex Buffer*/
-    ApertureIO::BufferElement positionElement{};
+    Aio::BufferElement positionElement{};
     positionElement.count = 3;
-    positionElement.type = ApertureIO::Float;
+    positionElement.type = Aio::Float;
     positionElement.normalized = false;
 
-    ApertureIO::BufferLayout vertexLayout;
+    Aio::BufferLayout vertexLayout;
     vertexLayout.AddBufferElement(positionElement);
     
     std::vector<glm::vec3> vertices;
@@ -54,7 +54,7 @@ int main()
     vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
     vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
 
-    ApertureIO::BufferCreateInfo bufferInfo{};
+    Aio::BufferCreateInfo bufferInfo{};
     bufferInfo.context = context;
     bufferInfo.device = GPU;
     bufferInfo.hostAccess = false;
@@ -62,15 +62,15 @@ int main()
     bufferInfo.layout = vertexLayout;
     bufferInfo.count = static_cast<uint32_t>(vertices.size());
 
-    ApertureIO::Buffer* vertexbuffer = ApertureIO::Buffer::CreateBuffer(&bufferInfo);
+    Aio::Buffer* vertexbuffer = Aio::Buffer::CreateBuffer(&bufferInfo);
 
     /* Index Buffer*/
-    ApertureIO::BufferElement indexElement{};
+    Aio::BufferElement indexElement{};
     indexElement.count = 1;
-    indexElement.type = ApertureIO::Int;
+    indexElement.type = Aio::Int;
     indexElement.normalized = false;
 
-    ApertureIO::BufferLayout indexLayout;
+    Aio::BufferLayout indexLayout;
     indexLayout.AddBufferElement(indexElement);
 
     std::vector<int> indices;
@@ -78,7 +78,7 @@ int main()
     indices.push_back(1);
     indices.push_back(2);
 
-    ApertureIO::BufferCreateInfo indexBufferInfo{};
+    Aio::BufferCreateInfo indexBufferInfo{};
     indexBufferInfo.context = context;
     indexBufferInfo.device = GPU;
     indexBufferInfo.hostAccess = false;
@@ -86,7 +86,7 @@ int main()
     indexBufferInfo.layout = indexLayout;
     indexBufferInfo.count = static_cast<uint32_t>(indices.size());
 
-    ApertureIO::Buffer* indexbuffer = ApertureIO::Buffer::CreateBuffer(&indexBufferInfo);
+    Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
     // Main Loop Stuff Happens Here!
     while(!glfwWindowShouldClose(Window.getWindowPtr()))

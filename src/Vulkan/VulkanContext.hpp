@@ -14,7 +14,7 @@
     Use vk-bootstrap and start an vulkan instance
     */
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanContext : public Context
 {
@@ -31,6 +31,6 @@ class VulkanContext : public Context
     friend class VulkanDevice;
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace
 
 #endif

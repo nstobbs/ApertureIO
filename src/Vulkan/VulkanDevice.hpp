@@ -6,7 +6,7 @@
 #include "../Base/Device.hpp"
 #include "../Base/Context.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanContext;
 
@@ -49,5 +49,5 @@ class VulkanDevice : public Device
     std::vector<VkSemaphore> _semaphores;
 };
 
-} // End namespace ApertureIO
+} // End namespace Aio
 #endif

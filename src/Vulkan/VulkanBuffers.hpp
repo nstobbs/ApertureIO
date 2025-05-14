@@ -8,7 +8,7 @@
 #include "../Base/Buffers.hpp"
 #include "../Base/BufferLayout.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanBuffer : public Buffer
 {
@@ -26,5 +26,5 @@ class VulkanBuffer : public Buffer
     VkBuffer _buffer;
     VmaAllocation _allocation;
 };
-}; // End of ApertureIO Namespace
+}; // End of Aio Namespace
 #endif

@@ -1,7 +1,7 @@
 #include "VulkanBuffers.hpp"
 #include "VulkanCommand.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uint32_t vertexCount, bool hostAccess)
 {
@@ -69,4 +69,4 @@ VulkanBuffer::~VulkanBuffer()
     vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
 
-} // End ApertureIO namespace
+} // End Aio namespace

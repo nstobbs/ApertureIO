@@ -8,7 +8,7 @@
 #include "Context.hpp"
 #include "Device.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 //TODO shorter name maybe?
 struct ShaderComputeCreateInfo
@@ -59,6 +59,6 @@ class ShaderLibrary
     std::unordered_map<std::string, Shader*> _shaders;
 };
 
-}; // End of ApertureIO Namespace 
+}; // End of Aio Namespace 
 
 #endif

@@ -6,7 +6,7 @@
 /* This will be based of GLFW cause I don't care about qt.
  I'll worry about that later*/
 
-namespace ApertureIO {
+namespace Aio {
 
 class Window
 {
@@ -23,6 +23,6 @@ class Window
     GLFWwindow* _pWindow;
 };
 
-} // End ApertureIO namespace 
+} // End Aio namespace 
 
 #endif

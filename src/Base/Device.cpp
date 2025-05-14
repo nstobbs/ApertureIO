@@ -1,7 +1,7 @@
 #include "Device.hpp"
 #include "../Vulkan/VulkanDevice.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
  Device* Device::CreateDevice(Context* context)
  {
@@ -12,4 +12,4 @@ namespace ApertureIO {
     }
  };
 
-} // End ApertureIO namespace
+} // End Aio namespace

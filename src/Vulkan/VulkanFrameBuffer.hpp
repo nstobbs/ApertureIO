@@ -8,7 +8,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanDevice.hpp"
 
-namespace ApertureIO {
+namespace Aio {
 
 class VulkanFrameBuffer : public FrameBuffer
 {

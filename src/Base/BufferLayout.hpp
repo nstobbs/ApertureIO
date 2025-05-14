@@ -7,7 +7,7 @@
 /* TODO: should this be an vertex related classes? could just rename this to be buffer related like
 buffer elements and buffer layout since that what it's really doing and not just.*/
 
-namespace ApertureIO {
+namespace Aio {
 
 
 enum BufferElementType
