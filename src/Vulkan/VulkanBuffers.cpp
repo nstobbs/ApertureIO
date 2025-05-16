@@ -3,11 +3,12 @@
 
 namespace Aio {
 
-VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uint32_t vertexCount, bool hostAccess)
+VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
 {
-    _pDevice = dynamic_cast<VulkanDevice*>(device);
-    size_t size = static_cast<uint32_t>(layout.GetStride() * vertexCount);
-    
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
+    size_t size = static_cast<uint32_t>(createInfo->layout.GetStride() * createInfo->count);
+    _size = static_cast<uint32_t>(size);
+
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -22,10 +23,11 @@ VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uin
     VkBuffer buffer;
     VmaAllocation allocation;
     VK_ASSERT(vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr), VK_SUCCESS, "Create Host + Device Buffer");
-    VK_ASSERT(vmaCopyMemoryToAllocation(allocator, pData, allocation, 0, size), VK_SUCCESS, "Copy From Host to Buffer");
 
-   if (!hostAccess)
+   if (createInfo->type == BufferType::Vertex || BufferType::Index)
    {
+        /* If it's a Vertex or Index then the data pointer is copied from the CPU */
+        VK_ASSERT(vmaCopyMemoryToAllocation(allocator, createInfo->data, allocation, 0, size), VK_SUCCESS, "Copy From Host to Buffer");
         /* Create A Device Only Buffer and Copy theSlow Buffer Over*/
         VkBufferCreateInfo extraBufferInfo{};
         extraBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -49,9 +51,22 @@ VulkanBuffer::VulkanBuffer(Device* device, void* pData, BufferLayout layout, uin
        vmaDestroyBuffer(allocator, buffer, allocation);
    }
    else {
+        /* When using UniformBuffers the data pointer is used for mapping .*/
         _buffer = buffer;
         _allocation = allocation;
+        vmaMapMemory(_pDevice->GetVmaAllocator(), _allocation, &createInfo->data);
+        _pData = createInfo->data;
    }
+};
+
+void VulkanBuffer::UploadToDevice(void* data)
+{
+    memcpy(_pData, data, static_cast<size_t>(_size));
+};
+
+void VulkanBuffer::rebuildBuffer()
+{
+    vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
 
 void VulkanBuffer::Bind()

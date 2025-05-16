@@ -12,9 +12,7 @@ Buffer* Buffer::CreateBuffer(BufferCreateInfo* createInfo)
     switch(API)
     {
         case eVulkan:
-            return new VulkanBuffer(createInfo->device, createInfo->data,
-                                    createInfo->layout, createInfo->count,
-                                    createInfo->hostAccess);
+            return new VulkanBuffer(createInfo);
     }
 };
 

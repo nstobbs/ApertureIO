@@ -8,13 +8,20 @@
 
 namespace Aio {
 
+enum BufferType
+{
+    Vertex = 0,
+    Index = 1,
+    Uniform = 2
+};
+
 struct BufferCreateInfo
 {
     Device* device;
     Context* context;
-    bool hostAccess = false; // Read and Write Access
-    void* data;
+    BufferType type;
     BufferLayout layout;
+    void* data;
     uint32_t count;
 };
 

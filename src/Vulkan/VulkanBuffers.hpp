@@ -14,7 +14,12 @@ class VulkanBuffer : public Buffer
 {
     public:
     ~VulkanBuffer();
-    VulkanBuffer(Device* device, void* pData, BufferLayout layout, uint32_t vertexCount, bool hostAccess);
+    VulkanBuffer(BufferCreateInfo* createInfo);
+
+    void UploadToDevice(void* data);
+
+    /* Might need to function to rebuild the buffer */
+    void rebuildBuffer(); //destory and rebuild the buffer.
 
     void Bind() override;
     void Unbind() override;
@@ -25,6 +30,9 @@ class VulkanBuffer : public Buffer
     BufferLayout _layout;
     VkBuffer _buffer;
     VmaAllocation _allocation;
+
+    uint32_t _size;
+    void* _pData;
 };
 }; // End of Aio Namespace
 #endif

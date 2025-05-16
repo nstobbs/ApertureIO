@@ -55,9 +55,9 @@ int main()
     vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
 
     Aio::BufferCreateInfo bufferInfo{};
+    bufferInfo.type = Aio::BufferType::Vertex;
     bufferInfo.context = context;
     bufferInfo.device = GPU;
-    bufferInfo.hostAccess = false;
     bufferInfo.data = vertices.data();
     bufferInfo.layout = vertexLayout;
     bufferInfo.count = static_cast<uint32_t>(vertices.size());
@@ -79,9 +79,9 @@ int main()
     indices.push_back(2);
 
     Aio::BufferCreateInfo indexBufferInfo{};
+    indexBufferInfo.type = Aio::BufferType::Index;
     indexBufferInfo.context = context;
     indexBufferInfo.device = GPU;
-    indexBufferInfo.hostAccess = false;
     indexBufferInfo.data = indices.data();
     indexBufferInfo.layout = indexLayout;
     indexBufferInfo.count = static_cast<uint32_t>(indices.size());
