@@ -1,11 +1,12 @@
 #include "VulkanContext.hpp"
 #include <iostream>
+#include "../Common/Logger.hpp"
 
 namespace Aio {
 
 void VulkanContext::init()
 {
-    std::cout << "Init Vulkan :p\n";
+    Logger::LogInfo("Init Vulkan");
     VkResult result = volkInitialize();
     if (result != VK_SUCCESS)
     {

@@ -196,8 +196,14 @@ If Output Target Framebuffer:
 So I don't need to create the surface but i expect the window api to
 create the window for us.
 
-Fuck it, we are gonna manage the window........
+Hot-Loading.
 
-For the Maths, should just use glm directly like we normally do 
-instead of trying to abstract that stuff too..
+For handling shaders, instead of using the glsl.exe to compile the
+shaders. We will do it at runtime and also set up a watcher on the 
+shader source file to track for any changes on the shader. If the
+source has been modifed then we will start rebuilding a new shader
+with. Then swap it with the out of data shader once it's ready to use.
+
+Watching Source files should happen on the base classes not vulkan classes!
+
 

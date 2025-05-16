@@ -14,6 +14,12 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/App/Window.hpp
                           ../src/App/Window.cpp
 
+                          ../src/Common/Logger.hpp
+                          ../src/Common/Logger.cpp
+
+                          ../src/Common/FileIO.hpp
+                          ../src/Common/FileIO.cpp
+
                           ../src/Base/Context.hpp
                           ../src/Base/Context.cpp
 

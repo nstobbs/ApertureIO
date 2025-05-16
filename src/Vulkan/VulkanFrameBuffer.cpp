@@ -1,9 +1,11 @@
 #include "VulkanFrameBuffer.hpp"
+#include "../Common/Logger.hpp"
 
 namespace Aio {
 
 VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
 {
+    Logger::LogInfo("Created VulkanFrameBuffer");
     // create with swap chain
     isSwapChainTarget = true;
     _pDevice = dynamic_cast<VulkanDevice*>(device);
@@ -58,9 +60,9 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device)
     _pDevice = dynamic_cast<VulkanDevice*>(device);
 };
 
+/* Do I even Need this?*/
 bool VulkanFrameBuffer::init()
 {
-    std::cout << ":0\n";
     return true;
 };
 

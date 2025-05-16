@@ -1,12 +1,19 @@
 #include "ApertureIO.hpp"
 
-#include <iostream>
 #include "GLFW/glfw3.h"
 #include <glm/glm.hpp>
+
 #include <vector>
+#include <iostream>
+#include <chrono>
+#include <ctime>
 
 int main()
 {
+    Aio::Logger::LogWarn("Logger Tests 1...");
+    Aio::Logger::LogInfo("Logger Tests 2...");
+    Aio::Logger::LogError("Logger Tests 3...");
+
     /* Window to Render to...*/
     Aio::Window Window;
     
@@ -88,10 +95,20 @@ int main()
 
     Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
+    Aio::ShaderCreateInfo SolidColourShaderInfo{};
+    SolidColourShaderInfo.type = Aio::ShaderType::Graphics;
+    SolidColourShaderInfo.pContext = context;
+    SolidColourShaderInfo.pDevice = GPU;
+    SolidColourShaderInfo.shaderName = "SolidColour";
+    SolidColourShaderInfo.sourceFilepath = "./Shaders/SolidColour.glsl";
+
     // Main Loop Stuff Happens Here!
     while(!glfwWindowShouldClose(Window.getWindowPtr()))
     {
-        std::cout << "running :)\n";
+        /* Start*/
+        Aio::Logger::LogInfo("Running");
+        return EXIT_SUCCESS;
+        /* End */
     };
 
     return EXIT_SUCCESS;

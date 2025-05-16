@@ -1,4 +1,5 @@
 #include "Window.hpp"
+#include "../Common/Logger.hpp"
 #include <iostream>
 
 
@@ -6,7 +7,7 @@ namespace Aio {
 
 Window::Window()
 {
-    std::cout << "glfwInit\n";
+    Logger::LogInfo("Init Glfw");
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     _pWindow = glfwCreateWindow(_width, _height, "Don't Care", NULL, NULL);

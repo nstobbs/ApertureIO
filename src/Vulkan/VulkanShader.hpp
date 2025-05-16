@@ -12,12 +12,18 @@ class VulkanShader : public Shader
     VulkanShader(ShaderComputeCreateInfo& createInfo);
     VulkanShader(ShaderGraphicsCreateInfo& createInfo);
 
+    ~VulkanShader();
+
     void Bind() override;
     void Unbind() override;
 
     void SetVec4(std::string name, glm::vec4 value) override;
 
     private:
+    std::vector<VkShaderModule> _shaderModules;
+
+    VkViewport _viewport;
+    VkRect2D _scissor;
 
     VkPipeline _pipeline;
     VkPipelineLayout _layout;
