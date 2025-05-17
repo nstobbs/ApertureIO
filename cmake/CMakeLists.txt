@@ -7,8 +7,6 @@ find_package(volk)
 find_package(glfw3)
 find_package(glm)
 
-add_subdirectory(extern/shaderc)
-
 add_executable(ApertureIO ../src/main.cpp
 
                           ../src/ApertureIO.hpp
@@ -58,6 +56,7 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Vulkan/VulkanBuffers.cpp
 
                           ../src/Vulkan/VulkanShader.hpp
+                          ../src/Vulkan/VulkanShader.cpp
 
                           ../src/Vulkan/VulkanCommand.hpp
                           ../src/Vulkan/VulkanCommand.cpp

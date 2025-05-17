@@ -27,6 +27,8 @@ class VulkanShader : public Shader
     VkPipeline _pipeline;
     VkPipelineLayout _layout;
 
+    VkDevice* _pDevice;
+
     int hash; //TODO: might be useful to use hashing so that we know when to rebuild the graphics pipeline.
 };
 

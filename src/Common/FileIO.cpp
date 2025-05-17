@@ -27,4 +27,10 @@ std::vector<char> FileIO::ReadSourceFile(const std::string& filepath)
     return buffer;
 };
 
+std::vector<std::string> FileIO::SplitOutShader(std::vector<char>& sourceCode, std::string shaderType)
+{
+    std::vector<std::string> blank;
+    return blank;
+};
+
 };
