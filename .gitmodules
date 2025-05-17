@@ -7,6 +7,3 @@
 [submodule "deps/shaderc"]
 	path = deps/shaderc
 	url = git@github.com:google/shaderc.git
-[submodule "deps/efsw"]
-	path = deps/efsw
-	url = git@github.com:SpartanJ/efsw.git

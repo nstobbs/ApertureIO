@@ -31,6 +31,8 @@ class Shader
 
     virtual void Bind() = 0;
     virtual void Unbind() = 0;
+    
+    virtual void rebuildShader() = 0;
 
     virtual void SetVec4(std::string name, glm::vec4 value) = 0;
 
@@ -38,6 +40,10 @@ class Shader
     char* _name = "";
     std::vector<std::string> _uniformBufferNames;
 };
+
+/* TODO: Hot-Loading Notes, the shaderLibaray will be watching the source files for any chanages to the files.
+Once we get an event back that one of the shader source files have changed. Then we start the rebuild shader
+process.*/
 
 class ShaderLibrary
 {
