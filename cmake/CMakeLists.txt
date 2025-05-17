@@ -7,6 +7,8 @@ find_package(volk)
 find_package(glfw3)
 find_package(glm)
 
+add_subdirectory(extern/shaderc)
+
 add_executable(ApertureIO ../src/main.cpp
 
                           ../src/ApertureIO.hpp
@@ -36,6 +38,7 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Base/BufferLayout.cpp
 
                           ../src/Base/Shader.hpp
+                          ../src/Base/Shader.cpp
                         
                           ../src/Base/Command.hpp
 

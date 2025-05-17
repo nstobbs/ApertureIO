@@ -9,8 +9,7 @@ namespace Aio {
 class VulkanShader : public Shader
 {
     public:
-    VulkanShader(ShaderComputeCreateInfo& createInfo);
-    VulkanShader(ShaderGraphicsCreateInfo& createInfo);
+    VulkanShader(ShaderCreateInfo& createInfo);
 
     ~VulkanShader();
 

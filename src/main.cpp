@@ -102,6 +102,11 @@ int main()
     SolidColourShaderInfo.shaderName = "SolidColour";
     SolidColourShaderInfo.sourceFilepath = "./Shaders/SolidColour.glsl";
 
+    auto source = Aio::FileIO::ReadSourceFile("./Shaders/SolidColour.glsl");
+    auto sourceVert = Aio::FileIO::SplitOutShader(source, "#TYPE VERTEX");
+    auto sourceFrag = Aio::FileIO::SplitOutShader(source, "#TYPE FRAGMENT");
+    auto sourceComp = Aio::FileIO::SplitOutShader(source, "#TYPE COMPUTE");
+
     // Main Loop Stuff Happens Here!
     while(!glfwWindowShouldClose(Window.getWindowPtr()))
     {
