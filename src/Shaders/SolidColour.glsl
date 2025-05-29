@@ -1,5 +1,5 @@
-#TYPE VERTEX
+#shader Vertex
 
-#TYPE FRAGMENT
+#shader Fragment
 
-#TYPE COMPUTE
+#shader Compute

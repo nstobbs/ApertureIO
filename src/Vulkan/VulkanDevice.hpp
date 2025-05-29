@@ -18,6 +18,8 @@ class VulkanDevice : public Device
 
     VkDevice GetVkDevice();
     VmaAllocator GetVmaAllocator();
+    VkDescriptorSetLayout GetBindlessLayout();
+    VkDescriptorSet GetBindlessDescriptorSet();
     VkQueue GetPresentVkQueue();
     VkQueue GetComputeVkQueue();
     VkQueue GetGraphicVkQueue();

@@ -2,12 +2,13 @@
 #include "Logger.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
 
 namespace Aio {
 
-std::vector<char> FileIO::ReadSourceFile(const std::string& filepath)
+std::string FileIO::ReadSourceFile(const std::string& filepath)
 {
     Logger::LogInfo("Reading Source File: " + filepath);
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);
@@ -18,19 +19,50 @@ std::vector<char> FileIO::ReadSourceFile(const std::string& filepath)
         throw std::runtime_error("EXITING");
     };
 
-    size_t size = file.tellg();
-    std::vector<char> buffer(size);
-    file.seekg(0);
-    file.read(buffer.data(), size);
-    file.close();
-    
-    return buffer;
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    return contents.str();
 };
 
-std::vector<std::string> FileIO::SplitOutShader(std::vector<char>& sourceCode, std::string shaderType)
-{
-    std::vector<std::string> blank;
-    return blank;
+std::string SplitOutShader(std::string& sourceCode, SourceFileType shaderType)
+{   
+    // TODO Clean up this whole function
+    std::stringstream output[3]; // TODO Set a Global For Number of ShaderTypes 
+    std::string result;
+    std::istringstream stream(sourceCode);
+    std::string line;
+
+    SourceFileType currentType = NoneShader;
+
+    while(std::getline(stream, line))
+    {
+        if (line.find("#shader") != std::string::npos)
+        {   
+            if(line.find("Vertex") != std::string::npos)
+            {
+                currentType = VertexShader;
+
+            } else if (line.find("Fragment") != std::string::npos)
+            {
+                currentType = FragmentShader;
+
+            } else if (line.find("Compute") != std::string::npos)
+            {
+
+                currentType = ComputeShader;
+
+            };
+        } else {
+            if (currentType != NoneShader)
+            {
+                output[static_cast<int>(currentType)] << line << "\n";
+            }
+        }
+    };
+
+    result = output[static_cast<int>(shaderType)].str();
+
+    return result;
 };
 
 };

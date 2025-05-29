@@ -188,6 +188,16 @@ VmaAllocator VulkanDevice::GetVmaAllocator()
     return _allocator;
 };
 
+VkDescriptorSetLayout VulkanDevice::GetBindlessLayout()
+{
+    return _bindlessLayout;
+};
+
+VkDescriptorSet VulkanDevice::GetBindlessDescriptorSet()
+{
+    return _bindlessDescriptorSet;
+};
+
 VkQueue VulkanDevice::GetPresentVkQueue()
 {
     auto result = _device.get_queue(vkb::QueueType::present);

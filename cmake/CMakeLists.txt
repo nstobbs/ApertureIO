@@ -3,9 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 project(ApertureIO)
 set(CXX_STANDARD_REQUIRED 20)
 
-find_package(volk)
-find_package(glfw3)
-find_package(glm)
+find_package(volk REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
+find_package(shaderc REQUIRED)
+find_package(efsw REQUIRED)
 
 add_executable(ApertureIO ../src/main.cpp
 
@@ -65,4 +67,4 @@ add_executable(ApertureIO ../src/main.cpp
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
                           ../deps/vk-bootstrap/src/VkBootstrapDispatch.h
                           ../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h)
-target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm)
+target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm shaderc::shaderc efsw::efsw)

@@ -7,11 +7,19 @@
 namespace Aio 
 {
 
+enum SourceFileType
+{
+    NoneShader = -1,
+    VertexShader = 0,
+    FragmentShader = 1,
+    ComputeShader = 3,
+};
+
 class FileIO
 {
     public:
-    static std::vector<char> ReadSourceFile(const std::string& filepath);
-    static std::vector<std::string> SplitOutShader(std::vector<char>& sourceCode, std::string shaderType);
+    static std::string FileIO::ReadSourceFile(const std::string& filepath);
+    static std::string SplitOutShader(std::string& sourceCode, SourceFileType shaderType);
 };
 
 };

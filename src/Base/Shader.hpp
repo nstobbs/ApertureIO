@@ -8,6 +8,9 @@
 #include "Context.hpp"
 #include "Device.hpp"
 
+#include <efsw/efsw.h>
+#include <efsw/efsw.hpp>
+
 namespace Aio {
 
 enum ShaderType {
@@ -33,17 +36,47 @@ class Shader
     virtual void Unbind() = 0;
     
     virtual void rebuildShader() = 0;
+    
+    std::string& GetSourceFilePath();
+    std::string& GetName();
 
     virtual void SetVec4(std::string name, glm::vec4 value) = 0;
 
     private:
-    char* _name = "";
+    std::string _name = "";
+    std::string _sourceFilepath = "";
     std::vector<std::string> _uniformBufferNames;
 };
 
 /* TODO: Hot-Loading Notes, the shaderLibaray will be watching the source files for any chanages to the files.
 Once we get an event back that one of the shader source files have changed. Then we start the rebuild shader
 process.*/
+
+class ShaderListener : public efsw::FileWatchListener
+{   
+    public:
+    void handleFileAction( efsw::WatchID watchid, const std::string& dir,
+								   const std::string& filename, efsw::Action action,
+								   std::string oldFilename = "" ) override;
+    
+    std::vector<Shader*> _pShaders;
+};
+
+class ShaderWatcher
+{
+    public:
+    ShaderWatcher();
+    void AddToWatchList(Shader* shader);
+    void RemoveFromWatchList(Shader* shader);
+
+    private:
+    std::vector<Shader*> _pShaders;
+    efsw::FileWatcher _fileWatcher;
+    ShaderListener _Listener;
+
+    friend class ShaderListener;
+
+};
 
 class ShaderLibrary
 {

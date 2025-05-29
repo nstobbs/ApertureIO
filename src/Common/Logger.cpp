@@ -37,7 +37,6 @@ void Logger::setPrintColour(int colour)
     std::cout << "\033[" << colour << "m";
 };
 
-
 void Logger::resetPrintColour()
 {
     std::cout << "\033[0m";
