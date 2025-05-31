@@ -5,6 +5,7 @@
 
 #include "../Base/Command.hpp"
 #include "../Base/Context.hpp"
+#include "../Base/RenderContext.hpp"
 
 #include "VulkanCommon.hpp"
 #include "VulkanBuffers.hpp"
@@ -16,12 +17,12 @@ class VulkanCommand : public Command
     public:
     VulkanCommand(Context* context);
     
-    void StartCommand(Device* pDevice) override;
-    void EndCommand(Device* pDevice) override;
-    void Draw(Device* pDevice) override;
-    void DrawInstance(Device* pDevice) override;
-    void DispatchCompute(Device* pDevice) override;
-    void Clear(Device* pDevice) override; //TODO maybe move this into framebuffer??
+    void StartCommand(RenderContext& renderContext) override;
+    void EndCommand(RenderContext& renderContext) override;
+    void Draw(RenderContext& renderContext) override;
+    void DrawInstance(RenderContext& renderContext) override;
+    void DispatchCompute(RenderContext& renderContext) override;
+    void Clear(RenderContext& renderContext) override; //TODO maybe move this into framebuffer??
 
     static void CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t size);
 

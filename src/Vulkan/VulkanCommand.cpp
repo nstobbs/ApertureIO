@@ -75,9 +75,11 @@ void VulkanCommand::CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuff
     endSingleTimeCommandBuffer(pDevice, commandBuffer);
 };
 
-void VulkanCommand::StartCommand(Device* pDevice)
+void VulkanCommand::StartCommand(RenderContext& renderContext)
 {
-    auto device = dynamic_cast<VulkanDevice*>(pDevice); 
-    createCommandBuffers(device);
+    //auto device = dynamic_cast<VulkanDevice*>(pDevice); 
+    //createCommandBuffers(device);
 };
+
+
 }; // End of Aio namespace

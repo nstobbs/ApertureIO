@@ -5,6 +5,7 @@
 #include "VulkanContext.hpp"
 #include "../Base/Device.hpp"
 #include "../Base/Context.hpp"
+#include "../Base/Command.hpp"
 
 namespace Aio {
 

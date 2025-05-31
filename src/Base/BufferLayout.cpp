@@ -39,4 +39,9 @@ size_t BufferLayout::GetStride()
 {
     return calculateStride();
 };
+
+BufferElement BufferLayout::GetBufferElementAt(uint32_t index)
+{
+    return _elements.at(index);
+};
 } // End of Aio namespace

@@ -7,6 +7,7 @@
 #include "App/Window.hpp"
 
 #include "Base/Context.hpp"
+#include "Base/RenderContext.hpp"
 #include "Base/Device.hpp"
 #include "Base/FrameBuffer.hpp"
 #include "Base/Buffers.hpp"

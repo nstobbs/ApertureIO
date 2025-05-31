@@ -11,6 +11,8 @@ class Device
     static Device* CreateDevice(Context* context);
     virtual bool init() = 0;
 
+    Command* pCommand;
+
     private:
     bool _started;
 };

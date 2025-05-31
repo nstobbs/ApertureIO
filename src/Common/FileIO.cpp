@@ -11,7 +11,7 @@ namespace Aio {
 std::string FileIO::ReadSourceFile(const std::string& filepath)
 {
     Logger::LogInfo("Reading Source File: " + filepath);
-    std::ifstream file(filepath, std::ios::binary | std::ios::ate);
+    std::ifstream file(filepath, std::ios::in | std::ios::binary);
 
     if(!file.is_open())
     {
@@ -24,7 +24,7 @@ std::string FileIO::ReadSourceFile(const std::string& filepath)
     return contents.str();
 };
 
-std::string SplitOutShader(std::string& sourceCode, SourceFileType shaderType)
+std::string FileIO::SplitOutShader(std::string& sourceCode, SourceFileType shaderType)
 {   
     // TODO Clean up this whole function
     std::stringstream output[3]; // TODO Set a Global For Number of ShaderTypes 

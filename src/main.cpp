@@ -95,24 +95,31 @@ int main()
 
     Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
+    /* Create an Shader Program to Run */
     Aio::ShaderCreateInfo SolidColourShaderInfo{};
     SolidColourShaderInfo.type = Aio::ShaderType::Graphics;
     SolidColourShaderInfo.pContext = context;
     SolidColourShaderInfo.pDevice = GPU;
     SolidColourShaderInfo.shaderName = "SolidColour";
-    SolidColourShaderInfo.sourceFilepath = "./Shaders/SolidColour.glsl";
+    SolidColourShaderInfo.sourceFilepath = "./src/Shaders/SolidColour.glsl";
 
-    auto source = Aio::FileIO::ReadSourceFile("./Shaders/SolidColour.glsl");
-    //auto sourceVert = Aio::FileIO::SplitOutShader(source, "#TYPE VERTEX");
-    //auto sourceFrag = Aio::FileIO::SplitOutShader(source, "#TYPE FRAGMENT");
-    //auto sourceComp = Aio::FileIO::SplitOutShader(source, "#TYPE COMPUTE");
+    Aio::Shader* solidColourShader = Aio::Shader::CreateShader(SolidColourShaderInfo);
+
+    /* Bind all the objects needed to the RenderContext */
+    Aio::RenderContext rContext;
+
+    vertexbuffer->Bind(rContext);
+    indexbuffer->Bind(rContext);
+    framebuffer->Bind(rContext);
+    solidColourShader->Bind(rContext);
 
     // Main Loop Stuff Happens Here!
     while(!glfwWindowShouldClose(Window.getWindowPtr()))
     {
         /* Start*/
         Aio::Logger::LogInfo("Running");
-        return EXIT_SUCCESS;
+        GPU->pCommand->Clear(rContext);
+        GPU->pCommand->Draw(rContext);
         /* End */
     };
 

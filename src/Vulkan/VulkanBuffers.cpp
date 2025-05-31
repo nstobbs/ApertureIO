@@ -8,6 +8,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
     size_t size = static_cast<uint32_t>(createInfo->layout.GetStride() * createInfo->count);
     _size = static_cast<uint32_t>(size);
+    _type = createInfo->type;
 
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -57,6 +58,8 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
         vmaMapMemory(_pDevice->GetVmaAllocator(), _allocation, &createInfo->data);
         _pData = createInfo->data;
    }
+
+   dynamic_cast<Buffer*>(this)->SetBufferLayout(createInfo->layout);
 };
 
 void VulkanBuffer::UploadToDevice(void* data)
@@ -69,9 +72,18 @@ void VulkanBuffer::rebuildBuffer()
     vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
 
-void VulkanBuffer::Bind()
+void VulkanBuffer::Bind(RenderContext& renderContext)
 {
-
+    switch(_type)
+    {
+        case BufferType::Vertex:
+            renderContext._VertexBuffer = dynamic_cast<Buffer*>(this);
+            break;
+        case BufferType::Index:
+            renderContext._IndexBuffer = dynamic_cast<Buffer*>(this);
+        case BufferType::Uniform:
+            break;
+    };
 };
 
 void VulkanBuffer::Unbind()

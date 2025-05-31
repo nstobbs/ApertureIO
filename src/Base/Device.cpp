@@ -8,7 +8,9 @@ namespace Aio {
     switch(context->getRendererAPI())
     {
         case eVulkan:
-            return new VulkanDevice(context);
+            VulkanDevice* device = new VulkanDevice(context);
+            dynamic_cast<Device*>(device)->pCommand = Command::CreateCommand(device, context);
+            return device;
     }
  };
 

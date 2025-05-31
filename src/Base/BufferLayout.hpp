@@ -30,6 +30,7 @@ class BufferLayout
     void AddBufferElement(BufferElement element);
     uint32_t GetElementCount();
     size_t GetStride();
+    BufferElement GetBufferElementAt(uint32_t index);
 
     private:
     std::vector<BufferElement> _elements;

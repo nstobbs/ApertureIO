@@ -7,6 +7,7 @@
 #include "../Base/Device.hpp"
 #include "../Base/Buffers.hpp"
 #include "../Base/BufferLayout.hpp"
+#include "../Base/RenderContext.hpp"
 
 namespace Aio {
 
@@ -21,13 +22,15 @@ class VulkanBuffer : public Buffer
     /* Might need to function to rebuild the buffer */
     void rebuildBuffer(); //destory and rebuild the buffer.
 
-    void Bind() override;
+    void Bind(RenderContext& renderContext) override;
     void Unbind() override;
 
     private:
     VulkanDevice* _pDevice;
 
+    BufferType _type;
     BufferLayout _layout;
+    
     VkBuffer _buffer;
     VmaAllocation _allocation;
 

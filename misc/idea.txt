@@ -207,3 +207,7 @@ with. Then swap it with the out of data shader once it's ready to use.
 Watching Source files should happen on the base classes not vulkan classes!
 
 
+RenderContext
+Might need to create an class like RenderContext that stores current information required to draw
+the current object. Most importantly storing what objects are currently bound.
+

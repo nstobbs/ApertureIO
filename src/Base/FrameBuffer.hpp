@@ -25,7 +25,7 @@ class FrameBuffer
 
     virtual bool init() = 0; // TODO Does a framebuffer need an init function?
 
-    virtual void Bind() = 0;
+    virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
     
     void createLayer(char* name, FrameBufferPixelFormat format);

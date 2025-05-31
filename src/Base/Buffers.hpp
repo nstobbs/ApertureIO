@@ -30,7 +30,10 @@ class Buffer
     public:
     static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
 
-    virtual void Bind() = 0;
+    BufferLayout GetBufferLayout();
+    void SetBufferLayout(BufferLayout layout);
+
+    virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
 
     private:

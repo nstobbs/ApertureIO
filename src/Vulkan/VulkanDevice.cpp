@@ -1,8 +1,8 @@
 #define VMA_IMPLEMENTATION
 
 #include <array>
-
 #include "VulkanDevice.hpp"
+
 namespace Aio {
 
 VulkanDevice::VulkanDevice(Context* context)
@@ -13,7 +13,7 @@ VulkanDevice::VulkanDevice(Context* context)
 bool VulkanDevice::init()
 {   
     GLFWwindow* window = _pVulkanContext->getActiveWindowPtr()->getWindowPtr();
-    VkInstance instance = _pVulkanContext->getVkInstance();
+    VkInstance instance = _pVulkanContext->GetVkInstance();
     VkSurfaceKHR surface;
 
     //TODO shouldn't be using platform spec code instead of here.

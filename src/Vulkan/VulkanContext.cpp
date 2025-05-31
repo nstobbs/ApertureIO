@@ -38,12 +38,21 @@ void VulkanContext::init()
     // volk loads all extension to start using them
     _instance = builderResult.value();
     volkLoadInstance(_instance);
+    
+    // boot up the shader compiler
+    _compiler = shaderc_compiler_initialize();
+    // TODO: create an teardown function for this class
 };
 
-VkInstance VulkanContext::getVkInstance()
+VkInstance VulkanContext::GetVkInstance()
 {
     return _instance.instance;
 }
+
+shaderc_compiler_t VulkanContext::GetShadercCompiler()
+{
+    return _compiler;
+};
 
 std::vector<const char*> VulkanContext::getRequiredExtensions()
 {

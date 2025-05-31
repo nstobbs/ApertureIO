@@ -16,5 +16,15 @@ Buffer* Buffer::CreateBuffer(BufferCreateInfo* createInfo)
     }
 };
 
+BufferLayout Buffer::GetBufferLayout()
+{
+    return _layout;
+};
+
+void Buffer::SetBufferLayout(BufferLayout layout)
+{
+    _layout = layout;
+};
+
 }
 

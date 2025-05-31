@@ -208,9 +208,9 @@ VkFramebuffer VulkanFrameBuffer::CreateVkFramebuffer(std::vector<VkImageView> la
     return framebuffer;
 };
 
-void VulkanFrameBuffer::Bind()
+void VulkanFrameBuffer::Bind(RenderContext& renderContext)
 {
-
+    renderContext._TargetFrameBuffer = dynamic_cast<FrameBuffer*>(this);
 };
 
 void VulkanFrameBuffer::Unbind()

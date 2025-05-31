@@ -8,6 +8,7 @@ find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(shaderc REQUIRED)
 find_package(efsw REQUIRED)
+find_package(Boost REQUIRED)
 
 add_executable(ApertureIO ../src/main.cpp
 
@@ -42,6 +43,9 @@ add_executable(ApertureIO ../src/main.cpp
                         
                           ../src/Base/Command.hpp
 
+                          ../src/Base/RenderContext.hpp
+                          ../src/Base/RenderContext.cpp
+
                           ../src/Vulkan/VulkanCommon.hpp
                           ../src/Vulkan/VulkanCommon.cpp
 
@@ -67,4 +71,5 @@ add_executable(ApertureIO ../src/main.cpp
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
                           ../deps/vk-bootstrap/src/VkBootstrapDispatch.h
                           ../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h)
-target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm shaderc::shaderc efsw::efsw)
+                          
+target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm shaderc::shaderc efsw::efsw boost::boost)

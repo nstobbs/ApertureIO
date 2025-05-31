@@ -5,7 +5,7 @@
 
 namespace Aio {
     
-Shader* CreateShader(ShaderCreateInfo& createInfo)
+Shader* Shader::CreateShader(ShaderCreateInfo& createInfo)
 {
     auto API =  createInfo.pContext->getRendererAPI();
     switch (API)
@@ -51,7 +51,7 @@ void ShaderListener::handleFileAction( efsw::WatchID watchid, const std::string&
                 case efsw::Action::Modified:
                     Logger::LogInfo("ShaderListener: " + filename + " Was Modified..");
                     shader->rebuildShader();
-                    Logger::LogInfo("ShaderListener: Rebuilding Shader " + shader->GetName() + "\n");
+                    Logger::LogWarn("ShaderListener: Rebuilding Shader " + shader->GetName() + "\n");
                     break;
 
                 case efsw::Action::Moved:

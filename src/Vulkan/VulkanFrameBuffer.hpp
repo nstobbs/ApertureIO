@@ -2,6 +2,7 @@
 #define H_VULAKNFRAMEBUFFER
 
 #include "../Base/FrameBuffer.hpp"
+#include "../Base/RenderContext.hpp"
 #include "../Base/Context.hpp"
 #include "../Base/Device.hpp"
 
@@ -10,6 +11,10 @@
 
 namespace Aio {
 
+/* TODO: Worth looking into dynamic rendering and might remove the need for render passes
+ https://docs.vulkan.org/samples/latest/samples/extensions/dynamic_rendering/README.html
+ instead of having to create render passes we can instead just point to the image attachment
+ and just render to that instead.*/
 class VulkanFrameBuffer : public FrameBuffer
 {
     public:
@@ -18,10 +23,12 @@ class VulkanFrameBuffer : public FrameBuffer
 
     bool init() override;
 
-    void Bind() override;
+    void Bind(RenderContext& renderContext) override;
     void Unbind() override;
 
     private:
+
+    friend VulkanShader;
     /* Private Functions */
     VkRenderPass CreateVkRenderPass();
 
