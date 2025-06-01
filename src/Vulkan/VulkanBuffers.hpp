@@ -25,6 +25,8 @@ class VulkanBuffer : public Buffer
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
 
+    VkBuffer GetBuffer();
+
     private:
     VulkanDevice* _pDevice;
 

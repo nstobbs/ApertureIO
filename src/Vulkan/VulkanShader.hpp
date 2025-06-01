@@ -28,6 +28,11 @@ class VulkanShader : public Shader
 
     void SetVec4(std::string name, glm::vec4 value) override;
 
+    VkViewport GetViewport();
+    VkRect2D GetScissor();
+    VkPipeline GetPipeline();
+    VkPipelineLayout GetPipelineLayout();
+
     private:
 
     // Shader Components

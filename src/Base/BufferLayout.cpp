@@ -24,7 +24,7 @@ size_t BufferLayout::calculateStride()
                 stride += sizeof(float) * element.count;
                 break;
             case Int:
-                stride += sizeof(int) * element.count;
+                stride += sizeof(uint32_t) * element.count;
                 break;
             case Bool:
                 stride += sizeof(bool) * element.count;

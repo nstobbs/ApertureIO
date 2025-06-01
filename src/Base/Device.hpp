@@ -2,6 +2,12 @@
 #define H_DEVICE
 
 #include "Context.hpp"
+#include "Command.hpp"
+
+//TODO: dont know why this fixs issue with command 
+namespace Aio {
+class Command;
+}
 
 namespace Aio {
 

@@ -10,6 +10,11 @@
 #include "FrameBuffer.hpp"
 #include "Shader.hpp"
 
+namespace Aio {
+    class Buffer;
+    class Shader;
+    class FrameBuffer;
+}
 
 /* singleton object that store the currently Bound objects
 to be used for rendering the current object. */
@@ -22,21 +27,16 @@ class RenderContext
 
     Device* _Device;
     Context* _Context;
-
-    Command* _Command;
-
+    
     Buffer* _VertexBuffer;
     Buffer* _IndexBuffer;
     Buffer* _StorageBuffer;
-
     Shader* _Shader;
-
     FrameBuffer* _TargetFrameBuffer;
 
-
     private:
-    
-
+    bool _valid = {false};
+    size_t _hash;
 };
 
 };

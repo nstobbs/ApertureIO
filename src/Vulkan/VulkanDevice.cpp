@@ -95,6 +95,7 @@ bool VulkanDevice::init()
     VkCommandPoolCreateInfo commandPoolInfo{};
     commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     commandPoolInfo.queueFamilyIndex = _device.get_queue_index(vkb::QueueType::graphics).value();
+    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     VK_ASSERT(vkCreateCommandPool(GetVkDevice(), &commandPoolInfo, nullptr, &_commandPool), VK_SUCCESS, "Create Graphics Command Pool");
 
     /* Create Descriptor Pool */
@@ -126,6 +127,42 @@ bool VulkanDevice::init()
     VK_ASSERT(vkCreateDescriptorPool(GetVkDevice(), &descriptorPoolCreateInfo, nullptr,&_descriptorPool), VK_SUCCESS, "Create Descriptor Pool");
     
     createAndAllocateBindlessResources();
+
+    // TODO: should sync objects be part of the device?
+    // create sync objects
+    Context* context = dynamic_cast<Context*>(_pVulkanContext);
+    uint32_t inFlight = context->getMaxFramesInFlight();
+    // image available
+    // render finished
+    // 0 1 is image available
+    // 2 3 is render finshed  
+    //TODO: come back and handle this better.
+    VkSemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    _semaphores.resize(inFlight * 2);
+
+    // in flight  
+    VkFenceCreateInfo fenceCreateInfo{};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    _fences.resize(inFlight);
+
+    for (int i = 0; i < inFlight; i++)
+    {
+        VK_ASSERT(vkCreateSemaphore(GetVkDevice(), &semaphoreCreateInfo, nullptr, &_semaphores[i]), VK_SUCCESS, "Create Semaphores");
+        VK_ASSERT(vkCreateSemaphore(GetVkDevice(), &semaphoreCreateInfo, nullptr, &_semaphores[i + inFlight]), VK_SUCCESS, "Create Semaphores");
+        VK_ASSERT(vkCreateFence(GetVkDevice(), &fenceCreateInfo, nullptr, &_fences[i]), VK_SUCCESS, "Create Fences");
+    };
+
+    // create commands buffers per frame.
+    _commandBuffers.resize(inFlight);
+    VkCommandBufferAllocateInfo allocateInfo{};
+    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocateInfo.commandPool = _commandPool;
+    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocateInfo.commandBufferCount = inFlight;
+    VK_ASSERT(vkAllocateCommandBuffers(GetVkDevice(), &allocateInfo, _commandBuffers.data()), VK_SUCCESS, "Create Command Buffers");
+    
     return true;
 };
 
@@ -227,5 +264,27 @@ VkQueue VulkanDevice::GetGraphicVkQueue()
     }
     return result.value();
 };
+
+VkSemaphore VulkanDevice::GetImageAvailableSemaphore(uint32_t currentFrame)
+{
+    return _semaphores[currentFrame];
+};
+
+VkSemaphore VulkanDevice::GetRenderFinshedSemaphore(uint32_t currentFrame)
+{
+    auto maxInflight = dynamic_cast<Context*>(_pVulkanContext)->getMaxFramesInFlight();
+    return _semaphores[currentFrame + maxInflight];
+};
+
+VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)
+{
+    return _fences[currentFrame];
+};
+
+VkCommandBuffer VulkanDevice::GetCommandBuffer(uint32_t currentFrame)
+{
+    return _commandBuffers[currentFrame];
+};
+
 
 }

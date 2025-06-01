@@ -13,5 +13,6 @@
 #include "Base/Buffers.hpp"
 #include "Base/BufferLayout.hpp"
 #include "Base/Shader.hpp"
+#include "Base/Command.hpp"
 
 #endif

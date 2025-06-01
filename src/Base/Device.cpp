@@ -9,7 +9,7 @@ namespace Aio {
     {
         case eVulkan:
             VulkanDevice* device = new VulkanDevice(context);
-            dynamic_cast<Device*>(device)->pCommand = Command::CreateCommand(device, context);
+            dynamic_cast<Device*>(device)->pCommand = Command::CreateCommand(context, dynamic_cast<Device*>(device));
             return device;
     }
  };

@@ -3,13 +3,13 @@
 
 namespace Aio {
 
-Command* Command::CreateCommand(Context* context)
+Command* Command::CreateCommand(Context* context, Device* device)
 {
     auto API = context->getRendererAPI();
     switch (API)
     {
         case eVulkan:
-            return new VulkanCommand(context);
+            return new VulkanCommand(context, device);
     };
 };
 

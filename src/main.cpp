@@ -80,7 +80,7 @@ int main()
     Aio::BufferLayout indexLayout;
     indexLayout.AddBufferElement(indexElement);
 
-    std::vector<int> indices;
+    std::vector<uint32_t> indices;
     indices.push_back(0);
     indices.push_back(1);
     indices.push_back(2);
@@ -114,12 +114,12 @@ int main()
     solidColourShader->Bind(rContext);
 
     // Main Loop Stuff Happens Here!
+    Aio::Logger::LogInfo("Running!");
     while(!glfwWindowShouldClose(Window.getWindowPtr()))
     {
         /* Start*/
-        Aio::Logger::LogInfo("Running");
-        GPU->pCommand->Clear(rContext);
         GPU->pCommand->Draw(rContext);
+        context->nextFrame();
         /* End */
     };
 

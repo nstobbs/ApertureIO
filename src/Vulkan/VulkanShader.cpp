@@ -361,4 +361,24 @@ VkShaderModule VulkanShader::createShaderModule(std::vector<uint32_t>& code)
     return shaderModule;
 };
 
+VkViewport VulkanShader::GetViewport()
+{
+    return _viewport;
+};
+
+VkRect2D VulkanShader::GetScissor()
+{
+    return _scissor;
+};
+
+VkPipeline VulkanShader::GetPipeline()
+{
+    return _pipeline;
+};
+
+VkPipelineLayout VulkanShader::GetPipelineLayout()
+{
+    return _layout;
+};
+
 };

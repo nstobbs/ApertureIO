@@ -218,4 +218,24 @@ void VulkanFrameBuffer::Unbind()
 
 };
 
+VkSwapchainKHR VulkanFrameBuffer::GetSwapChain()
+{
+    return _swapchain;
+};
+
+VkRenderPass VulkanFrameBuffer::GetRenderPass()
+{
+    return _renderPass;
+};
+
+VkExtent2D VulkanFrameBuffer::GetExtent()
+{
+    return _extent;
+};
+
+VkFramebuffer VulkanFrameBuffer::GetIndexFramebuffer(uint32_t imageIndex)
+{
+    return _framebuffers[imageIndex];
+};
+
 } // End Aio namespace

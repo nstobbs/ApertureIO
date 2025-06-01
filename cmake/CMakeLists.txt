@@ -42,6 +42,7 @@ add_executable(ApertureIO ../src/main.cpp
                           ../src/Base/Shader.cpp
                         
                           ../src/Base/Command.hpp
+                          ../src/Base/Command.cpp
 
                           ../src/Base/RenderContext.hpp
                           ../src/Base/RenderContext.cpp
@@ -71,5 +72,5 @@ add_executable(ApertureIO ../src/main.cpp
                           ../deps/vk-bootstrap/src/VkBootstrap.cpp
                           ../deps/vk-bootstrap/src/VkBootstrapDispatch.h
                           ../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h)
-                          
+
 target_link_libraries(ApertureIO PRIVATE volk::volk glfw glm::glm shaderc::shaderc efsw::efsw boost::boost)

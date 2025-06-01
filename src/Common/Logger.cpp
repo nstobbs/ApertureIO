@@ -4,7 +4,7 @@ namespace Aio {
 
 void Logger::LogError(std::string text)
 { 
-    std::cout << "[Log] ";
+    std::cout << "[Aio::Logger] ";
     setPrintColour(31);
     std::cout << "Error: ";
     resetPrintColour();
@@ -13,7 +13,7 @@ void Logger::LogError(std::string text)
 
 void Logger::LogWarn(std::string text)
 {
-    std::cout << "[Log] ";
+    std::cout << "[Aio::Logger] ";
     setPrintColour(33);
     std::cout << "Warning: ";
     resetPrintColour();
@@ -22,7 +22,7 @@ void Logger::LogWarn(std::string text)
 
 void Logger::LogInfo(std::string text)
 {
-    std::cout << "[Log] ";
+    std::cout << "[Aio::Logger] ";
     setPrintColour(32);
     std::cout << "Info: ";
     resetPrintColour();

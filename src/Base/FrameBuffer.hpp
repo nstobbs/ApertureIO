@@ -5,7 +5,14 @@
 #include <unordered_map>
 
 #include "Context.hpp"
+#include "RenderContext.hpp"
 #include "Device.hpp"
+
+namespace Aio {
+    class Device;
+    class Context;
+    class RenderContext;
+}
 
 namespace Aio {
 

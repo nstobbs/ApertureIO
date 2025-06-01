@@ -10,6 +10,10 @@
 #include "VulkanDevice.hpp"
 
 namespace Aio {
+    class VulkanShader;
+}
+
+namespace Aio {
 
 /* TODO: Worth looking into dynamic rendering and might remove the need for render passes
  https://docs.vulkan.org/samples/latest/samples/extensions/dynamic_rendering/README.html
@@ -25,6 +29,11 @@ class VulkanFrameBuffer : public FrameBuffer
 
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
+
+    VkSwapchainKHR GetSwapChain();
+    VkRenderPass GetRenderPass();
+    VkExtent2D GetExtent();
+    VkFramebuffer GetIndexFramebuffer(uint32_t imageIndex);
 
     private:
 

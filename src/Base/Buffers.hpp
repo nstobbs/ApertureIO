@@ -4,7 +4,13 @@
 #include <vector>
 #include "Device.hpp"
 #include "Context.hpp"
+#include "RenderContext.hpp"
 #include "BufferLayout.hpp"
+
+namespace Aio {
+    class Device;
+    class RenderContext;
+};
 
 namespace Aio {
 

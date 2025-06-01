@@ -25,6 +25,12 @@ class VulkanDevice : public Device
     VkQueue GetComputeVkQueue();
     VkQueue GetGraphicVkQueue();
 
+    VkSemaphore GetImageAvailableSemaphore(uint32_t currentFrame);
+    VkSemaphore GetRenderFinshedSemaphore(uint32_t currentFrame);
+    VkFence GetInFlightFence(uint32_t currentFrame);
+    VkCommandBuffer GetCommandBuffer(uint32_t currentFrame);
+    
+
     friend class VulkanFrameBuffer;
     friend class VulkanCommand;
 
