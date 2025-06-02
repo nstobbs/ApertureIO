@@ -12,12 +12,13 @@ VulkanDevice::VulkanDevice(Context* context)
 
 bool VulkanDevice::init()
 {   
-    GLFWwindow* window = _pVulkanContext->getActiveWindowPtr()->getWindowPtr();
-    VkInstance instance = _pVulkanContext->GetVkInstance();
-    VkSurfaceKHR surface;
+    GLFWwindow* window = _pVulkanContext->getActiveWindowPtr()->getWindowPtr(); //TODO: this need to be rewritten so different platforms can imp they own!
+    VkInstance instance = _pVulkanContext->GetVkInstance(); 
+    VkSurfaceKHR surface; 
 
     //TODO shouldn't be using platform spec code instead of here.
-    auto result = glfwCreateWindowSurface(instance, window, NULL, &surface);
+    //TODO: this need to be rewritten so different platforms can imp they own!
+    auto result = glfwCreateWindowSurface(instance, window, NULL, &surface); 
     if (result != VK_SUCCESS)
     {
         std::cout << "failed to create VkSurface :(\n";

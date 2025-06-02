@@ -54,6 +54,7 @@ shaderc_compiler_t VulkanContext::GetShadercCompiler()
     return _compiler;
 };
 
+//TODO: this need to be rewritten so different platforms can imp they own!
 std::vector<const char*> VulkanContext::getRequiredExtensions()
 {
     uint32_t glfwExtCount;

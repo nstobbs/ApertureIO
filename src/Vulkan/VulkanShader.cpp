@@ -38,7 +38,7 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             //TODO: Double check shader name vs filepath 
             shaderc_compilation_result_t vertResult = shaderc_compile_into_spv(
                                                     context->GetShadercCompiler(), vertSource.c_str(),
-                                                    fragSource.size(), shaderc_glsl_vertex_shader,
+                                                    vertSource.size(), shaderc_glsl_vertex_shader,
                                                     createInfo.shaderName.c_str(), "main", nullptr);
 
             auto compileStatus = shaderc_result_get_compilation_status(vertResult);
