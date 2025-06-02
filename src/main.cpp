@@ -107,14 +107,16 @@ int main()
     Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
     /* Create an Shader Program to Run */
-    Aio::ShaderCreateInfo SolidColourShaderInfo{};
-    SolidColourShaderInfo.type = Aio::ShaderType::Graphics;
-    SolidColourShaderInfo.pContext = context;
-    SolidColourShaderInfo.pDevice = GPU;
-    SolidColourShaderInfo.shaderName = "Basic Shader";
-    SolidColourShaderInfo.sourceFilepath = "./src/Shaders/Basic.glsl";
+    Aio::ShaderCreateInfo BasicShaderCreateInfo{};
+    BasicShaderCreateInfo.type = Aio::ShaderType::Graphics;
+    BasicShaderCreateInfo.pContext = context;
+    BasicShaderCreateInfo.pDevice = GPU;
+    BasicShaderCreateInfo.shaderName = "Basic Shader";
+    BasicShaderCreateInfo.sourceFilepath = "./src/Shaders/Basic.glsl";
 
-    Aio::Shader* solidColourShader = Aio::Shader::CreateShader(SolidColourShaderInfo);
+    Aio::ShaderManager shaderManager;
+    Aio::Shader* BasicShader = Aio::Shader::CreateShader(BasicShaderCreateInfo);
+    shaderManager.AddShader(BasicShader);
 
     /* Bind all the objects needed to the RenderContext */
     Aio::RenderContext rContext;
@@ -122,13 +124,15 @@ int main()
     vertexbuffer->Bind(rContext);
     indexbuffer->Bind(rContext);
     framebuffer->Bind(rContext);
-    solidColourShader->Bind(rContext);
+    BasicShader->Bind(rContext);
+    rContext.UnpauseRendering();
 
     // Main Loop Stuff Happens Here!
     Aio::Logger::LogInfo("Running!");
     while(!glfwWindowShouldClose(Window.getWindowPtr()))
     {
         /* Start*/
+        glfwPollEvents();
         GPU->pCommand->Draw(rContext);
         context->nextFrame();
         /* End */

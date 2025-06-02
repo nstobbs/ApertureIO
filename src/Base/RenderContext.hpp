@@ -24,6 +24,10 @@ class RenderContext
 {
     public:
     size_t GetHash();
+    
+    bool IsPaused();
+    void PauseRendering();
+    void UnpauseRendering();
 
     Device* _Device;
     Context* _Context;
@@ -35,6 +39,7 @@ class RenderContext
     FrameBuffer* _TargetFrameBuffer;
 
     private:
+    bool _paused = {false};
     bool _valid = {false};
     size_t _hash;
 };

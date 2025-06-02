@@ -1,7 +1,8 @@
 #include "Shader.hpp"
 #include "../Common/Logger.hpp"
-
 #include "../Vulkan/VulkanShader.hpp"
+
+#include <thread>
 
 namespace Aio {
     
@@ -11,7 +12,10 @@ Shader* Shader::CreateShader(ShaderCreateInfo& createInfo)
     switch (API)
     {
         case eVulkan:
-            return new VulkanShader(createInfo);
+            Shader* shader = new VulkanShader(createInfo);
+            shader->_sourceFilepath = createInfo.sourceFilepath;
+            shader->_name = createInfo.shaderName;
+            return shader;
     }
 };
 
@@ -26,48 +30,81 @@ std::string& Shader::GetName()
 };
 
 //////////////////////////////////////////////
-/// ShaderWatcher - Hot-Reloading Shaders ///
+/// ShaderListener - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
 
-ShaderWatcher::ShaderWatcher()
+ShaderListener* ShaderListener::CreateShaderListener(ShaderManager* manager)
 {
-    // Start Watcher Thread.?!?.
-    _fileWatcher.watch();
+    ShaderListener* listener = new ShaderListener;
+    listener->_pManager = manager;
+    return listener;
 };
 
-/* TODO: need to rethink how I want to handle the listening and watch of shaders.
-Any shader that a part of the shaderLibary should be watched.
-Whenever the Watched Shader Source Files */
 void ShaderListener::handleFileAction( efsw::WatchID watchid, const std::string& dir,
 								   const std::string& filename, efsw::Action action,
 								   std::string oldFilename)
 {
-    for(auto shader : _pShaders)
-    {   
-        if (filename != shader->GetSourceFilePath())
+    for (auto& s : _pManager->_shaders)
+    {
+        auto shader = s.second;
+        auto shaderSourcePath = shader->GetSourceFilePath(); 
+        auto pos = shaderSourcePath.find_last_of("/");
+
+        std::string shaderFilename = shaderSourcePath.substr(pos + 1);
+
+        if (filename == shaderFilename && action == efsw::Action::Modified)
         {
-            switch(action)
-            {
-                case efsw::Action::Modified:
-                    Logger::LogInfo("ShaderListener: " + filename + " Was Modified..");
-                    shader->rebuildShader();
-                    Logger::LogWarn("ShaderListener: Rebuilding Shader " + shader->GetName() + "\n");
-                    break;
+            auto msg = "ShaderListener: Shader SourceFile: " + filename + " was modified.";
+            Logger::LogWarn(msg);
+            shader->rebuildShader();
+        }        
+    }
+};
 
-                case efsw::Action::Moved:
-                    Logger::LogInfo("ShaderListener: " + filename + " Was Moved..");
-                    break;
-                
-                case efsw::Action::Add:
-                    Logger::LogInfo("ShaderListener: " + filename + " Was Added..");
-                    break;
+//////////////////////////////////////////////
+/// ShaderManager - Hot-Reloading Shaders ///
+/////////////////////////////////////////////
 
-                case efsw::Action::Delete:
-                    Logger::LogInfo("ShaderListener: " + filename + " Was Deleted..");
-                    break;
-            };
-        };
-    };
+ShaderManager::ShaderManager()
+{
+    _pFileWatcher = new efsw::FileWatcher;
+    _pShaderListener = ShaderListener::CreateShaderListener(this);
+
+    _pFileWatcher->watch();
+};
+
+Shader* ShaderManager::GetShader(std::string& name)
+{
+    return _shaders.at(name);
+};
+
+void ShaderManager::AddShader(Shader* shader)
+{
+    std::string name = shader->GetName();
+    _shaders.emplace(name, shader);
+
+    efsw::WatchID id = _pFileWatcher->addWatch(shader->GetSourceFilePath(), _pShaderListener, false);
+    efsw::WatchID id2 = _pFileWatcher->addWatch("./src/Shaders/", _pShaderListener, false);
+    auto msg = "ShaderManager: Started Watching - " + shader->GetSourceFilePath();
+    Logger::LogInfo(msg);
+};
+
+void ShaderManager::CreateShader(ShaderCreateInfo& createInfo)
+{
+    Shader* shader = Shader::CreateShader(createInfo);
+    std::string name = shader->GetName();
+    _shaders.emplace(name, shader);
+
+    efsw::WatchID id = _pFileWatcher->addWatch(shader->GetSourceFilePath(), _pShaderListener, false);
+    auto msg = "ShaderManager: Started Watching - " + shader->GetSourceFilePath();
+    Logger::LogInfo(msg);
+};
+
+void ShaderManager::DestroyShader(std::string& name)
+{
+    // remove from watch list
+
+    // destroy shader
 };
 
 };

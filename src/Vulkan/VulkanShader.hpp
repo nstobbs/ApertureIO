@@ -8,6 +8,8 @@
 #include "../Base/RenderContext.hpp"
 #include "../Base/Shader.hpp"
 
+#include "../Common/FileIO.hpp"
+
 #include <vector>
 
 namespace Aio {
@@ -24,8 +26,6 @@ class VulkanShader : public Shader
 
     void rebuildShader() override; //TODO: Needs the RenderContext
 
-    void createPipeline(RenderContext& renderContext);
-
     void SetVec4(std::string name, glm::vec4 value) override;
 
     VkViewport GetViewport();
@@ -34,6 +34,7 @@ class VulkanShader : public Shader
     VkPipelineLayout GetPipelineLayout();
 
     private:
+    ShaderType _type;
 
     // Shader Components
     VkViewport _viewport;
@@ -63,8 +64,15 @@ class VulkanShader : public Shader
     VkPipelineLayout _layout;
 
     VulkanDevice* _pDevice;
+    VulkanContext* _pContext;
 
+    VkPipeline createPipeline(RenderContext& renderContext);
     VkShaderModule createShaderModule(std::vector<uint32_t>& code);
+    std::vector<uint32_t> compileShaderSource(std::string& code, SourceFileType type);
+
+    //TODO: if we can have an vector of RenderContexts then doesnt that mean we should have an vector of VkPipeline for each different RenderContext???
+    RenderContext* _bound; // I don't really like this idea. But seems needed for hot-reloading...
+    bool _alreadyRebuilding = {false};
 
     size_t _previousHash;
 };

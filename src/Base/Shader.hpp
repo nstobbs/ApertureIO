@@ -49,49 +49,44 @@ class Shader
     std::vector<std::string> _uniformBufferNames;
 };
 
-class ShaderManager
-{
-    public:
-    Shader* GetShader(std::string& name);
-
-    void AddShader(Shader* shader, std::string& name);
-    void CreateShader(ShaderCreateInfo& createInfo);
-
-    void DestroyShader(std::string& name);
-    
-    private:
-    std::unordered_map<std::string, Shader*> _shaders;
-};
-
-
 /* TODO: Hot-Loading Notes, the shaderLibaray will be watching the source files for any chanages to the files.
 Once we get an event back that one of the shader source files have changed. Then we start the rebuild shader
 process. The Listening and Creations of New Shaders should happen on new threads.*/
 
+class ShaderManager;
+
 class ShaderListener : public efsw::FileWatchListener
 {   
     public:
+    static ShaderListener* CreateShaderListener(ShaderManager* manager);
     void handleFileAction( efsw::WatchID watchid, const std::string& dir,
 								   const std::string& filename, efsw::Action action,
-								   std::string oldFilename = "" ) override;
-    
-    std::vector<Shader*> _pShaders;
+								   std::string oldFilename) override;
+    private:
+    ShaderManager* _pManager;
 };
 
-class ShaderWatcher
+//////////////////////////////////////////////
+/// ShaderManager - Hot-Reloading Shaders ///
+/////////////////////////////////////////////
+
+class ShaderManager
 {
     public:
-    ShaderWatcher();
-    void AddToWatchList(Shader* shader);
-    void RemoveFromWatchList(Shader* shader);
+    ShaderManager();
 
+    Shader* GetShader(std::string& name);
+    void AddShader(Shader* shader);
+    void CreateShader(ShaderCreateInfo& createInfo);
+    void DestroyShader(std::string& name);
+    
     private:
-    std::vector<Shader*> _pShaders;
-    efsw::FileWatcher _fileWatcher;
-    ShaderListener _Listener;
+    std::unordered_map<std::string, Shader*> _shaders;
+    
+    efsw::FileWatcher* _pFileWatcher;
+    ShaderListener* _pShaderListener;
 
     friend class ShaderListener;
-
 };
 
 }; // End of Aio Namespace 

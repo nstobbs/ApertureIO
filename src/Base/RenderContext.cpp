@@ -13,12 +13,27 @@ size_t RenderContext::GetHash()
         boost::hash_combine(seed, _StorageBuffer);
         boost::hash_combine(seed, _TargetFrameBuffer);
         boost::hash_combine(seed, _Shader);
-        
+
         _valid = true;
         return seed;
     };
     
     return _hash;
+};
+
+void RenderContext::PauseRendering()
+{
+    _paused = true;
+};
+
+void RenderContext::UnpauseRendering()
+{
+    _paused = false;
+};
+
+bool RenderContext::IsPaused()
+{
+    return _paused;
 };
 
 };

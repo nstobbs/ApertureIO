@@ -3,17 +3,17 @@
 #include "VulkanFrameBuffer.hpp"
 
 #include "../Common/Logger.hpp"
-#include "../Common/FileIO.hpp"
 
 namespace Aio {
 
 VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
 {
-    ShaderType currentType = createInfo.type;
+    _type = createInfo.type;
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
+    _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
     auto bindlessLayout = _pDevice->GetBindlessLayout();
     
-    switch(currentType)
+    switch(_type)
     {   
         /* Create a Pipeline Layout.*/
         case ShaderType::Graphics:
@@ -30,68 +30,27 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             /* Read Shader Source Code */
             auto sourceCode = FileIO::ReadSourceFile(createInfo.sourceFilepath);
             auto vertSource = FileIO::SplitOutShader(sourceCode, SourceFileType::VertexShader);
-            auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader); 
+            auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader);
 
             /* Compile the Shader Source Code */
-            VulkanContext* context = dynamic_cast<VulkanContext*>(createInfo.pContext);
+            auto vertCompiledCode = compileShaderSource(vertSource, SourceFileType::VertexShader);
 
-            //TODO: Double check shader name vs filepath 
-            shaderc_compilation_result_t vertResult = shaderc_compile_into_spv(
-                                                    context->GetShadercCompiler(), vertSource.c_str(),
-                                                    vertSource.size(), shaderc_glsl_vertex_shader,
-                                                    createInfo.shaderName.c_str(), "main", nullptr);
-
-            auto compileStatus = shaderc_result_get_compilation_status(vertResult);
-            if (compileStatus != shaderc_compilation_status_success)
-            {
-                Logger::LogError("Failed to Compile Vertex Shader Source Code!");
-                Logger::LogError(shaderc_result_get_error_message(vertResult));
-                throw std::runtime_error("Failed to Compile Shader");
-            }
-
-            auto vertSize = shaderc_result_get_length(vertResult);
-            auto vertPointer = shaderc_result_get_bytes(vertResult);
-            
-            //TODO: Badly managed memory here
-            std::vector<uint32_t> vertCompiled((vertSize)); //TDO: this seems like it would be way to big but doesnt error?!
-            memcpy(vertCompiled.data(), vertPointer, vertSize);
-            shaderc_result_release(vertResult);
-
-            _vertModule = createShaderModule(vertCompiled);
+            _vertModule = createShaderModule(vertCompiledCode);
             VkPipelineShaderStageCreateInfo vertCreateInfo{};
             vertCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             vertCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
             vertCreateInfo.module = _vertModule;
             vertCreateInfo.pName = "main";
 
-            shaderc_compilation_result_t fragResult = shaderc_compile_into_spv(
-                                                    context->GetShadercCompiler(), fragSource.c_str(),
-                                                    fragSource.size(), shaderc_glsl_fragment_shader,
-                                                    createInfo.shaderName.c_str(), "main", nullptr);
-            compileStatus = shaderc_result_get_compilation_status(fragResult);
-            if (compileStatus != shaderc_compilation_status_success)
-            {
-                Logger::LogError("Failed to Compile Fragment Shader Source Code!");
-                Logger::LogError(shaderc_result_get_error_message(fragResult));
-                throw std::runtime_error("Failed to Compile Shader");
-            };
+            auto fragCompiledCode = compileShaderSource(fragSource, SourceFileType::FragmentShader);
 
-            auto fragSize = shaderc_result_get_length(fragResult);
-            auto fragPointer = shaderc_result_get_bytes(fragResult);
-
-            //TODO: Badly managed memory here
-            std::vector<uint32_t> fragCompiled((fragSize));
-            memcpy(fragCompiled.data(), fragPointer, fragSize);
-            shaderc_result_release(fragResult);
-
-            _fragModule = createShaderModule(fragCompiled);
+            _fragModule = createShaderModule(fragCompiledCode);
             VkPipelineShaderStageCreateInfo fragCreateInfo{};
             fragCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             fragCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             fragCreateInfo.module = _fragModule;
             fragCreateInfo.pName = "main";
             
-
             _shaderStages.push_back(vertCreateInfo);
             _shaderStages.push_back(fragCreateInfo);
 
@@ -200,7 +159,7 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
     };
 };
 
-void VulkanShader::createPipeline(RenderContext& renderContext)
+VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
 {   
     /* TODO: with better hashing, we could use that to id what areas
     of the shader needs rebuilding. E.g. if only the framebuffer
@@ -317,14 +276,83 @@ void VulkanShader::createPipeline(RenderContext& renderContext)
         _viewport.width = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_extent.width;
         _scissor.extent = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_extent;
 
-        auto result = vkCreateGraphicsPipelines(_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &_pipelineInfo, nullptr, &_pipeline);
+        VkPipeline pipeline;
+        auto result = vkCreateGraphicsPipelines(_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &_pipelineInfo, nullptr, &pipeline);
         VK_ASSERT(result, VK_SUCCESS, "Create Graphics Pipeline");
+        return pipeline;
     }
 };
 
 void VulkanShader::rebuildShader()
-{
+{   
+    if(!_alreadyRebuilding)
+    {
+        auto msg = "Rebuilding Shader: " + GetName();
+        _alreadyRebuilding = true;
+        _bound->PauseRendering();
+        vkDeviceWaitIdle(_pDevice->GetVkDevice());
 
+        Logger::LogWarn(msg);
+        switch (_type)
+        {
+            case ShaderType::Graphics:
+            // Read Shader Source File
+            //TODO: Double check if we are safe to call GetSourceFilePath().
+            auto sourceCode = FileIO::ReadSourceFile(GetSourceFilePath());
+            auto vertSource = FileIO::SplitOutShader(sourceCode, SourceFileType::VertexShader);
+            auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader);
+        
+            // ReCompile Source Code.
+            auto compiledVertCode = compileShaderSource(vertSource, SourceFileType::VertexShader);
+            auto compiledFragCode = compileShaderSource(fragSource, SourceFileType::FragmentShader);
+        
+            // Destroy Old ShaderModule 
+            vkDestroyShaderModule(_pDevice->GetVkDevice(), _vertModule, nullptr);
+            vkDestroyShaderModule(_pDevice->GetVkDevice(), _fragModule, nullptr);
+
+            // Create a ShaderModule
+            _vertModule = createShaderModule(compiledVertCode);
+            _fragModule = createShaderModule(compiledFragCode);
+
+            // Update VkPipelineShaderStageCreateInfo
+            VkPipelineShaderStageCreateInfo vertCreateInfo{};
+            vertCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            vertCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+            vertCreateInfo.module = _vertModule;
+            vertCreateInfo.pName = "main";
+
+            VkPipelineShaderStageCreateInfo fragCreateInfo{};
+            fragCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            fragCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            fragCreateInfo.module = _fragModule;
+            fragCreateInfo.pName = "main";
+
+            // Update _shaderStages
+            _shaderStages.clear();
+            _shaderStages.push_back(vertCreateInfo);
+            _shaderStages.push_back(fragCreateInfo);
+
+            // Run CreatePipeline and Create an New* Pipeline
+            //TODO: temp workaround for recreating pipline. Needs to think more about the renderContext object.
+            VkPipeline freshPipeline;
+            if(_bound)
+            {
+                RenderContext& rContext = *_bound;
+                freshPipeline = createPipeline(rContext);
+            }
+
+            // Pause Rendering and Wait for the Device
+            vkDestroyPipeline(_pDevice->GetVkDevice(), _pipeline, nullptr);
+
+            _pipeline = freshPipeline;
+            _bound->UnpauseRendering();
+            _alreadyRebuilding = false;
+            break;
+            // Switch to the New Pipeline
+
+            // Destroy the Old Pipeline
+        }
+    };
 };
 
 VulkanShader::~VulkanShader()
@@ -338,7 +366,8 @@ void VulkanShader::Bind(RenderContext& renderContext)
     // time of the renderContext cycle instead of happening
     // at bind time. 
     renderContext._Shader = dynamic_cast<Shader*>(this);
-    createPipeline(renderContext);
+    _pipeline = createPipeline(renderContext);
+    _bound = &renderContext;
 };
 
 void VulkanShader::Unbind()
@@ -361,6 +390,49 @@ VkShaderModule VulkanShader::createShaderModule(std::vector<uint32_t>& code)
     VkShaderModule shaderModule;
     VK_ASSERT(vkCreateShaderModule(_pDevice->GetVkDevice(), &createInfo, nullptr, &shaderModule), VK_SUCCESS, "Create Shader Module");
     return shaderModule;
+};
+
+std::vector<uint32_t> VulkanShader::compileShaderSource(std::string& code, SourceFileType type)
+{
+    shaderc_shader_kind shadercType;
+    switch(type)
+    {
+        case SourceFileType::VertexShader:
+            shadercType = shaderc_glsl_vertex_shader;
+            break;
+
+        case SourceFileType::FragmentShader:
+            shadercType = shaderc_glsl_fragment_shader;
+            break;
+        
+        case SourceFileType::ComputeShader:
+            shadercType = shaderc_glsl_compute_shader;
+            break;
+    }
+    
+    //TODO: Double check GetName.
+    shaderc_compilation_result_t result = shaderc_compile_into_spv(
+                                            _pContext->GetShadercCompiler(), code.c_str(),
+                                            code.size(), shadercType,
+                                            GetName().c_str(), "main", nullptr);
+
+    auto compileStatus = shaderc_result_get_compilation_status(result);
+    if (compileStatus != shaderc_compilation_status_success)
+    {
+        auto msg = "Failed to Compile: " + GetName();
+        Logger::LogError(msg);
+        Logger::LogError(shaderc_result_get_error_message(result));
+        throw std::runtime_error("");
+    }
+
+    auto compiledCodeSize = shaderc_result_get_length(result);
+    auto compiledCodePointer = shaderc_result_get_bytes(result);
+    
+    //TODO: this seems like it would be way to big???
+    std::vector<uint32_t> compiledCode(compiledCodeSize); 
+    memcpy(compiledCode.data(), compiledCodePointer, compiledCodeSize);
+    shaderc_result_release(result);
+    return compiledCode;
 };
 
 VkViewport VulkanShader::GetViewport()
