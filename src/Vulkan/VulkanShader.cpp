@@ -46,6 +46,7 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             {
                 Logger::LogError("Failed to Compile Vertex Shader Source Code!");
                 Logger::LogError(shaderc_result_get_error_message(vertResult));
+                throw std::runtime_error("Failed to Compile Shader");
             }
 
             auto vertSize = shaderc_result_get_length(vertResult);
@@ -72,6 +73,7 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             {
                 Logger::LogError("Failed to Compile Fragment Shader Source Code!");
                 Logger::LogError(shaderc_result_get_error_message(fragResult));
+                throw std::runtime_error("Failed to Compile Shader");
             };
 
             auto fragSize = shaderc_result_get_length(fragResult);

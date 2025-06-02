@@ -53,13 +53,24 @@ int main()
     positionElement.type = Aio::Float;
     positionElement.normalized = false;
 
+    Aio::BufferElement colourElement{};
+    colourElement.count = 3;
+    colourElement.type = Aio::Float;
+    colourElement.normalized = false;
+
     Aio::BufferLayout vertexLayout;
     vertexLayout.AddBufferElement(positionElement);
+    vertexLayout.AddBufferElement(colourElement);
     
     std::vector<glm::vec3> vertices;
-    vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-    vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-    vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+    vertices.push_back(glm::vec3(0.0f, -0.5f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // ColourElement
+
+    vertices.push_back(glm::vec3(-0.5f, 0.5f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // ColourElement
+    
+    vertices.push_back(glm::vec3(0.5f, 0.5f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f)); // ColourElement
 
     Aio::BufferCreateInfo bufferInfo{};
     bufferInfo.type = Aio::BufferType::Vertex;
@@ -100,8 +111,8 @@ int main()
     SolidColourShaderInfo.type = Aio::ShaderType::Graphics;
     SolidColourShaderInfo.pContext = context;
     SolidColourShaderInfo.pDevice = GPU;
-    SolidColourShaderInfo.shaderName = "SolidColour";
-    SolidColourShaderInfo.sourceFilepath = "./src/Shaders/SolidColour.glsl";
+    SolidColourShaderInfo.shaderName = "Basic Shader";
+    SolidColourShaderInfo.sourceFilepath = "./src/Shaders/Basic.glsl";
 
     Aio::Shader* solidColourShader = Aio::Shader::CreateShader(SolidColourShaderInfo);
 
