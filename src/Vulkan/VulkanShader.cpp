@@ -281,6 +281,8 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
         VK_ASSERT(result, VK_SUCCESS, "Create Graphics Pipeline");
         return pipeline;
     }
+
+    return VK_NULL_HANDLE;
 };
 
 void VulkanShader::rebuildShader()
@@ -288,11 +290,12 @@ void VulkanShader::rebuildShader()
     if(!_alreadyRebuilding)
     {
         auto msg = "Rebuilding Shader: " + GetName();
+        Logger::LogWarn(msg);
+
         _alreadyRebuilding = true;
         _bound->PauseRendering();
-        vkDeviceWaitIdle(_pDevice->GetVkDevice());
-
-        Logger::LogWarn(msg);
+        VK_ASSERT(vkDeviceWaitIdle(_pDevice->GetVkDevice()), VK_SUCCESS, "Wait for Device to Idle.");
+        
         switch (_type)
         {
             case ShaderType::Graphics:
@@ -338,19 +341,19 @@ void VulkanShader::rebuildShader()
             if(_bound)
             {
                 RenderContext& rContext = *_bound;
+                _previousHash = NULL; // FORCES A Rebuild of the pipeline cause of the hashes
                 freshPipeline = createPipeline(rContext);
             }
 
-            // Pause Rendering and Wait for the Device
-            vkDestroyPipeline(_pDevice->GetVkDevice(), _pipeline, nullptr);
+            if (freshPipeline != VK_NULL_HANDLE)
+            {
+                vkDestroyPipeline(_pDevice->GetVkDevice(), _pipeline, nullptr);
+                _pipeline = freshPipeline;
+            }
 
-            _pipeline = freshPipeline;
             _bound->UnpauseRendering();
             _alreadyRebuilding = false;
             break;
-            // Switch to the New Pipeline
-
-            // Destroy the Old Pipeline
         }
     };
 };

@@ -88,103 +88,102 @@ void VulkanCommand::StartCommand(RenderContext& renderContext)
 
 void VulkanCommand::Draw(RenderContext& renderContext)
 {   
-    if (!renderContext.IsPaused())
-    {
-        //TODO: Break this function down to more smaller ones
-        uint32_t currentFrame = _pContext->getCurrentFrame();
-        VkDevice device = _pDevice->GetVkDevice();
-        VkCommandBuffer commandBuffer = _pDevice->GetCommandBuffer(currentFrame);
-        VkFence inFlightFence = _pDevice->GetInFlightFence(currentFrame);
-        VulkanFrameBuffer* target = dynamic_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
-        VulkanShader* shader = dynamic_cast<VulkanShader*>(renderContext._Shader);
-        
-        
-        vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    renderContext.IsPaused(); // Pauses Rendering Thread if Required
 
-        uint32_t imageIndex;
-        VK_ASSERT(vkAcquireNextImageKHR(device, target->GetSwapChain(), UINT64_MAX, _pDevice->GetImageAvailableSemaphore(currentFrame), VK_NULL_HANDLE, &imageIndex),
-                                                                                                                                                    VK_SUCCESS, "Acquire Next Image");
-        
-        vkResetFences(device, 1, &inFlightFence);
-        vkResetCommandBuffer(commandBuffer, 0);
+    //TODO: Break this function down to more smaller ones
+    uint32_t currentFrame = _pContext->getCurrentFrame();
+    VkDevice device = _pDevice->GetVkDevice();
+    VkCommandBuffer commandBuffer = _pDevice->GetCommandBuffer(currentFrame);
+    VkFence inFlightFence = _pDevice->GetInFlightFence(currentFrame);
+    VulkanFrameBuffer* target = dynamic_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
+    VulkanShader* shader = dynamic_cast<VulkanShader*>(renderContext._Shader);
+    
+    
+    vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0;
-        beginInfo.pInheritanceInfo = nullptr;
+    uint32_t imageIndex;
+    VK_ASSERT(vkAcquireNextImageKHR(device, target->GetSwapChain(), UINT64_MAX, _pDevice->GetImageAvailableSemaphore(currentFrame), VK_NULL_HANDLE, &imageIndex),
+                                                                                                                                                VK_SUCCESS, "Acquire Next Image");
+    
+    vkResetFences(device, 1, &inFlightFence);
+    vkResetCommandBuffer(commandBuffer, 0);
 
-        VK_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo), VK_SUCCESS, "Begin Command Buffer - VulkanCommand::Draw");
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0;
+    beginInfo.pInheritanceInfo = nullptr;
 
-        
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = target->GetRenderPass();
-        renderPassInfo.framebuffer = target->GetIndexFramebuffer(imageIndex);
-        renderPassInfo.renderArea.offset = {0,0};
-        renderPassInfo.renderArea.extent = target->GetExtent();
+    VK_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo), VK_SUCCESS, "Begin Command Buffer - VulkanCommand::Draw");
 
-        //TODO: Clear Command Shouild be handled in Clear();
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-        clearValues[1].depthStencil = {1.0f, 0};
+    
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = target->GetRenderPass();
+    renderPassInfo.framebuffer = target->GetIndexFramebuffer(imageIndex);
+    renderPassInfo.renderArea.offset = {0,0};
+    renderPassInfo.renderArea.extent = target->GetExtent();
 
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
+    //TODO: Clear Command Shouild be handled in Clear();
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clearValues[1].depthStencil = {1.0f, 0};
 
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
-        VkBuffer vertexBuffers[] = {dynamic_cast<VulkanBuffer*>(renderContext._VertexBuffer)->GetBuffer()};
-        VkDeviceSize offsets[] = {0};
-        VkBuffer indexBuffer = dynamic_cast<VulkanBuffer*>(renderContext._IndexBuffer)->GetBuffer();
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipeline());
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdSetViewport(commandBuffer, 0, 1, &shader->GetViewport());
-        vkCmdSetScissor(commandBuffer, 0, 1, &shader->GetScissor());
+    VkBuffer vertexBuffers[] = {dynamic_cast<VulkanBuffer*>(renderContext._VertexBuffer)->GetBuffer()};
+    VkDeviceSize offsets[] = {0};
+    VkBuffer indexBuffer = dynamic_cast<VulkanBuffer*>(renderContext._IndexBuffer)->GetBuffer();
 
-        VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipeline());
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdSetViewport(commandBuffer, 0, 1, &shader->GetViewport());
+    vkCmdSetScissor(commandBuffer, 0, 1, &shader->GetScissor());
 
-        // DRAW COMMAND!
-        vkCmdDrawIndexed(commandBuffer, 3, 1, 0, 0, 0);
+    VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);
 
-        vkCmdEndRenderPass(commandBuffer);
-        VK_ASSERT(vkEndCommandBuffer(commandBuffer), VK_SUCCESS, "End Command Buffer");
+    // DRAW COMMAND!
+    vkCmdDrawIndexed(commandBuffer, 3, 1, 0, 0, 0);
 
-        // Sumbit and Preset
+    vkCmdEndRenderPass(commandBuffer);
+    VK_ASSERT(vkEndCommandBuffer(commandBuffer), VK_SUCCESS, "End Command Buffer");
 
-        VkSemaphore waitSemaphores[] = {_pDevice->GetImageAvailableSemaphore(currentFrame)};
-        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    // Sumbit and Preset
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores  = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
+    VkSemaphore waitSemaphores[] = {_pDevice->GetImageAvailableSemaphore(currentFrame)};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores  = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
 
-        VkSemaphore finshedSemaphores[] = {_pDevice->GetRenderFinshedSemaphore(currentFrame)};
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = finshedSemaphores;
-        VK_ASSERT(vkQueueSubmit(_pDevice->GetGraphicVkQueue(), 1, &submitInfo, _pDevice->GetInFlightFence(currentFrame)), VK_SUCCESS, "Submit CommandBuffer");
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
 
-        VkPresentInfoKHR presentInfo{};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = finshedSemaphores;
+    VkSemaphore finshedSemaphores[] = {_pDevice->GetRenderFinshedSemaphore(currentFrame)};
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = finshedSemaphores;
+    VK_ASSERT(vkQueueSubmit(_pDevice->GetGraphicVkQueue(), 1, &submitInfo, _pDevice->GetInFlightFence(currentFrame)), VK_SUCCESS, "Submit CommandBuffer");
 
-        VkSwapchainKHR swapChains[] = {target->GetSwapChain()}; 
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &imageIndex;
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = finshedSemaphores;
 
-        presentInfo.pResults = nullptr;
+    VkSwapchainKHR swapChains[] = {target->GetSwapChain()}; 
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
 
-        VK_ASSERT(vkQueuePresentKHR(_pDevice->GetPresentVkQueue(), &presentInfo), VK_SUCCESS, "Submit Present");
-    };
+    presentInfo.pResults = nullptr;
+
+    VK_ASSERT(vkQueuePresentKHR(_pDevice->GetPresentVkQueue(), &presentInfo), VK_SUCCESS, "Submit Present");
 };
 
 }; // End of Aio 

@@ -125,7 +125,6 @@ int main()
     indexbuffer->Bind(rContext);
     framebuffer->Bind(rContext);
     BasicShader->Bind(rContext);
-    rContext.UnpauseRendering();
 
     // Main Loop Stuff Happens Here!
     Aio::Logger::LogInfo("Running!");

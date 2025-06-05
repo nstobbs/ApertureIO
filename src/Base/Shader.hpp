@@ -69,6 +69,8 @@ class ShaderListener : public efsw::FileWatchListener
 //////////////////////////////////////////////
 /// ShaderManager - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
+//TODO: Maybe this class can be more generic so it can be used for other
+// objects like textures, obj, etc...
 
 class ShaderManager
 {
