@@ -106,6 +106,32 @@ int main()
 
     Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
+    /* Uniform Buffer */
+    struct uniformStruct
+    {
+        int a;
+    };
+
+    Aio::BufferElement intElement{};
+    intElement.count = 1;
+    intElement.type = Aio::Int;
+    intElement.normalized = false;
+
+    Aio::BufferLayout uniformLayout;
+    uniformLayout.AddBufferElement(intElement);
+
+    void* pUniformData; // Pointer that we will be copying values too.
+
+    Aio::BufferCreateInfo uniformBufferInfo{};
+    uniformBufferInfo.type = Aio::BufferType::Uniform;
+    uniformBufferInfo.context = context;
+    uniformBufferInfo.device = GPU;
+    uniformBufferInfo.data = nullptr;
+    uniformBufferInfo.layout = uniformLayout;
+    uniformBufferInfo.count = 1;
+
+    //Aio::Buffer* uniformBuffer = Aio::Buffer::CreateBuffer(&uniformBufferInfo);
+
     /* Create an Shader Program to Run */
     Aio::ShaderCreateInfo BasicShaderCreateInfo{};
     BasicShaderCreateInfo.type = Aio::ShaderType::Graphics;

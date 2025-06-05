@@ -211,3 +211,11 @@ RenderContext
 Might need to create an class like RenderContext that stores current information required to draw
 the current object. Most importantly storing what objects are currently bound.
 
+Bindless Layout Stuff.
+For Any Texture or Buffer that isn't a Index of Vertex Buffer.
+Will have an Handle (uint32_t) that can be passed to the 
+command buffer at draw time to access different resources
+from the device. Push Constant have a min size of 128 Bytes.
+Meaning that we should be able to hand to a shader 32 different
+during one draw command. Should be fine for now but might be an
+issue for larger shader...  
