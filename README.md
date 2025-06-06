@@ -3,7 +3,7 @@
 #### What is ApertureIO?
 
 ApertureIO is a C++ abstraction layer over Vulkan. For prototyping and messing around with
-GPU graphic rendering and computation applications. Written in C++.
+GPU rendering and computation for developing graphics based applications.
 
 ### Main Features:
 
