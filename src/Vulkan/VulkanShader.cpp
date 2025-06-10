@@ -383,6 +383,34 @@ void VulkanShader::SetVec4(std::string name, glm::vec4 value)
 
 };
 
+void VulkanShader::SetFloat(std::string name, float value)
+{
+    // Check if this variable exists or not.
+    if (std::find(_uniformBufferNames.begin(), _uniformBufferNames.end(), name) != _uniformBufferNames.end())
+    {
+        // Update the Value of the Uniform Buffer.
+    }
+    else
+    {
+        // Create the Uniform Buffer and Update the Value.
+        _uniformBufferNames.push_back(name);
+
+        BufferElement elementInfo{};
+        elementInfo.count = 1;
+        elementInfo.type = BufferElementType::Float;
+        elementInfo.normalized = false;
+
+        _uniformBufferLayout.AddBufferElement(elementInfo);
+
+        // ReBuild Uniform Buffer with new Layout.
+        // If we can't set new uniform variables after it starts rendering
+        // then we won't need a rebuild uniform buffer.
+        // This whole class could be moved out of here. 
+
+        // Set the Value
+    };
+};
+
 VkShaderModule VulkanShader::createShaderModule(std::vector<uint32_t>& code)
 {
     VkShaderModuleCreateInfo createInfo{};

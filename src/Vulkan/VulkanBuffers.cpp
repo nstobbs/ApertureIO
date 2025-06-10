@@ -68,6 +68,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
         _allocation = allocation;
         vmaMapMemory(_pDevice->GetVmaAllocator(), _allocation, &createInfo->data);
         _pData = createInfo->data;
+        _handle = storeBufferHandle();
    }
 
    dynamic_cast<Buffer*>(this)->SetBufferLayout(createInfo->layout);
@@ -78,10 +79,35 @@ void VulkanBuffer::UploadToDevice(void* data)
     memcpy(_pData, data, static_cast<size_t>(_size));
 };
 
+// TODO: Useble for Uniform Buffers and Storage Buffers
+BufferHandle VulkanBuffer::storeBufferHandle()
+{
+    BufferHandle handle = _pDevice->CreateUniformBufferHandle();
+    
+    // Create the Write Descriptor Set.
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = _buffer;
+    bufferInfo.range = VK_WHOLE_SIZE;
+    bufferInfo.offset = 0;
+
+    VkWriteDescriptorSet writeInfo{};
+    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo.dstSet = _pDevice->GetBindlessDescriptorSet();
+    writeInfo.dstBinding = 0; // UniformBuffers at 0;
+    writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeInfo.descriptorCount = 1;
+    writeInfo.dstArrayElement = handle;
+    writeInfo.pBufferInfo = &bufferInfo;
+    
+    vkUpdateDescriptorSets(_pDevice->GetVkDevice(), 1, &writeInfo, 0, nullptr);
+    return handle;
+};
+
 void VulkanBuffer::rebuildBuffer()
 {
     vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
+
 
 void VulkanBuffer::Bind(RenderContext& renderContext)
 {

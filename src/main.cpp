@@ -106,7 +106,8 @@ int main()
 
     Aio::Buffer* indexbuffer = Aio::Buffer::CreateBuffer(&indexBufferInfo);
 
-    /* Uniform Buffer */
+    /* This is One Way to Handle Uniform Buffers.  
+    For Multiple Shaders with one Buffer Object.*/
     struct uniformStruct
     {
         int a;
@@ -143,6 +144,12 @@ int main()
     Aio::ShaderManager shaderManager;
     Aio::Shader* BasicShader = Aio::Shader::CreateShader(BasicShaderCreateInfo);
     shaderManager.AddShader(BasicShader);
+
+    /* Here's another way to use the Uniform Buffer per Shader
+    without creating an Buffer. The Uniform buffer is managed 
+    inside of the Shader. All Uniforms should be set before 
+    rendering. */
+    BasicShader->SetFloat("basic_float", 1.0f);
 
     /* Bind all the objects needed to the RenderContext */
     Aio::RenderContext rContext;

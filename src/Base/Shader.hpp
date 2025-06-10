@@ -42,10 +42,11 @@ class Shader
     std::string& GetName();
 
     virtual void SetVec4(std::string name, glm::vec4 value) = 0;
+    virtual void SetFloat(std::string name, float value) = 0;
 
-    private:
-    std::string _name = "";
-    std::string _sourceFilepath = "";
+    protected:
+    std::string _name;
+    std::string _sourceFilepath;
     std::vector<std::string> _uniformBufferNames;
 };
 

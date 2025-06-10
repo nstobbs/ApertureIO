@@ -3,14 +3,17 @@
 
 #include "VulkanDevice.hpp"
 #include "VulkanCommon.hpp"
+#include "VulkanBuffers.hpp"
 
 #include "../Base/FrameBuffer.hpp"
 #include "../Base/RenderContext.hpp"
 #include "../Base/Shader.hpp"
+#include "../Base/Handles.hpp"
 
 #include "../Common/FileIO.hpp"
 
 #include <vector>
+#include <algorithm>
 
 namespace Aio {
 
@@ -27,6 +30,7 @@ class VulkanShader : public Shader
     void rebuildShader() override; //TODO: Needs the RenderContext
 
     void SetVec4(std::string name, glm::vec4 value) override;
+    void SetFloat(std::string name, float value) override;
 
     VkViewport GetViewport();
     VkRect2D GetScissor();
@@ -35,6 +39,10 @@ class VulkanShader : public Shader
 
     private:
     ShaderType _type;
+
+    // Uniform Buffer Stuff
+    BufferLayout _uniformBufferLayout;
+    VulkanBuffer* _uniformBuffer;
 
     // Shader Components
     VkViewport _viewport;

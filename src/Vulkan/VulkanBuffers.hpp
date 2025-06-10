@@ -18,7 +18,7 @@ class VulkanBuffer : public Buffer
     VulkanBuffer(BufferCreateInfo* createInfo);
 
     void UploadToDevice(void* data);
-
+    
     /* Might need to function to rebuild the buffer */
     void rebuildBuffer(); //destory and rebuild the buffer.
 
@@ -28,11 +28,14 @@ class VulkanBuffer : public Buffer
     VkBuffer GetBuffer();
 
     private:
+    BufferHandle storeBufferHandle();
+    BufferHandle _handle;
+    
     VulkanDevice* _pDevice;
 
     BufferType _type;
     BufferLayout _layout;
-    
+
     VkBuffer _buffer;
     VmaAllocation _allocation;
 

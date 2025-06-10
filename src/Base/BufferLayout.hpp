@@ -7,6 +7,15 @@
 namespace Aio {
 
 
+//TODO: Used to get Default Layout.
+enum class BufferBytesLayout
+{
+    UNF32, // Float
+    UNF32F32F32, // Vec3 Float
+    UNF32F32F32F32, // Vec4 Float
+};
+
+
 enum BufferElementType
 {
     Float = 0,
