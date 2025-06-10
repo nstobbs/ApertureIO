@@ -9,4 +9,14 @@ add_library(Base STATIC
         Shader.cpp
 )
 
+target_include_directories(Base PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(Base
+        efsw::efsw
+        glm::glm
+        boost::boost
+)
+
 add_library(Aio::Base ALIAS Base)

@@ -8,4 +8,13 @@ add_library(Vulkan STATIC
         VulkanShader.cpp
 )
 
+target_include_directories(Vulkan PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(Vulkan
+    volk::volk
+    shaderc::shaderc
+)
+
 add_library(Aio::Vulkan ALIAS Vulkan)
