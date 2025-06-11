@@ -1,7 +1,7 @@
-#include "Window.hpp"
-#include "../Common/Logger.hpp"
-#include <iostream>
+#include "ApertureIO/Window.hpp"
+#include "ApertureIO/Logger.hpp"
 
+#include <iostream>
 
 namespace Aio {
 

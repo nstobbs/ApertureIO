@@ -1,12 +1,10 @@
-#ifndef H_VULKANCONTEXT
-#define H_VULKANCONTEXT
+#pragma once
 
 #include <vector>
 
-#include "../Base/Context.hpp"
-#include "VulkanDevice.hpp"
-
-#include "VulkanCommon.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/VulkanDevice.hpp"
+#include "ApertureIO/VulkanCommon.hpp"
 
 namespace Aio {
 
@@ -29,5 +27,3 @@ class VulkanContext : public Context
 };
 
 } // End Aio namespace
-
-#endif

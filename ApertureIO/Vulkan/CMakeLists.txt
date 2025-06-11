@@ -15,6 +15,8 @@ target_include_directories(Vulkan PUBLIC
 target_link_libraries(Vulkan
     volk::volk
     shaderc::shaderc
+    vk-bootstrap::vk-bootstrap
+    GPUOpen::VulkanMemoryAllocator
 )
 
 add_library(Aio::Vulkan ALIAS Vulkan)

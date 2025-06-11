@@ -1,5 +1,4 @@
-#ifndef H_FILEIO
-#define H_FILEIO
+#pragma once
 
 #include <vector>
 #include <string>
@@ -24,5 +23,3 @@ class FileIO
 };
 
 };
-
-#endif

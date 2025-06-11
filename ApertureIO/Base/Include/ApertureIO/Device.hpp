@@ -1,9 +1,8 @@
-#ifndef H_DEVICE
-#define H_DEVICE
+#pragma once
 
-#include "Context.hpp"
-#include "Command.hpp"
-#include "Handles.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Command.hpp"
+#include "ApertureIO/Handles.hpp"
 
 #include <vector>
 

@@ -2,8 +2,8 @@
 #define H_VULKANCOMMON
 
 #include <volk.h>
-#include "../../deps/vk-bootstrap/src/VkBootstrap.h"
-#include "../../deps/VulkanMemoryAllocator/include/vk_mem_alloc.h"
+#include <VkBootstrap.h>
+#include <vk_mem_alloc.h>
 #include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
 

@@ -1,5 +1,4 @@
-#ifndef H_LOGGER
-#define H_LOGGER
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -20,5 +19,3 @@ class Logger
 };
 
 };
-
-#endif

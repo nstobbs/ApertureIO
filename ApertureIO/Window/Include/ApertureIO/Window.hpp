@@ -1,5 +1,4 @@
-#ifndef H_WINDOW
-#define H_WINDOW
+#pragma once
 
 #include <GLFW/glfw3.h>
 
