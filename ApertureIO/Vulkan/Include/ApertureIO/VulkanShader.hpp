@@ -1,16 +1,15 @@
-#ifndef H_VULKANSHADER
-#define H_VULKANSHADER
+#pragma once
 
-#include "VulkanDevice.hpp"
-#include "VulkanCommon.hpp"
-#include "VulkanBuffers.hpp"
+#include "ApertureIO/VulkanDevice.hpp"
+#include "ApertureIO/VulkanCommon.hpp"
+#include "ApertureIO/VulkanBuffers.hpp"
 
-#include "../Base/FrameBuffer.hpp"
-#include "../Base/RenderContext.hpp"
-#include "../Base/Shader.hpp"
-#include "../Base/Handles.hpp"
+#include "ApertureIO/FrameBuffer.hpp"
+#include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/Shader.hpp"
+#include "ApertureIO/Handles.hpp"
 
-#include "../Common/FileIO.hpp"
+#include "ApertureIO/FileIO.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -86,5 +85,3 @@ class VulkanShader : public Shader
 };
 
 }; // End of Aio namespace
-
-#endif

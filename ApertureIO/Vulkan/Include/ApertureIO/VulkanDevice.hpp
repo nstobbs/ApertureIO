@@ -1,11 +1,11 @@
-#ifndef H_VULKANDEVICE
-#define H_VULKANDEVICE
+#pragma once
 
-#include "VulkanCommon.hpp"
-#include "VulkanContext.hpp"
-#include "../Base/Device.hpp"
-#include "../Base/Context.hpp"
-#include "../Base/Command.hpp"
+#include "ApertureIO/VulkanCommon.hpp"
+#include "ApertureIO/VulkanContext.hpp"
+
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Command.hpp"
 
 namespace Aio {
 
@@ -58,5 +58,4 @@ class VulkanDevice : public Device
     std::vector<VkSemaphore> _semaphores;
 };
 
-} // End namespace Aio
-#endif
+}; // End namespace Aio

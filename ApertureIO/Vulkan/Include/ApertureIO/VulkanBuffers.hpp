@@ -1,13 +1,12 @@
-#ifndef H_VULKANBUFFERS
-#define H_VULKANBUFFERS
+#pragma once
 
-#include "VulkanCommon.hpp"
-#include "VulkanDevice.hpp"
+#include "ApertureIO/VulkanCommon.hpp"
+#include "ApertureIO/VulkanDevice.hpp"
 
-#include "../Base/Device.hpp"
-#include "../Base/Buffers.hpp"
-#include "../Base/BufferLayout.hpp"
-#include "../Base/RenderContext.hpp"
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Buffers.hpp"
+#include "ApertureIO/BufferLayout.hpp"
+#include "ApertureIO/RenderContext.hpp"
 
 namespace Aio {
 
@@ -43,4 +42,3 @@ class VulkanBuffer : public Buffer
     void* _pData;
 };
 }; // End of Aio Namespace
-#endif

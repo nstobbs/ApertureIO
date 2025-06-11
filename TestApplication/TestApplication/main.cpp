@@ -1,6 +1,18 @@
-#include "ApertureIO.hpp"
+// Aio::Common
+#include "ApertureIO/FileIO.hpp"
+#include "ApertureIO/Logger.hpp"
 
-#include "GLFW/glfw3.h"
+// Aio::Base
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Window.hpp"
+#include "ApertureIO/Buffers.hpp"
+#include "ApertureIO/BufferLayout.hpp"
+#include "ApertureIO/FrameBuffer.hpp"
+#include "ApertureIO/Shader.hpp"
+#include "ApertureIO/RenderContext.hpp"
+
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -139,7 +151,7 @@ int main()
     BasicShaderCreateInfo.pContext = context;
     BasicShaderCreateInfo.pDevice = GPU;
     BasicShaderCreateInfo.shaderName = "Basic Shader";
-    BasicShaderCreateInfo.sourceFilepath = "./src/Shaders/Basic.glsl";
+    BasicShaderCreateInfo.sourceFilepath = "./Shaders/Basic.glsl";
 
     Aio::ShaderManager shaderManager;
     Aio::Shader* BasicShader = Aio::Shader::CreateShader(BasicShaderCreateInfo);

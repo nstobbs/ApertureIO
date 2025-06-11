@@ -7,7 +7,9 @@ target_include_directories(Window PUBLIC
 )
 
 target_link_libraries(Window
-    glfw 
+    glfw
+    
+    Aio::Common
 )
 
 add_library(Aio::Window ALIAS Window)

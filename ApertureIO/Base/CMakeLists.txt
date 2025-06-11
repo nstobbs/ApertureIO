@@ -17,6 +17,10 @@ target_link_libraries(Base
         efsw::efsw
         glm::glm
         boost::boost
+        
+        Aio::Common
+        Aio::Vulkan
+        Aio::Window
 )
 
 add_library(Aio::Base ALIAS Base)

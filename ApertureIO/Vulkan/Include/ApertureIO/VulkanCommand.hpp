@@ -1,19 +1,17 @@
-#ifndef H_VULKANCOMMAND
-#define H_VULKANCOMMAND
+#pragma once
+
+#include "ApertureIO/VulkanCommon.hpp"
+#include "ApertureIO/VulkanDevice.hpp"
+#include "ApertureIO/VulkanBuffers.hpp"
+#include "ApertureIO/VulkanFrameBuffer.hpp"
+#include "ApertureIO/VulkanShader.hpp"
+
+#include "ApertureIO/Command.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/RenderContext.hpp"
 
 #include <vector>
 #include <array>
-
-#include "../Base/Command.hpp"
-#include "../Base/Context.hpp"
-#include "../Base/RenderContext.hpp"
-
-#include "VulkanCommon.hpp"
-#include "VulkanDevice.hpp"
-#include "VulkanBuffers.hpp"
-#include "VulkanFrameBuffer.hpp"
-#include "VulkanShader.hpp"
-
 
 namespace Aio {
 
@@ -41,5 +39,3 @@ class VulkanCommand : public Command
     VulkanDevice* _pDevice;
 };
 } // End of Aio Namespace
-
-#endif

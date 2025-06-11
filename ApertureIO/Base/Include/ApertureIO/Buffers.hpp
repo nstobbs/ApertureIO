@@ -1,11 +1,11 @@
-#ifndef H_BUFFERS
-#define H_BUFFERS
+#pragma once
+
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/BufferLayout.hpp"
 
 #include <vector>
-#include "Device.hpp"
-#include "Context.hpp"
-#include "RenderContext.hpp"
-#include "BufferLayout.hpp"
 
 namespace Aio {
     class Device;
@@ -75,6 +75,4 @@ class VertexArray
     Buffer* _pIndexBuffer;
 };
 
-} // End Aio namespace
-
-#endif
+}; // End Aio namespace

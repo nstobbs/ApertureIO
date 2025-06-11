@@ -1,9 +1,8 @@
-#ifndef H_COMMAND
-#define H_COMMAND
+#pragma once
 
-#include "Device.hpp"
-#include "Context.hpp"
-#include "RenderContext.hpp"
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/RenderContext.hpp"
 
 namespace Aio {
     class Device;
@@ -26,4 +25,3 @@ class Command
 };
 
 };
-#endif

@@ -1,7 +1,8 @@
 #define VMA_IMPLEMENTATION
 
+#include "ApertureIO/VulkanDevice.hpp"
+
 #include <array>
-#include "VulkanDevice.hpp"
 
 namespace Aio {
 

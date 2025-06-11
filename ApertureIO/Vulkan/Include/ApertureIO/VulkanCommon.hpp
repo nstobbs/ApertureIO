@@ -1,5 +1,4 @@
-#ifndef H_VULKANCOMMON
-#define H_VULKANCOMMON
+#pragma once
 
 #include <volk.h>
 #include <VkBootstrap.h>
@@ -7,9 +6,7 @@
 #include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
 
-#include <string> //TODO this shouldnt be here
+#include <string>
  
 std::string VkResultToString(VkResult result);
 void VK_ASSERT(VkResult result, VkResult expect, std::string message);
-
-#endif

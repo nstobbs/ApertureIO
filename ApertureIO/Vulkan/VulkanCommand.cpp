@@ -1,4 +1,4 @@
-#include "VulkanCommand.hpp"
+#include "ApertureIO/VulkanCommand.hpp"
 
 namespace Aio {
 
@@ -97,6 +97,8 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     VkFence inFlightFence = _pDevice->GetInFlightFence(currentFrame);
     VulkanFrameBuffer* target = dynamic_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
     VulkanShader* shader = dynamic_cast<VulkanShader*>(renderContext._Shader);
+    VkViewport viewport = shader->GetViewport();
+    VkRect2D scissor = shader->GetScissor();
     
     
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
@@ -140,8 +142,8 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipeline());
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdSetViewport(commandBuffer, 0, 1, &shader->GetViewport());
-    vkCmdSetScissor(commandBuffer, 0, 1, &shader->GetScissor());
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);

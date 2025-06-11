@@ -1,5 +1,5 @@
-#include "Command.hpp"
-#include "../Vulkan/VulkanCommand.hpp"
+#include "ApertureIO/Command.hpp"
+#include "ApertureIO/VulkanCommand.hpp"
 
 namespace Aio {
 

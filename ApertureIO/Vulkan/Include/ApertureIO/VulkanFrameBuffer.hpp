@@ -1,13 +1,12 @@
-#ifndef H_VULAKNFRAMEBUFFER
-#define H_VULAKNFRAMEBUFFER
+#pragma once
 
-#include "../Base/FrameBuffer.hpp"
-#include "../Base/RenderContext.hpp"
-#include "../Base/Context.hpp"
-#include "../Base/Device.hpp"
+#include "ApertureIO/VulkanContext.hpp"
+#include "ApertureIO/VulkanDevice.hpp"
 
-#include "VulkanContext.hpp"
-#include "VulkanDevice.hpp"
+#include "ApertureIO/FrameBuffer.hpp"
+#include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Device.hpp"
 
 namespace Aio {
     class VulkanShader;
@@ -63,6 +62,4 @@ class VulkanFrameBuffer : public FrameBuffer
     // if it is a swapchain store it.
     VkSwapchainKHR _swapchain;
 }; 
-}
-
-#endif
+};

@@ -1,5 +1,4 @@
-#ifndef H_BUFFERLAYOUT
-#define H_BUFFERLAYOUT
+#pragma once
 
 #include <glm/glm.hpp>
 #include <vector> 
@@ -46,5 +45,3 @@ class BufferLayout
 };
 
 };
-
-#endif

@@ -1,8 +1,8 @@
-#ifndef H_CONTEXT
-#define H_CONTEXT
-#include <iostream>
+#pragma once
 
-#include "../App/Window.hpp"
+#include "ApertureIO/Window.hpp"
+
+#include <iostream>
 
 namespace Aio {
 
@@ -37,5 +37,3 @@ class Context
     uint32_t CurrentFrame = 0;
 };
 } //End Aio namespace
-
-#endif

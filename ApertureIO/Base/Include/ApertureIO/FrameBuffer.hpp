@@ -1,12 +1,11 @@
-#ifndef H_FRAMEBUFFER
-#define H_FRAMEBUFFER
+#pragma once
+
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/Device.hpp"
 
 #include <vector>
 #include <unordered_map>
-
-#include "Context.hpp"
-#include "RenderContext.hpp"
-#include "Device.hpp"
 
 namespace Aio {
     class Device;
@@ -52,5 +51,3 @@ class FrameBuffer
 };
 
 } // End Aio namespace
-
-#endif

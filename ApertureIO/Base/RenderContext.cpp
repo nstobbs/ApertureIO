@@ -1,4 +1,5 @@
-#include "RenderContext.hpp"
+#include "ApertureIO/RenderContext.hpp"
+
 #include <boost/functional/hash.hpp>
 
 namespace Aio {

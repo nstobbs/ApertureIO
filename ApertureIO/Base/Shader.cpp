@@ -1,6 +1,6 @@
-#include "Shader.hpp"
-#include "../Common/Logger.hpp"
-#include "../Vulkan/VulkanShader.hpp"
+#include "ApertureIO/Shader.hpp"
+#include "ApertureIO/VulkanShader.hpp"
+#include "ApertureIO/Logger.hpp"
 
 #include <thread>
 

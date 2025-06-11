@@ -1,5 +1,13 @@
-#ifndef H_RENDERCONTEXT
-#define H_RENDERCONTEXT
+#pragma once
+
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Command.hpp"
+#include "ApertureIO/Buffers.hpp"
+#include "ApertureIO/FrameBuffer.hpp"
+#include "ApertureIO/Shader.hpp"
+
+#include "ApertureIO/Logger.hpp"
 
 #include <functional>
 #include <atomic>
@@ -7,15 +15,6 @@
 #include <condition_variable>
 #include <chrono>
 #include <thread>
-
-#include "Device.hpp"
-#include "Context.hpp"
-#include "Command.hpp"
-#include "Buffers.hpp"
-#include "FrameBuffer.hpp"
-#include "Shader.hpp"
-
-#include "../Common/Logger.hpp"
 
 namespace Aio {
     class Buffer;
@@ -56,4 +55,3 @@ class RenderContext
 };
 
 };
-#endif

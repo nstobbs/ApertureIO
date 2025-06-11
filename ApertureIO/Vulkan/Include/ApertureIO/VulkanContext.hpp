@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
-
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/VulkanDevice.hpp"
 #include "ApertureIO/VulkanCommon.hpp"
+
+#include <vector>
 
 namespace Aio {
 

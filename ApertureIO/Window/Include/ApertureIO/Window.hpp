@@ -22,6 +22,4 @@ class Window
     GLFWwindow* _pWindow;
 };
 
-} // End Aio namespace 
-
-#endif
+} // End Aio namespace

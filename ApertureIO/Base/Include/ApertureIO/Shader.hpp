@@ -1,16 +1,15 @@
-#ifndef H_SHADER
-#define H_SHADER
+#pragma once
+
+#include "ApertureIO/Context.hpp"
+#include "ApertureIO/Device.hpp"
+#include "ApertureIO/RenderContext.hpp"
+
+#include <glm/glm.hpp>
+#include <efsw/efsw.h>
+#include <efsw/efsw.hpp>
 
 #include <string>
 #include <unordered_map>
-#include <glm/glm.hpp>
-
-#include "Context.hpp"
-#include "Device.hpp"
-#include "RenderContext.hpp"
-
-#include <efsw/efsw.h>
-#include <efsw/efsw.hpp>
 
 namespace Aio {
 
@@ -93,5 +92,3 @@ class ShaderManager
 };
 
 }; // End of Aio Namespace 
-
-#endif

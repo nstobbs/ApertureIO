@@ -32,5 +32,4 @@ class Device
     std::vector<BufferHandle> _storageBufferHandles;
     std::vector<TextureHandle> _textureHandles; 
 };
-} // End Aio namespace
-#endif
+}; // End Aio namespace

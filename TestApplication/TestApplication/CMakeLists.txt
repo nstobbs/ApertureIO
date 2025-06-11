@@ -3,8 +3,8 @@ add_executable(TestApplication
 )
 
 target_link_libraries(TestApplication PUBLIC
-        Base
-        Common
-        Window
-        Vulkan
+        Aio::Base
+        Aio::Common
+        Aio::Window
+        Aio::Vulkan
 )
