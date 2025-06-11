@@ -27,7 +27,7 @@ GPU rendering and computation for developing graphics based applications.
 
 ### Build:
 
-###### Building on Windows:
+###### Create Packages from Conan Recipes:
 
 ```
 git clone git@github.com:conan-io/conan-center-index.git
@@ -36,8 +36,11 @@ conan create . --version=1.4.1 --settings=build_type=Debug --build=missing
 
 cd ../../boost/all/
 conan create . --version=1.88.0 --settings=build_type=Debug --build=missing
+```
 
-cd ../../../../
+###### Building Debug on Windows:
+
+```
 git clone git@github.com:nstobbs/ApertureIO.git
 cd ./ApertureIO
 git submodule update --init --recursive
@@ -53,7 +56,11 @@ cmake --build
 * [x] Look into tests and building test application.
 * [x] Restructure CMake and Conan Files.
 * [x] Add Build Steps to README.
-* [ ] Move FileIO and Logger out of Aio.
 * [ ] Implement a Workflow for UniformBuffers.
-* [ ] Decide how to handle platform APIs.
+* [ ] Implement a Workflow for StroageBuffers.
+* [ ] Implement a Workflow for Textures.
+* [ ] Implement a Workflow for Compute Shaders.
+* [ ] Turn Aio::Window into a competely virutal class.
+* [ ] Add an implementation of Aio::Window with glfw.
+* [ ] Add an implementation of Aio::Window with Qt.
 * [ ] Add Tests for finshed classes.
