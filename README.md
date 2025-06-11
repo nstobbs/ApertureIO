@@ -9,7 +9,7 @@ GPU rendering and computation for developing graphics based applications.
 
 * Shader Hot Reloading - Currently only on GLSL Shaders but planning of supporting hot reloading across the library like textures.
 
-![](misc/ShaderHotReloading.gif)
+![](Misc/ShaderHotReloading.gif)
 
 ### Roadmap:
 
@@ -29,13 +29,31 @@ GPU rendering and computation for developing graphics based applications.
 
 ###### Building on Windows:
 
+```
+git clone git@github.com:conan-io/conan-center-index.git
+cd ./conan-center-index/recipes/efsw/all
+conan create . --version=1.4.1 --settings=build_type=Debug --build=missing
+
+cd ../../boost/all/
+conan create . --version=1.88.0 --settings=build_type=Debug --build=missing
+
+cd ../../../../
+git clone git@github.com:nstobbs/ApertureIO.git
+cd ./ApertureIO
+git submodule update --init --recursive
+conan install . --settings=build_type=Debug --build=missing
+cd ./build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=generators/conan_toolchain.cmake -G "Visual Studio 17 2022"
+cmake --build
+```
+
 ### TODO List:
 
-* [ ] Restructure Source Files.
-* [ ] Look into tests and building test application.
-* [ ] Restructure CMake and Conan Files.
-* [ ] Add Build Steps to README.
+* [x] Restructure Source Files.
+* [x] Look into tests and building test application.
+* [x] Restructure CMake and Conan Files.
+* [x] Add Build Steps to README.
 * [ ] Move FileIO and Logger out of Aio.
 * [ ] Implement a Workflow for UniformBuffers.
 * [ ] Decide how to handle platform APIs.
-
+* [ ] Add Tests for finshed classes.
