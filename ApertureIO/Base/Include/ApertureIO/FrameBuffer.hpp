@@ -4,6 +4,7 @@
 #include "ApertureIO/RenderContext.hpp"
 #include "ApertureIO/Device.hpp"
 
+#include <string>
 #include <vector>
 #include <unordered_map>
 
@@ -34,20 +35,20 @@ class FrameBuffer
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
     
-    void createLayer(char* name, FrameBufferPixelFormat format);
-    void setName(char* name);
+    void createLayer(std::string name, FrameBufferPixelFormat format);
+    void setName(std::string name);
 
     friend class VulkanFrameBuffer; // TODO: not sure if I like this really.
 
     private:
-    char* _name = "";
+    std::string _name;
     bool isSwapChainTarget = false;
 
     unsigned int _width;
     unsigned int _height;
 
     unsigned int _layerCount = 0;
-    std::unordered_map<char*, FrameBufferPixelFormat> _layers;
+    std::unordered_map<std::string, FrameBufferPixelFormat> _layers;
 };
 
 } // End Aio namespace

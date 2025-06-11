@@ -16,6 +16,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <string>
 #include <iostream>
 #include <chrono>
 #include <ctime>
@@ -50,7 +51,7 @@ int main()
     /* The FrameBuffer is a render Target for any shaders to render to. This can be hook with an window for rendering
     to the screen directly. */
     Aio::FrameBuffer* framebuffer = Aio::FrameBuffer::CreateFrameBuffer(GPU, context);
-    char* name = "SwapChain_FrameBuffer1";
+    std::string name = "SwapChain_FrameBuffer1";
     framebuffer->setName(name);
     if (!framebuffer->init()) //TODO: Does a FrameBuffer need a Init Function?
     {

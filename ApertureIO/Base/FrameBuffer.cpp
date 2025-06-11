@@ -14,7 +14,7 @@ FrameBuffer* FrameBuffer::CreateFrameBuffer(Device* pDevice, Context* pContext)
     }
 };
 
-void FrameBuffer::setName(char* name)
+void FrameBuffer::setName(std::string name)
 {
     _name = name;
 };

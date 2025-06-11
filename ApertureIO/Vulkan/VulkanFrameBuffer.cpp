@@ -1,6 +1,8 @@
 #include "ApertureIO/VulkanFrameBuffer.hpp"
 #include "ApertureIO/Logger.hpp"
 
+#include <string>
+
 namespace Aio {
 
 VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
@@ -36,7 +38,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
 
     // framebuffers for swapchains must have the swapchain format at index 0.
     _formats.push_back(swapchain.image_format);
-    char* name = "Colour_Output";
+    std::string name = "Colour_Output";
     _layers.insert(std::make_pair(name, COLOR_RGBA_8888));
     _layerCount++;
     /* Image Layout when using as a swapchain.

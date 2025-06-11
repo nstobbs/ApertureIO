@@ -84,7 +84,7 @@ void ShaderManager::AddShader(Shader* shader)
     _shaders.emplace(name, shader);
 
     efsw::WatchID id = _pFileWatcher->addWatch(shader->GetSourceFilePath(), _pShaderListener, false);
-    efsw::WatchID id2 = _pFileWatcher->addWatch("./src/Shaders/", _pShaderListener, false);
+    efsw::WatchID id2 = _pFileWatcher->addWatch("./Shaders/", _pShaderListener, false);
     auto msg = "ShaderManager: Started Watching - " + shader->GetSourceFilePath();
     Logger::LogInfo(msg);
 };
