@@ -3,5 +3,8 @@ add_executable(TestApplication
 )
 
 target_link_libraries(TestApplication PUBLIC
-        ApertureIO
+        Base
+        Common
+        Window
+        Vulkan
 )
