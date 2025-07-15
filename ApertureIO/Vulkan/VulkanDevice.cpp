@@ -3,6 +3,7 @@
 #include "ApertureIO/VulkanDevice.hpp"
 
 #include <array>
+#include <string>
 
 namespace Aio {
 
@@ -11,20 +12,9 @@ VulkanDevice::VulkanDevice(Context* context)
     _pVulkanContext = dynamic_cast<VulkanContext*>(context);
 };
 
-bool VulkanDevice::init()
+bool VulkanDevice::init(VkSurfaceKHR surface, std::string extensions)
 {   
-    GLFWwindow* window = _pVulkanContext->getActiveWindowPtr()->getWindowPtr(); //TODO: this need to be rewritten so different platforms can imp they own!
     VkInstance instance = _pVulkanContext->GetVkInstance(); 
-    VkSurfaceKHR surface; 
-
-    //TODO shouldn't be using platform spec code instead of here.
-    //TODO: this need to be rewritten so different platforms can imp they own!
-    auto result = glfwCreateWindowSurface(instance, window, NULL, &surface); 
-    if (result != VK_SUCCESS)
-    {
-        std::cout << "failed to create VkSurface :(\n";
-        return false;
-    }
 
     // Picking the Physical Device
     vkb::PhysicalDeviceSelector phyiscalDevicePicker(_pVulkanContext->_instance);
@@ -34,14 +24,8 @@ bool VulkanDevice::init()
     // Need to double check these. I'm sure I'm doing something
     // wrong here or volk is doing it for me.
 
-
-    for (auto ext : _pVulkanContext->getRequiredExtensions())
-    {
-        /* TODO setting required extensions seems to break 
-        the physical device selection process.*/
-        //phyiscalDevicePicker.add_required_extension(ext);
-        //std::cout << "Added Extension " << ext << "\n";
-    }
+    //TODO: Any Extensions needed for the Window / Surface should happen here...
+    // else it should be remove as a argv 
 
     auto pickerResult = phyiscalDevicePicker.select();
     if (!pickerResult) 
@@ -52,7 +36,7 @@ bool VulkanDevice::init()
 
     _physicalDevice = pickerResult.value();
 
-    // Enable Device Features that we want.
+    // Enable Device Features 
     VkPhysicalDeviceVulkan12Features features{};
     features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     features.runtimeDescriptorArray = VK_TRUE;

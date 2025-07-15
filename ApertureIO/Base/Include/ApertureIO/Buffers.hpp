@@ -47,6 +47,7 @@ class Buffer
 };
 
 // TODO: Rethink about buffers. Could we have a base buffer class that can be used to create index and vertex buffers from, as well as normal buffers??
+// TODO: These classes arent currently being used and can be removed.
 class IndexBuffer : public Buffer
 {
     public:

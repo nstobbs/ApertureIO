@@ -26,7 +26,7 @@ enum FrameBufferPixelFormat
 
 class FrameBuffer
 {
-    public:
+public:
     static FrameBuffer* CreateFrameBuffer(Device* pDevice, Context* pContext); // For SwapChain.
     static FrameBuffer* CreateFrameBuffer(Device* pDevice); // Default
 
@@ -34,13 +34,13 @@ class FrameBuffer
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
-    
+
     void createLayer(std::string name, FrameBufferPixelFormat format);
     void setName(std::string name);
 
     friend class VulkanFrameBuffer; // TODO: not sure if I like this really.
 
-    private:
+protected:
     std::string _name;
     bool isSwapChainTarget = false;
 

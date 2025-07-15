@@ -21,11 +21,6 @@ RendererAPI Context::getRendererAPI()
     return _rendererAPI;
 };
 
-Window* Context::getActiveWindowPtr()
-{
-    return _pActiveWindow;
-};
-
 uint32_t Context::getCurrentFrame()
 {
     return CurrentFrame;
@@ -50,11 +45,6 @@ void Context::setMaxFramesInFlight(uint32_t value)
 void Context::setRendererAPI(RendererAPI API)
 {
     _rendererAPI = API;
-};
-
-void Context::setActiveWindow(Window* window)
-{
-    _pActiveWindow = window;
 };
 
 

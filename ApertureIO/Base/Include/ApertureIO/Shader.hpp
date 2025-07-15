@@ -72,6 +72,9 @@ class ShaderListener : public efsw::FileWatchListener
 //TODO: Maybe this class can be more generic so it can be used for other
 // objects like textures, obj, etc...
 
+// TODO: Efsw doesn't seems to support watching of single files.
+/// instead we should add folders to watch for shader files
+// as part of the constructor of ShaderManager.
 class ShaderManager
 {
     public:

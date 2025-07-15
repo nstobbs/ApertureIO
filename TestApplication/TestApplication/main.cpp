@@ -5,12 +5,14 @@
 // Aio::Base
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Context.hpp"
-#include "ApertureIO/Window.hpp"
 #include "ApertureIO/Buffers.hpp"
 #include "ApertureIO/BufferLayout.hpp"
 #include "ApertureIO/FrameBuffer.hpp"
 #include "ApertureIO/Shader.hpp"
 #include "ApertureIO/RenderContext.hpp"
+
+//TestApplication 
+#include "Window/WindowGLFWImpl.cpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -26,9 +28,6 @@ int main()
     Aio::Logger::LogWarn("Logger Tests 1...");
     Aio::Logger::LogInfo("Logger Tests 2...");
     Aio::Logger::LogError("Logger Tests 3...");
-
-    /* Window to Render to...*/
-    Aio::Window Window;
     
     /* The Context handles all of the instance loading, extensions, validation layers and other stuff related to the
     selected graphics api */
@@ -36,6 +35,9 @@ int main()
     context->setActiveWindow(&Window);
     context->setRendererAPI(Aio::eVulkan); // TODO current this isn't needed for this system rn
     context->init();
+
+    /* Window to Render to...*/
+    TestApplication::WindowGLFWImpl* window = new TestApplication::WindowGLFWImpl(context);
 
     /* We will need to have a window created before we 
     can start creating the the GPUDevice */
@@ -144,7 +146,7 @@ int main()
     uniformBufferInfo.layout = uniformLayout;
     uniformBufferInfo.count = 1;
 
-    //Aio::Buffer* uniformBuffer = Aio::Buffer::CreateBuffer(&uniformBufferInfo);
+    Aio::Buffer* uniformBuffer = Aio::Buffer::CreateBuffer(&uniformBufferInfo);
 
     /* Create an Shader Program to Run */
     Aio::ShaderCreateInfo BasicShaderCreateInfo{};
@@ -174,7 +176,7 @@ int main()
 
     // Main Loop Stuff Happens Here!
     Aio::Logger::LogInfo("Running!");
-    while(!glfwWindowShouldClose(Window.getWindowPtr()))
+    while(!window->shouldClose())
     {
         /* Start*/
         glfwPollEvents();

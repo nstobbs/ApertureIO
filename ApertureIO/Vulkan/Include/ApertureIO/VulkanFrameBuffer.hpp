@@ -36,7 +36,7 @@ class VulkanFrameBuffer : public FrameBuffer
 
     private:
 
-    friend VulkanShader;
+    friend class VulkanShader;
     /* Private Functions */
     VkRenderPass CreateVkRenderPass();
 

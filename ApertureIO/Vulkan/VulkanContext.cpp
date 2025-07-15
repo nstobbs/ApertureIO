@@ -5,7 +5,7 @@
 
 namespace Aio {
 
-void VulkanContext::init()
+void VulkanContext::init(std::vector<const char*> extensions)
 {
     Logger::LogInfo("Init Vulkan");
     VkResult result = volkInitialize();
@@ -20,7 +20,7 @@ void VulkanContext::init()
     builder.set_engine_name("ApertureIO");
     builder.require_api_version(1,3,0);
     builder.enable_validation_layers();
-    builder.enable_extensions(getRequiredExtensions());
+    builder.enable_extensions(extensions);
 
     // system info
     auto systemInfo = vkb::SystemInfo::get_system_info().value();

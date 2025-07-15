@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ApertureIO/Window.hpp"
-
 #include <iostream>
 
 namespace Aio {
@@ -13,24 +11,21 @@ enum RendererAPI {
 
 class Context
 {
-    public:
+public:
     static Context* CreateContext();
+    void setRendererAPI(RendererAPI API); //TODO will need to hook this up better to creating an context when this has't been set
 
     RendererAPI getRendererAPI();
-    Window* getActiveWindowPtr();
-    uint32_t getMaxFramesInFlight();
 
+protected:
+    uint32_t getMaxFramesInFlight();
     uint32_t getCurrentFrame();
     void nextFrame();
     void setMaxFramesInFlight(uint32_t value);
 
-    void setRendererAPI(RendererAPI API); //TODO will need to hook this up better to creating an context when this has't been set
-    void setActiveWindow(Window* window);
-
     virtual void init() = 0;
-    
-    private:
-    Window* _pActiveWindow;
+
+private:
     bool _started;
     RendererAPI _rendererAPI = eVulkan;
     uint32_t MAX_FRAMES_IN_FLIGHT = 2;
