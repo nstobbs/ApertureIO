@@ -17,7 +17,6 @@ public:
 
     RendererAPI getRendererAPI();
 
-protected:
     uint32_t getMaxFramesInFlight();
     uint32_t getCurrentFrame();
     void nextFrame();

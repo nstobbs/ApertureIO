@@ -2,10 +2,11 @@
 #include "ApertureIO/Logger.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace Aio {
 
-void VulkanContext::init(std::vector<const char*> extensions)
+void VulkanContext::init()
 {
     Logger::LogInfo("Init Vulkan");
     VkResult result = volkInitialize();
@@ -20,7 +21,7 @@ void VulkanContext::init(std::vector<const char*> extensions)
     builder.set_engine_name("ApertureIO");
     builder.require_api_version(1,3,0);
     builder.enable_validation_layers();
-    builder.enable_extensions(extensions);
+    builder.enable_extensions(_requiredExtensionsCount, _requiredExtensions);
 
     // system info
     auto systemInfo = vkb::SystemInfo::get_system_info().value();
@@ -45,6 +46,12 @@ void VulkanContext::init(std::vector<const char*> extensions)
     // TODO: create an teardown function for this class
 };
 
+void VulkanContext::SetRequiredExtensions(const char** extensions, uint32_t count)
+{
+    _requiredExtensions = extensions;
+    _requiredExtensionsCount = count;
+}
+
 VkInstance VulkanContext::GetVkInstance()
 {
     return _instance.instance;
@@ -55,19 +62,5 @@ shaderc_compiler_t VulkanContext::GetShadercCompiler()
     return _compiler;
 };
 
-//TODO: this need to be rewritten so different platforms can imp they own!
-std::vector<const char*> VulkanContext::getRequiredExtensions()
-{
-    uint32_t glfwExtCount;
-    const char** glfwExtNames;
-    glfwExtNames = glfwGetRequiredInstanceExtensions(&glfwExtCount);
-
-    std::vector<const char*> extensions(glfwExtNames, glfwExtNames +  glfwExtCount);
-
-    //TODO check if i need to add validation extensions too as I think volk should
-    // be dealing with it.
-
-    return extensions;
-};
 
 } // End Aio namespace

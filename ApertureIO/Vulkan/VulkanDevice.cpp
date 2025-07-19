@@ -12,13 +12,13 @@ VulkanDevice::VulkanDevice(Context* context)
     _pVulkanContext = dynamic_cast<VulkanContext*>(context);
 };
 
-bool VulkanDevice::init(VkSurfaceKHR surface, std::string extensions)
+bool VulkanDevice::init()
 {   
     VkInstance instance = _pVulkanContext->GetVkInstance(); 
 
     // Picking the Physical Device
     vkb::PhysicalDeviceSelector phyiscalDevicePicker(_pVulkanContext->_instance);
-    phyiscalDevicePicker.set_surface(surface); // this doesnt need to be set if we want an headless option.
+    phyiscalDevicePicker.set_surface(_surface); // this doesnt need to be set if we want an headless option.
 
     /* Set the Required Extensions that I need */
     // Need to double check these. I'm sure I'm doing something
@@ -116,8 +116,8 @@ bool VulkanDevice::init(VkSurfaceKHR surface, std::string extensions)
 
     // TODO: should sync objects be part of the device?
     // create sync objects
-    Context* context = dynamic_cast<Context*>(_pVulkanContext);
-    uint32_t inFlight = context->getMaxFramesInFlight();
+    uint32_t inFlight = _pVulkanContext->getMaxFramesInFlight();
+    
     // image available
     // render finished
     // 0 1 is image available
@@ -199,6 +199,11 @@ void VulkanDevice::createAndAllocateBindlessResources()
     VK_ASSERT(vkAllocateDescriptorSets(GetVkDevice(), &allocateInfo, &_bindlessDescriptorSet), VK_SUCCESS, "Allocate Bindless Descriptor Set");
 };
 
+/* Setter Functions*/
+void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
+{
+    _surface = surface;
+}
 /* Getter Functions*/
 
 VkDevice VulkanDevice::GetVkDevice()
@@ -258,8 +263,8 @@ VkSemaphore VulkanDevice::GetImageAvailableSemaphore(uint32_t currentFrame)
 
 VkSemaphore VulkanDevice::GetRenderFinshedSemaphore(uint32_t currentFrame)
 {
-    auto maxInflight = dynamic_cast<Context*>(_pVulkanContext)->getMaxFramesInFlight();
-    return _semaphores[currentFrame + maxInflight];
+    
+    return _semaphores[currentFrame + _pVulkanContext->getMaxFramesInFlight()];
 };
 
 VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)

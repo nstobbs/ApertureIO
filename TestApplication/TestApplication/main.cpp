@@ -11,8 +11,12 @@
 #include "ApertureIO/Shader.hpp"
 #include "ApertureIO/RenderContext.hpp"
 
+// Aio::Vulkan
+#include "ApertureIO/VulkanContext.hpp"
+#include "ApertureIO/VulkanDevice.hpp" 
+
 //TestApplication 
-#include "Window/WindowGLFWImpl.cpp"
+#include "Window/WindowGLFWImpl.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -28,22 +32,27 @@ int main()
     Aio::Logger::LogWarn("Logger Tests 1...");
     Aio::Logger::LogInfo("Logger Tests 2...");
     Aio::Logger::LogError("Logger Tests 3...");
+
     
     /* The Context handles all of the instance loading, extensions, validation layers and other stuff related to the
     selected graphics api */
     Aio::Context* context = Aio::Context::CreateContext();
-    context->setActiveWindow(&Window);
     context->setRendererAPI(Aio::eVulkan); // TODO current this isn't needed for this system rn
-    context->init();
 
     /* Window to Render to...*/
     TestApplication::WindowGLFWImpl* window = new TestApplication::WindowGLFWImpl(context);
 
-    /* We will need to have a window created before we 
-    can start creating the the GPUDevice */
+    auto extensions = window->GetRequiredInstanceExtensions();
+    dynamic_cast<Aio::VulkanContext*>(context)->SetRequiredExtensions(extensions.first, extensions.second);
+    context->init();
 
     /* The Device handles all of the commands, memory, processing of the selected graphics api*/
     Aio::Device* GPU = Aio::Device::CreateDevice(context);
+    /* We will need to have a window created before we 
+    can start creating the the GPUDevice. So we can set the surface and 
+    give the GPU selector the right extensions */
+    dynamic_cast<Aio::VulkanDevice*>(GPU)->SetVkSurfaceKHR(window->GetVkSurface()); // hack to set the vulkan surface and extensions for now.
+
     if (!GPU->init())
     {
         std::cout << "failed to start Aio::Device :(\n";
