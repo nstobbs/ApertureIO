@@ -4,6 +4,7 @@
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/RenderContext.hpp"
 #include "ApertureIO/BufferLayout.hpp"
+#include "ApertureIO/Handles.hpp"
 
 #include <vector>
 
@@ -37,10 +38,13 @@ class Buffer
     static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
 
     BufferLayout GetBufferLayout();
+    virtual BufferHandle* GetBufferHandle() = 0;
     void SetBufferLayout(BufferLayout layout);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
+
+    virtual void UploadToDevice(void* data) = 0;
 
     private:
     BufferLayout _layout;

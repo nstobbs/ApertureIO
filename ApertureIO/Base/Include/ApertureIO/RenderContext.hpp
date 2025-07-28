@@ -6,6 +6,7 @@
 #include "ApertureIO/Buffers.hpp"
 #include "ApertureIO/FrameBuffer.hpp"
 #include "ApertureIO/Shader.hpp"
+#include "ApertureIO/Texture.hpp"
 
 #include "ApertureIO/Logger.hpp"
 
@@ -15,6 +16,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 namespace Aio {
     class Buffer;
@@ -40,7 +42,11 @@ class RenderContext
     
     Buffer* _VertexBuffer;
     Buffer* _IndexBuffer;
-    Buffer* _StorageBuffer;
+
+    std::vector<Buffer*> _UniformBuffers;
+    std::vector<Buffer*> _StorageBuffers;
+    std::vector<Texture*> _Textures;
+
     Shader* _Shader;
     FrameBuffer* _TargetFrameBuffer;
 

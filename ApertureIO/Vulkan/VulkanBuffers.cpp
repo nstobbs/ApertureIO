@@ -130,6 +130,11 @@ BufferBlock VulkanBuffer::createVkBuffer(size_t size, VkBufferUsageFlags usage)
     return result;
 };
 
+BufferHandle* VulkanBuffer::GetBufferHandle()
+{
+    return &_handle;
+};
+
 
 void VulkanBuffer::Bind(RenderContext& renderContext)
 {
@@ -140,7 +145,9 @@ void VulkanBuffer::Bind(RenderContext& renderContext)
             break;
         case BufferType::Index:
             renderContext._IndexBuffer = dynamic_cast<Buffer*>(this);
+            break;
         case BufferType::Uniform:
+            renderContext._UniformBuffers.push_back(dynamic_cast<Buffer*>(this));
             break;
     };
 };

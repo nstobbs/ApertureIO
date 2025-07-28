@@ -9,6 +9,7 @@
 #include "ApertureIO/Command.hpp"
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/Handles.hpp"
 
 #include <vector>
 #include <array>

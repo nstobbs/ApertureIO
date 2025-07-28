@@ -11,7 +11,8 @@ size_t RenderContext::GetHash()
         size_t seed = 0;
         boost::hash_combine(seed, _VertexBuffer);
         boost::hash_combine(seed, _IndexBuffer);
-        boost::hash_combine(seed, _StorageBuffer);
+        boost::hash_combine(seed, _StorageBuffers);
+        boost::hash_combine(seed, _UniformBuffers);
         boost::hash_combine(seed, _TargetFrameBuffer);
         boost::hash_combine(seed, _Shader);
 

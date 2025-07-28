@@ -14,7 +14,6 @@ target_include_directories(Base PUBLIC
 )
 
 target_link_libraries(Base
-        efsw::efsw
         glm::glm
         boost::boost
         

@@ -100,7 +100,6 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     VkViewport viewport = shader->GetViewport();
     VkRect2D scissor = shader->GetScissor();
     
-    
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -148,6 +147,11 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);
 
+    // Add Uniform Buffers Handles to Push Constant
+    PushConstantBufferHandles data{};
+    data.bufferA = renderContext._UniformBuffers[0]->GetBufferHandle(); // TODO: fix this, testing
+    vkCmdPushConstants(commandBuffer, shader->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantBufferHandles), &data);
+
     // DRAW COMMAND!
     vkCmdDrawIndexed(commandBuffer, 3, 1, 0, 0, 0);
 
@@ -186,6 +190,13 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     presentInfo.pResults = nullptr;
 
     VK_ASSERT(vkQueuePresentKHR(_pDevice->GetPresentVkQueue(), &presentInfo), VK_SUCCESS, "Submit Present");
+
+    // TODO: Check the current framebuffer for any resize event. If resized, re create the swapchain 
+    // also check if the swapchain it out of date
+    if (target->CheckRebuildInProgress())
+    {
+        
+    }
 };
 
 }; // End of Aio 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Window/Window.hpp"
 
 #include "ApertureIO/Logger.hpp"
@@ -9,8 +11,8 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
-const int WIDTH = 1280;
-const int HIGHT = 720;
+const int WIDTH = 640;
+const int HIGHT = 480;
 const std::string TITLE = "TestApplication Main Window";
 
 namespace TestApplication {
@@ -22,10 +24,12 @@ public:
     WindowGLFWImpl(Aio::Context* context);
     ~WindowGLFWImpl();
 
-    
     std::pair<const char**, uint32_t> GetRequiredInstanceExtensions() override;
     VkSurfaceKHR GetVkSurface() override;
 
+    void SetActiveFrameBuffer(Aio::FrameBuffer* framebuffer) override;
+
+    void triggerFrameBufferRebuild();
     bool shouldClose();
 
 private:

@@ -21,11 +21,20 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include <vector>
-#include <string>
-#include <iostream>
+#include <cmath>
 #include <chrono>
 #include <ctime>
+#include <iostream>
+#include <filesystem>
+#include <string>
+#include <vector>
+
+const float PI = 3.14f;
+
+struct TestUniformStuct
+{
+    float a;
+};
 
 int main()
 {
@@ -69,6 +78,7 @@ int main()
         std::cout << "failed to create Aio::FrameBuffer :(\n";
         return EXIT_FAILURE;
     }
+    window->SetActiveFrameBuffer(framebuffer);
 
     /* Define the Buffer Layout And Create a Buffer to store and handle this data.*/
     /* Vertex Buffer*/
@@ -132,20 +142,14 @@ int main()
 
     /* This is One Way to Handle Uniform Buffers.  
     For Multiple Shaders with one Buffer Object.*/
-    struct uniformStruct
-    {
-        int a;
-    };
 
-    Aio::BufferElement intElement{};
-    intElement.count = 1;
-    intElement.type = Aio::Int;
-    intElement.normalized = false;
+    Aio::BufferElement floatElement{};
+    floatElement.count = 1;
+    floatElement.type = Aio::Float;
+    floatElement.normalized = false;
 
     Aio::BufferLayout uniformLayout;
-    uniformLayout.AddBufferElement(intElement);
-
-    void* pUniformData; // Pointer that we will be copying values too.
+    uniformLayout.AddBufferElement(floatElement);
 
     Aio::BufferCreateInfo uniformBufferInfo{};
     uniformBufferInfo.type = Aio::BufferType::Uniform;
@@ -156,6 +160,9 @@ int main()
     uniformBufferInfo.count = 1;
 
     Aio::Buffer* uniformBuffer = Aio::Buffer::CreateBuffer(&uniformBufferInfo);
+    TestUniformStuct testUniformData{};
+    testUniformData.a = 1.0f;
+    uniformBuffer->UploadToDevice(&testUniformData);
 
     /* Create an Shader Program to Run */
     Aio::ShaderCreateInfo BasicShaderCreateInfo{};
@@ -165,9 +172,9 @@ int main()
     BasicShaderCreateInfo.shaderName = "Basic Shader";
     BasicShaderCreateInfo.sourceFilepath = "./Shaders/Basic.glsl";
 
-    Aio::ShaderManager shaderManager;
+    Aio::ShaderLibrary shaderLibrary(std::filesystem::path("./Shaders/"));
     Aio::Shader* BasicShader = Aio::Shader::CreateShader(BasicShaderCreateInfo);
-    shaderManager.AddShader(BasicShader);
+    shaderLibrary.AddShader(BasicShader);
 
     /* Here's another way to use the Uniform Buffer per Shader
     without creating an Buffer. The Uniform buffer is managed 
@@ -180,15 +187,26 @@ int main()
 
     vertexbuffer->Bind(rContext);
     indexbuffer->Bind(rContext);
+    uniformBuffer->Bind(rContext);
     framebuffer->Bind(rContext);
     BasicShader->Bind(rContext);
 
     // Main Loop Stuff Happens Here!
     Aio::Logger::LogInfo("Running!");
+    auto startTime = std::chrono::system_clock::now();
+
     while(!window->shouldClose())
     {
         /* Start*/
         glfwPollEvents();
+
+        // Test Updating Uniform Data
+        std::chrono::duration<float> time = std::chrono::system_clock::now() - startTime;
+        float factor = 0.5f;
+        float result = 0.5f * (std::sin(2 * PI * factor * time.count()) + 1.0);
+        testUniformData.a = result;
+        uniformBuffer->UploadToDevice(&testUniformData);
+
         GPU->pCommand->Draw(rContext);
         context->nextFrame();
         /* End */

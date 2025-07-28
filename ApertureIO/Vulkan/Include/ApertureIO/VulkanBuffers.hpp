@@ -24,14 +24,15 @@ class VulkanBuffer : public Buffer
     public:
     ~VulkanBuffer();
     VulkanBuffer(BufferCreateInfo* createInfo);
-
-    void UploadToDevice(void* data);
     
     /* Might need to function to rebuild the buffer */
     void rebuildBuffer(); //destory and rebuild the buffer.
 
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
+
+    void UploadToDevice(void* data) override;
+    BufferHandle* GetBufferHandle() override;
 
     VkBuffer GetBuffer();
 

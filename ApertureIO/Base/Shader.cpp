@@ -1,4 +1,5 @@
 #include "ApertureIO/Shader.hpp"
+#include "ApertureIO/GenericFileManager.hpp"
 #include "ApertureIO/VulkanShader.hpp"
 #include "ApertureIO/Logger.hpp"
 
@@ -14,12 +15,11 @@ Shader* Shader::CreateShader(ShaderCreateInfo& createInfo)
         case eVulkan:
             Shader* shader = new VulkanShader(createInfo);
             shader->_sourceFilepath = createInfo.sourceFilepath;
-            shader->_name = createInfo.shaderName;
             return shader;
     }
 };
 
-std::string& Shader::GetSourceFilePath()
+std::filesystem::path& Shader::GetSourceFilePath()
 {
     return _sourceFilepath;
 };
@@ -29,82 +29,38 @@ std::string& Shader::GetName()
     return _name;
 };
 
-//////////////////////////////////////////////
-/// ShaderListener - Hot-Reloading Shaders ///
-/////////////////////////////////////////////
-
-ShaderListener* ShaderListener::CreateShaderListener(ShaderManager* manager)
-{
-    ShaderListener* listener = new ShaderListener;
-    listener->_pManager = manager;
-    return listener;
-};
-
-void ShaderListener::handleFileAction( efsw::WatchID watchid, const std::string& dir,
-								   const std::string& filename, efsw::Action action,
-								   std::string oldFilename)
-{
-    for (auto& s : _pManager->_shaders)
-    {
-        auto shader = s.second;
-        auto shaderSourcePath = shader->GetSourceFilePath(); 
-        auto pos = shaderSourcePath.find_last_of("/");
-
-        std::string shaderFilename = shaderSourcePath.substr(pos + 1);
-
-        if (filename == shaderFilename && action == efsw::Action::Modified)
-        {
-            auto msg = "ShaderListener: Shader SourceFile: " + filename + " was modified.";
-            Logger::LogWarn(msg);
-            shader->rebuildShader();
-        }        
-    }
-};
 
 //////////////////////////////////////////////
-/// ShaderManager - Hot-Reloading Shaders ///
+/// ShaderLibrary - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
 
-ShaderManager::ShaderManager()
+ShaderLibrary::ShaderLibrary(std::filesystem::path folderPath)
 {
-    _pFileWatcher = new efsw::FileWatcher;
-    _pShaderListener = ShaderListener::CreateShaderListener(this);
-
-    _pFileWatcher->watch();
+    _shaderFileManager = ShaderFileManager(folderPath);
 };
 
-Shader* ShaderManager::GetShader(std::string& name)
+Shader* ShaderLibrary::GetShader(std::string& name)
 {
     return _shaders.at(name);
 };
 
-void ShaderManager::AddShader(Shader* shader)
+void ShaderLibrary::AddShader(Shader* shader)
 {
-    std::string name = shader->GetName();
-    _shaders.emplace(name, shader);
-
-    efsw::WatchID id = _pFileWatcher->addWatch(shader->GetSourceFilePath(), _pShaderListener, false);
-    efsw::WatchID id2 = _pFileWatcher->addWatch("./Shaders/", _pShaderListener, false);
-    auto msg = "ShaderManager: Started Watching - " + shader->GetSourceFilePath();
-    Logger::LogInfo(msg);
+    _shaders.emplace(shader->GetName(), shader);
+    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader);
 };
 
-void ShaderManager::CreateShader(ShaderCreateInfo& createInfo)
+void ShaderLibrary::CreateShader(ShaderCreateInfo& createInfo)
 {
     Shader* shader = Shader::CreateShader(createInfo);
-    std::string name = shader->GetName();
-    _shaders.emplace(name, shader);
-
-    efsw::WatchID id = _pFileWatcher->addWatch(shader->GetSourceFilePath(), _pShaderListener, false);
-    auto msg = "ShaderManager: Started Watching - " + shader->GetSourceFilePath();
-    Logger::LogInfo(msg);
+    _shaders.emplace(shader->GetName(), shader);
+    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader);
 };
 
-void ShaderManager::DestroyShader(std::string& name)
+void ShaderLibrary::DestroyShader(std::string& name)
 {
-    // remove from watch list
-
-    // destroy shader
+    Shader* shader = _shaders.at(name);
+    _shaderFileManager.RemoveObjectFromWatch(shader);
 };
 
 };
