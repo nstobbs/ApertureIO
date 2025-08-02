@@ -9,6 +9,7 @@
 #include "ApertureIO/BufferLayout.hpp"
 #include "ApertureIO/FrameBuffer.hpp"
 #include "ApertureIO/Shader.hpp"
+#include "ApertureIO/Texture.hpp"
 #include "ApertureIO/RenderContext.hpp"
 
 // Aio::Vulkan
@@ -92,19 +93,36 @@ int main()
     colourElement.type = Aio::Float;
     colourElement.normalized = false;
 
+    Aio::BufferElement uvElement{};
+    uvElement.count = 3;
+    uvElement.type = Aio::Float;
+    uvElement.normalized = false;
+
     Aio::BufferLayout vertexLayout;
     vertexLayout.AddBufferElement(positionElement);
     vertexLayout.AddBufferElement(colourElement);
+    vertexLayout.AddBufferElement(uvElement);
     
-    std::vector<glm::vec3> vertices;
-    vertices.push_back(glm::vec3(0.0f, -0.5f, 0.0f)); // PositionElement
-    vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // ColourElement
+    //TODO: use a different type instead of the vector.
+    // As we want to be able to have vec3s and vec2s in the same array
+    // as we will be able to find them correctly with the bufferLayout
 
-    vertices.push_back(glm::vec3(-0.5f, 0.5f, 0.0f)); // PositionElement
+    std::vector<glm::vec3> vertices;
+    vertices.push_back(glm::vec3(-1.0f, 1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // ColourElement
+    vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // uvElement
+
+    vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // ColourElement
+    vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f)); // uvElement
     
-    vertices.push_back(glm::vec3(0.5f, 0.5f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(-1.0f, -1.0f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f)); // ColourElement
+    vertices.push_back(glm::vec3(0.0f, 0.0f, 0.0f)); // uvElement
+
+    vertices.push_back(glm::vec3(1.0f, -1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f)); // ColourElement
+    vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // uvElement
 
     Aio::BufferCreateInfo bufferInfo{};
     bufferInfo.type = Aio::BufferType::Vertex;
@@ -129,6 +147,9 @@ int main()
     indices.push_back(0);
     indices.push_back(1);
     indices.push_back(2);
+    indices.push_back(2);
+    indices.push_back(1);
+    indices.push_back(3);
 
     Aio::BufferCreateInfo indexBufferInfo{};
     indexBufferInfo.type = Aio::BufferType::Index;
@@ -164,6 +185,13 @@ int main()
     testUniformData.a = 1.0f;
     uniformBuffer->UploadToDevice(&testUniformData);
 
+    /* Create an Texture to be used */
+    Aio::TextureCreateInfo testTextureInfo{};
+    testTextureInfo.context = context;
+    testTextureInfo.device = GPU;
+    testTextureInfo.filePath = "./Textures/1K_Test_PNG_Texture.png";
+    Aio::Texture* testTexture = Aio::Texture::CreateTexture(testTextureInfo);
+
     /* Create an Shader Program to Run */
     Aio::ShaderCreateInfo BasicShaderCreateInfo{};
     BasicShaderCreateInfo.type = Aio::ShaderType::Graphics;
@@ -172,7 +200,7 @@ int main()
     BasicShaderCreateInfo.shaderName = "Basic Shader";
     BasicShaderCreateInfo.sourceFilepath = "./Shaders/Basic.glsl";
 
-    Aio::ShaderLibrary shaderLibrary(std::filesystem::path("./Shaders/"));
+    Aio::ShaderLibrary shaderLibrary("./Shaders/");
     Aio::Shader* BasicShader = Aio::Shader::CreateShader(BasicShaderCreateInfo);
     shaderLibrary.AddShader(BasicShader);
 
@@ -180,7 +208,7 @@ int main()
     without creating an Buffer. The Uniform buffer is managed 
     inside of the Shader. All Uniforms should be set before 
     rendering. */
-    BasicShader->SetFloat("basic_float", 1.0f);
+    //BasicShader->SetFloat("basic_float", 1.0f);
 
     /* Bind all the objects needed to the RenderContext */
     Aio::RenderContext rContext;
@@ -190,6 +218,7 @@ int main()
     uniformBuffer->Bind(rContext);
     framebuffer->Bind(rContext);
     BasicShader->Bind(rContext);
+    testTexture->Bind(rContext);
 
     // Main Loop Stuff Happens Here!
     Aio::Logger::LogInfo("Running!");

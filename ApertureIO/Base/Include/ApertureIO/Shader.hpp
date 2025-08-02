@@ -67,7 +67,7 @@ protected:
 class ShaderLibrary
 {
 public:
-    ShaderLibrary(std::filesystem::path folderPath);
+    ShaderLibrary(std::string folderPath);
     Shader* GetShader(std::string& name);
     void AddShader(Shader* shader);
     void CreateShader(ShaderCreateInfo& createInfo);

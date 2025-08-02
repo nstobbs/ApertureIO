@@ -20,6 +20,7 @@ public:
     void SetVkSurfaceKHR(VkSurfaceKHR surface);
 
     VkDevice GetVkDevice();
+    VkSampler GetGlobalVkSampler();
     VmaAllocator GetVmaAllocator();
     VkDescriptorSetLayout GetBindlessLayout();
     VkDescriptorSet GetBindlessDescriptorSet();
@@ -61,6 +62,11 @@ private:
 
     std::vector<VkFence> _fences;
     std::vector<VkSemaphore> _semaphores;
+
+    /* Global Samplers For Texture Reading */
+    //TODO: Create an SamplersManager
+    void createGlobalTextureSampler();
+    VkSampler _sampler;
 };
 
 }; // End namespace Aio

@@ -113,6 +113,7 @@ bool VulkanDevice::init()
     VK_ASSERT(vkCreateDescriptorPool(GetVkDevice(), &descriptorPoolCreateInfo, nullptr,&_descriptorPool), VK_SUCCESS, "Create Descriptor Pool");
     
     createAndAllocateBindlessResources();
+    createGlobalTextureSampler();
 
     // TODO: should sync objects be part of the device?
     // create sync objects
@@ -199,6 +200,31 @@ void VulkanDevice::createAndAllocateBindlessResources()
     VK_ASSERT(vkAllocateDescriptorSets(GetVkDevice(), &allocateInfo, &_bindlessDescriptorSet), VK_SUCCESS, "Allocate Bindless Descriptor Set");
 };
 
+void VulkanDevice::createGlobalTextureSampler()
+{
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(_physicalDevice.physical_device, &properties);
+
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_FALSE; // TODO: enable this on the device first...
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+
+    VK_ASSERT(vkCreateSampler(GetVkDevice(), &samplerInfo, nullptr, &_sampler), VK_SUCCESS, "VulkanDevice: Failed to create VkSampler...");
+};
+
 /* Setter Functions*/
 void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
 {
@@ -209,6 +235,11 @@ void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
 VkDevice VulkanDevice::GetVkDevice()
 {
     return _device.device;
+};
+
+VkSampler VulkanDevice::GetGlobalVkSampler()
+{
+    return _sampler;
 };
 
 VmaAllocator VulkanDevice::GetVmaAllocator()

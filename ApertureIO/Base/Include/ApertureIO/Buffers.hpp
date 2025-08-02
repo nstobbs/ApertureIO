@@ -19,7 +19,7 @@ enum BufferType
 {
     Vertex = 0,
     Index = 1,
-    Uniform = 2
+    Uniform = 2,
 };
 
 struct BufferCreateInfo
@@ -34,7 +34,7 @@ struct BufferCreateInfo
 
 class Buffer
 {
-    public:
+public:
     static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
 
     BufferLayout GetBufferLayout();
@@ -43,11 +43,13 @@ class Buffer
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
+    uint32_t Count();
 
     virtual void UploadToDevice(void* data) = 0;
 
-    private:
+protected:
     BufferLayout _layout;
+    uint32_t _count;
 };
 
 // TODO: Rethink about buffers. Could we have a base buffer class that can be used to create index and vertex buffers from, as well as normal buffers??

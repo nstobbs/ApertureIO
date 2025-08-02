@@ -25,7 +25,7 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             VkPushConstantRange pushConstantHandlesInfo{};
             pushConstantHandlesInfo.stageFlags = VK_SHADER_STAGE_ALL;
             pushConstantHandlesInfo.offset = 0;
-            pushConstantHandlesInfo.size = sizeof(PushConstantBufferHandles);
+            pushConstantHandlesInfo.size = sizeof(HandlesPushConstant);
 
             VkPipelineLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -196,7 +196,8 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         //TODO: this needs to calculate where each element is offsets wise
-        // 
+        // TODO: this should be here as it't not really related to the shader.
+        // But more about the buffer layout itself
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
         uint32_t offset = 0;
 
@@ -232,7 +233,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                         description.offset = offset;
                     }
 
-                    offset =+ sizeof(float) * element.count;
+                    offset = offset + (sizeof(float) * element.count);
                     break;
 
                 case BufferElementType::Int:
@@ -259,7 +260,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                         description.offset = offset;
                     }
 
-                    offset =+ sizeof(int) * element.count;
+                    offset = offset + (sizeof(int) * element.count);
                     break;
 
                 case BufferElementType::Bool:

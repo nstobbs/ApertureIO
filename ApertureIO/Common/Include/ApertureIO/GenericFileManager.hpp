@@ -16,6 +16,7 @@ namespace Aio
  */
 
 class Shader;
+class Texture;
 
 template <typename T>
 class GenericFileListener;
@@ -25,7 +26,7 @@ class GenericFileManager
 {
 public:
     GenericFileManager();
-    GenericFileManager(std::filesystem::path folderPath);
+    GenericFileManager(std::string folderPath);
     ~GenericFileManager();    
     
     void AddFileToWatch(std::filesystem::path folderPath, T* object);
@@ -33,7 +34,7 @@ public:
     void RemoveObjectFromWatch(T* object);
 
 private:
-    friend GenericFileListener;
+    friend class GenericFileListener<T>;
 
     efsw::FileWatcher* _pWatcher;
     std::unordered_map<std::filesystem::path, efsw::WatchID> _watchingFolders;
@@ -54,6 +55,6 @@ private:
 };
 
 typedef GenericFileManager<Shader> ShaderFileManager;
-//typedef GenericFileManager<Texture> ShaderFileManager; TODO: Add Support For Textures...
+//typedef GenericFileManager<Texture> TextureFileManager;
 
 };

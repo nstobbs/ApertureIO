@@ -8,6 +8,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
     size_t size = static_cast<uint32_t>(createInfo->layout.GetStride() * createInfo->count);
     _size = static_cast<uint32_t>(size);
+    _count = createInfo->count;
     _type = createInfo->type;
 
    if (createInfo->type == BufferType::Vertex || createInfo->type == BufferType::Index) // TODO: Should be switch case instead of an if statement
@@ -78,7 +79,7 @@ void VulkanBuffer::UploadToDevice(void* data)
     memcpy(_pData, data, static_cast<size_t>(_size));
 };
 
-// TODO: Make this seble for Uniform Buffers and Storage Buffers
+// TODO: Make this useable for Uniform Buffers and Storage Buffers
 BufferHandle VulkanBuffer::storeBufferHandle()
 {
     BufferHandle handle = _pDevice->CreateUniformBufferHandle();
@@ -92,7 +93,7 @@ BufferHandle VulkanBuffer::storeBufferHandle()
     VkWriteDescriptorSet writeInfo{};
     writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeInfo.dstSet = _pDevice->GetBindlessDescriptorSet();
-    writeInfo.dstBinding = 0; // UniformBuffers at 0;
+    writeInfo.dstBinding = 0; // UniformBuffers at 0; StorageBuffers at 1; Textures at 2;
     writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     writeInfo.descriptorCount = 1;
     writeInfo.dstArrayElement = handle;

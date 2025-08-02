@@ -16,12 +16,9 @@
 
 namespace Aio {
 
-//TODO: switch to a dymanic buffer or something to support adding more buffershandles to the shader.
-struct PushConstantBufferHandles {
-    BufferHandle* bufferA = {nullptr};
-    BufferHandle* bufferB = {nullptr};
-    BufferHandle* bufferC = {nullptr};
-    BufferHandle* bufferD = {nullptr};
+struct HandlesPushConstant{
+    BufferHandle bufferHandles[16];
+    TextureHandle textureHandles[16];
 };
 
 class VulkanShader : public Shader

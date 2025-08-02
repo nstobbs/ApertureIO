@@ -1,6 +1,7 @@
 #include "ApertureIO/GenericFileManager.hpp"
 #include "ApertureIO/Logger.hpp"
 #include "ApertureIO/Shader.hpp"
+#include "ApertureIO/Texture.hpp"
 
 namespace Aio 
 {
@@ -37,17 +38,16 @@ GenericFileManager<T>::GenericFileManager()
 };
 
 template <typename T>
-GenericFileManager<T>::GenericFileManager(std::filesystem::path folderPath)
+GenericFileManager<T>::GenericFileManager(std::string folderPath)
 {
     _pWatcher =  new efsw::FileWatcher;
     _pListener = new GenericFileListener<T>(this);
     
-    efsw::WatchID folderID = _pWatcher->addWatch(folderPath.string(), _pListener, true);
-    auto logMsg = "GenericFileManager: Watching Dir: " + folderPath.string();
+    efsw::WatchID folderID = _pWatcher->addWatch(folderPath, _pListener, true);
+    auto logMsg = "GenericFileManager: Watching Dir: " + folderPath;
     Logger::LogInfo(logMsg);
     _watchingFolders.emplace(folderPath, folderID);
     _pWatcher->watch();
-    auto spots = _pWatcher->directories();
 };
 
 template <typename T>
@@ -61,13 +61,13 @@ template <typename T>
 void GenericFileManager<T>::AddFileToWatch(std::filesystem::path filePath, T* object)
 {
     std::filesystem::path folderPath = filePath.parent_path();
-    folderPath = folderPath.string() + "/";
-    if (_watchingFiles.find(filePath) == _watchingFiles.end() && _watchingFolders.find(folderPath) == _watchingFolders.end())
+    std::string folderPathString = folderPath.string() + "/";  
+    if (_watchingFiles.find(filePath) == _watchingFiles.end() && _watchingFolders.find(folderPathString) == _watchingFolders.end())
     {
-        efsw::WatchID folderID = _pWatcher->addWatch(folderPath.string(), _pListener);
-        auto logMsg = "GenericFileManager: Watching Dir: " + folderPath.string();
+        efsw::WatchID folderID = _pWatcher->addWatch(folderPathString, _pListener);
+        auto logMsg = "GenericFileManager: Watching Dir: " + folderPathString;
         Logger::LogInfo(logMsg);
-        _watchingFolders.emplace(folderPath, folderID);
+        _watchingFolders.emplace(std::filesystem::path(folderPathString), folderID);
         _watchingFiles.emplace(filePath, object);
     } else if (_watchingFiles.find(filePath) == _watchingFiles.end())
     {
@@ -88,7 +88,8 @@ void GenericFileManager<T>::RemoveObjectFromWatch(T* object)
     _watchingFiles.erase(filePath);
 };
 
-template class GenericFileManager<Shader>; 
+template class GenericFileManager<Shader>;
+//template class GenericFileManager<Texture>; 
 
 };
 

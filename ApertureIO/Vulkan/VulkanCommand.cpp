@@ -80,6 +80,26 @@ void VulkanCommand::CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuff
     endSingleTimeCommandBuffer(pDevice, commandBuffer);
 };
 
+void VulkanCommand::CopyBufferToImage(VulkanDevice* pDevice, VkBuffer srcBuffer, VkImage dstImage, uint32_t width, uint32_t height)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommandBuffer(pDevice);
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {width, height, 1};
+
+    vkCmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    endSingleTimeCommandBuffer(pDevice, commandBuffer);
+};
+
 void VulkanCommand::StartCommand(RenderContext& renderContext)
 {
     //auto device = dynamic_cast<VulkanDevice*>(pDevice); 
@@ -147,19 +167,20 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);
 
-    // Add Uniform Buffers Handles to Push Constant
-    PushConstantBufferHandles data{};
-    data.bufferA = renderContext._UniformBuffers[0]->GetBufferHandle(); // TODO: fix this, testing
-    vkCmdPushConstants(commandBuffer, shader->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantBufferHandles), &data);
+    // Add Uniform Buffers And Textures Handles to Push Constant
+    // TODO: Maybe it can be RenderContext job to have this sorted out...
+    HandlesPushConstant handlesToPush{};
+    handlesToPush.bufferHandles[0] = (BufferHandle)renderContext._UniformBuffers[0]->GetBufferHandle(); // TODO: fix this, testing
+    handlesToPush.textureHandles[0] = (TextureHandle)renderContext._Textures[0]->GetTextureHandle(); // TODO: fix this, testing
+    vkCmdPushConstants(commandBuffer, shader->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, sizeof(HandlesPushConstant), &handlesToPush);
 
     // DRAW COMMAND!
-    vkCmdDrawIndexed(commandBuffer, 3, 1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffer, renderContext._IndexBuffer->Count(), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
     VK_ASSERT(vkEndCommandBuffer(commandBuffer), VK_SUCCESS, "End Command Buffer");
 
     // Sumbit and Preset
-
     VkSemaphore waitSemaphores[] = {_pDevice->GetImageAvailableSemaphore(currentFrame)};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

@@ -34,7 +34,7 @@ std::string& Shader::GetName()
 /// ShaderLibrary - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
 
-ShaderLibrary::ShaderLibrary(std::filesystem::path folderPath)
+ShaderLibrary::ShaderLibrary(std::string folderPath)
 {
     _shaderFileManager = ShaderFileManager(folderPath);
 };

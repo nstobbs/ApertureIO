@@ -7,6 +7,7 @@ add_library(Base STATIC
         FrameBuffer.cpp
         RenderContext.cpp
         Shader.cpp
+        Texture.cpp
 )
 
 target_include_directories(Base PUBLIC 
@@ -16,6 +17,7 @@ target_include_directories(Base PUBLIC
 target_link_libraries(Base
         glm::glm
         boost::boost
+        stb::stb
         
         Aio::Common
         Aio::Vulkan

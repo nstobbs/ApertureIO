@@ -22,6 +22,7 @@ namespace Aio {
     class Buffer;
     class Shader;
     class FrameBuffer;
+    class Texture;
 }
 
 /* singleton object that store the currently Bound objects
