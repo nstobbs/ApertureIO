@@ -4,6 +4,7 @@
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/RenderContext.hpp"
 #include "ApertureIO/BufferLayout.hpp"
+#include "ApertureIO/Handles.hpp"
 
 #include <vector>
 
@@ -18,7 +19,7 @@ enum BufferType
 {
     Vertex = 0,
     Index = 1,
-    Uniform = 2
+    Uniform = 2,
 };
 
 struct BufferCreateInfo
@@ -33,20 +34,26 @@ struct BufferCreateInfo
 
 class Buffer
 {
-    public:
+public:
     static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
 
     BufferLayout GetBufferLayout();
+    virtual BufferHandle* GetBufferHandle() = 0;
     void SetBufferLayout(BufferLayout layout);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
+    uint32_t Count();
 
-    private:
+    virtual void UploadToDevice(void* data) = 0;
+
+protected:
     BufferLayout _layout;
+    uint32_t _count;
 };
 
 // TODO: Rethink about buffers. Could we have a base buffer class that can be used to create index and vertex buffers from, as well as normal buffers??
+// TODO: These classes arent currently being used and can be removed.
 class IndexBuffer : public Buffer
 {
     public:

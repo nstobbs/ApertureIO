@@ -16,6 +16,11 @@
 
 namespace Aio {
 
+struct HandlesPushConstant{
+    BufferHandle bufferHandles[16];
+    TextureHandle textureHandles[16];
+};
+
 class VulkanShader : public Shader
 {
     public:
@@ -26,7 +31,7 @@ class VulkanShader : public Shader
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
 
-    void rebuildShader() override; //TODO: Needs the RenderContext
+    void sourceFileModified() override;
 
     void SetVec4(std::string name, glm::vec4 value) override;
     void SetFloat(std::string name, float value) override;
@@ -39,6 +44,7 @@ class VulkanShader : public Shader
     private:
     ShaderType _type;
 
+    // TODO: Check if this is needed?
     // Uniform Buffer Stuff
     BufferLayout _uniformBufferLayout;
     VulkanBuffer* _uniformBuffer;
@@ -55,6 +61,8 @@ class VulkanShader : public Shader
     rebuild the shader if the source file has been modified or 
     if the renderContext has a different hash meaning that the bound
     objects have changed.*/
+
+    /* TODO: */
     std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
 
     VkPipelineInputAssemblyStateCreateInfo _inputAssemblyInfo{};

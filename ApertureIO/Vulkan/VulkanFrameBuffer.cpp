@@ -19,7 +19,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     //swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_STORAGE_BIT); // Write Access
     //swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_SAMPLED_BIT); // Read Access
 
-    swapchainBuilder.set_desired_min_image_count(context->getMaxFramesInFlight());
+    swapchainBuilder.set_desired_min_image_count(_pContext->getMaxFramesInFlight());
     auto swapchainResult = swapchainBuilder.build();
     if (!swapchainResult)
     {
@@ -208,6 +208,16 @@ VkFramebuffer VulkanFrameBuffer::CreateVkFramebuffer(std::vector<VkImageView> la
     };
     
     return framebuffer;
+};
+
+void VulkanFrameBuffer::Rebuild()
+{
+    _requestedRebuild = true;
+};
+
+bool VulkanFrameBuffer::CheckRebuildInProgress()
+{
+    return _requestedRebuild;
 };
 
 void VulkanFrameBuffer::Bind(RenderContext& renderContext)

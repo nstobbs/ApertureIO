@@ -9,6 +9,7 @@ namespace Aio {
 VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
 {
     _type = createInfo.type;
+    _name = createInfo.shaderName;
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
     _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
     auto bindlessLayout = _pDevice->GetBindlessLayout();
@@ -20,15 +21,23 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
         {
             Logger::LogInfo("Creating Graphics Pipeline Layout.");
 
+            // Push Constant For Buffer Handles
+            VkPushConstantRange pushConstantHandlesInfo{};
+            pushConstantHandlesInfo.stageFlags = VK_SHADER_STAGE_ALL;
+            pushConstantHandlesInfo.offset = 0;
+            pushConstantHandlesInfo.size = sizeof(HandlesPushConstant);
+
             VkPipelineLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             layoutInfo.setLayoutCount = 1;
             layoutInfo.pSetLayouts = &bindlessLayout;
+            layoutInfo.pushConstantRangeCount = 1;
+            layoutInfo.pPushConstantRanges = &pushConstantHandlesInfo;
             VK_ASSERT(vkCreatePipelineLayout(_pDevice->GetVkDevice(), &layoutInfo, nullptr, &_layout), VK_SUCCESS, "Create Graphics Pipeline");
 
             /* Create the Pipeline */
             /* Read Shader Source Code */
-            auto sourceCode = FileIO::ReadSourceFile(createInfo.sourceFilepath);
+            auto sourceCode = FileIO::ReadSourceFile(createInfo.sourceFilepath.string());
             auto vertSource = FileIO::SplitOutShader(sourceCode, SourceFileType::VertexShader);
             auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader);
 
@@ -187,7 +196,8 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         //TODO: this needs to calculate where each element is offsets wise
-        // 
+        // TODO: this should be here as it't not really related to the shader.
+        // But more about the buffer layout itself
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
         uint32_t offset = 0;
 
@@ -223,7 +233,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                         description.offset = offset;
                     }
 
-                    offset =+ sizeof(float) * element.count;
+                    offset = offset + (sizeof(float) * element.count);
                     break;
 
                 case BufferElementType::Int:
@@ -250,7 +260,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                         description.offset = offset;
                     }
 
-                    offset =+ sizeof(int) * element.count;
+                    offset = offset + (sizeof(int) * element.count);
                     break;
 
                 case BufferElementType::Bool:
@@ -285,7 +295,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
     return VK_NULL_HANDLE;
 };
 
-void VulkanShader::rebuildShader()
+void VulkanShader::sourceFileModified()
 {   
     if(!_alreadyRebuilding)
     {
@@ -301,7 +311,7 @@ void VulkanShader::rebuildShader()
             case ShaderType::Graphics:
             // Read Shader Source File
             //TODO: Double check if we are safe to call GetSourceFilePath().
-            auto sourceCode = FileIO::ReadSourceFile(GetSourceFilePath());
+            auto sourceCode = FileIO::ReadSourceFile(GetSourceFilePath().string());
             auto vertSource = FileIO::SplitOutShader(sourceCode, SourceFileType::VertexShader);
             auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader);
         
@@ -426,26 +436,29 @@ VkShaderModule VulkanShader::createShaderModule(std::vector<uint32_t>& code)
 std::vector<uint32_t> VulkanShader::compileShaderSource(std::string& code, SourceFileType type)
 {
     shaderc_shader_kind shadercType;
+    auto shaderName = GetName();
     switch(type)
     {
         case SourceFileType::VertexShader:
             shadercType = shaderc_glsl_vertex_shader;
+            shaderName = shaderName + "_VertexShader";
             break;
 
         case SourceFileType::FragmentShader:
             shadercType = shaderc_glsl_fragment_shader;
+            shaderName = shaderName + "_FragmentShader";
             break;
         
         case SourceFileType::ComputeShader:
             shadercType = shaderc_glsl_compute_shader;
+            shaderName = shaderName + "_ComputeShader";
             break;
     }
     
-    //TODO: Double check GetName.
     shaderc_compilation_result_t result = shaderc_compile_into_spv(
                                             _pContext->GetShadercCompiler(), code.c_str(),
                                             code.size(), shadercType,
-                                            GetName().c_str(), "main", nullptr);
+                                            shaderName.c_str(), "main", nullptr);
 
     auto compileStatus = shaderc_result_get_compilation_status(result);
     if (compileStatus != shaderc_compilation_status_success)

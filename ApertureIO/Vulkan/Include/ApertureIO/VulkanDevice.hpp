@@ -13,11 +13,14 @@ class VulkanContext;
 
 class VulkanDevice : public Device
 {
-    public:
+public:
     VulkanDevice(Context* context);
     bool init() override;
 
+    void SetVkSurfaceKHR(VkSurfaceKHR surface);
+
     VkDevice GetVkDevice();
+    VkSampler GetGlobalVkSampler();
     VmaAllocator GetVmaAllocator();
     VkDescriptorSetLayout GetBindlessLayout();
     VkDescriptorSet GetBindlessDescriptorSet();
@@ -34,13 +37,16 @@ class VulkanDevice : public Device
     friend class VulkanFrameBuffer;
     friend class VulkanCommand;
 
-    private:
+private:
 
     VulkanContext* _pVulkanContext;
 
     vkb::PhysicalDevice _physicalDevice;
     vkb::Device _device;
     VmaAllocator _allocator;
+
+    VkSurfaceKHR _surface = {VK_NULL_HANDLE};
+    char* _windowExtensions = {nullptr};
 
     VkDescriptorPool _descriptorPool;
 
@@ -56,6 +62,11 @@ class VulkanDevice : public Device
 
     std::vector<VkFence> _fences;
     std::vector<VkSemaphore> _semaphores;
+
+    /* Global Samplers For Texture Reading */
+    //TODO: Create an SamplersManager
+    void createGlobalTextureSampler();
+    VkSampler _sampler;
 };
 
 }; // End namespace Aio

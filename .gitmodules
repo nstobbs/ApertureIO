@@ -4,3 +4,6 @@
 [submodule "ThirdParty/vk-bootstrap"]
 	path = ThirdParty/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap.git
+[submodule "ThirdParty/stb"]
+	path = ThirdParty/stb
+	url = https://github.com/nothings/stb.git

@@ -3,6 +3,7 @@
 #include "ApertureIO/VulkanDevice.hpp"
 
 #include <array>
+#include <string>
 
 namespace Aio {
 
@@ -13,35 +14,18 @@ VulkanDevice::VulkanDevice(Context* context)
 
 bool VulkanDevice::init()
 {   
-    GLFWwindow* window = _pVulkanContext->getActiveWindowPtr()->getWindowPtr(); //TODO: this need to be rewritten so different platforms can imp they own!
     VkInstance instance = _pVulkanContext->GetVkInstance(); 
-    VkSurfaceKHR surface; 
-
-    //TODO shouldn't be using platform spec code instead of here.
-    //TODO: this need to be rewritten so different platforms can imp they own!
-    auto result = glfwCreateWindowSurface(instance, window, NULL, &surface); 
-    if (result != VK_SUCCESS)
-    {
-        std::cout << "failed to create VkSurface :(\n";
-        return false;
-    }
 
     // Picking the Physical Device
     vkb::PhysicalDeviceSelector phyiscalDevicePicker(_pVulkanContext->_instance);
-    phyiscalDevicePicker.set_surface(surface); // this doesnt need to be set if we want an headless option.
+    phyiscalDevicePicker.set_surface(_surface); // this doesnt need to be set if we want an headless option.
 
     /* Set the Required Extensions that I need */
     // Need to double check these. I'm sure I'm doing something
     // wrong here or volk is doing it for me.
 
-
-    for (auto ext : _pVulkanContext->getRequiredExtensions())
-    {
-        /* TODO setting required extensions seems to break 
-        the physical device selection process.*/
-        //phyiscalDevicePicker.add_required_extension(ext);
-        //std::cout << "Added Extension " << ext << "\n";
-    }
+    //TODO: Any Extensions needed for the Window / Surface should happen here...
+    // else it should be remove as a argv 
 
     auto pickerResult = phyiscalDevicePicker.select();
     if (!pickerResult) 
@@ -52,7 +36,7 @@ bool VulkanDevice::init()
 
     _physicalDevice = pickerResult.value();
 
-    // Enable Device Features that we want.
+    // Enable Device Features 
     VkPhysicalDeviceVulkan12Features features{};
     features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     features.runtimeDescriptorArray = VK_TRUE;
@@ -129,11 +113,12 @@ bool VulkanDevice::init()
     VK_ASSERT(vkCreateDescriptorPool(GetVkDevice(), &descriptorPoolCreateInfo, nullptr,&_descriptorPool), VK_SUCCESS, "Create Descriptor Pool");
     
     createAndAllocateBindlessResources();
+    createGlobalTextureSampler();
 
     // TODO: should sync objects be part of the device?
     // create sync objects
-    Context* context = dynamic_cast<Context*>(_pVulkanContext);
-    uint32_t inFlight = context->getMaxFramesInFlight();
+    uint32_t inFlight = _pVulkanContext->getMaxFramesInFlight();
+    
     // image available
     // render finished
     // 0 1 is image available
@@ -215,11 +200,46 @@ void VulkanDevice::createAndAllocateBindlessResources()
     VK_ASSERT(vkAllocateDescriptorSets(GetVkDevice(), &allocateInfo, &_bindlessDescriptorSet), VK_SUCCESS, "Allocate Bindless Descriptor Set");
 };
 
+void VulkanDevice::createGlobalTextureSampler()
+{
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(_physicalDevice.physical_device, &properties);
+
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_FALSE; // TODO: enable this on the device first...
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+
+    VK_ASSERT(vkCreateSampler(GetVkDevice(), &samplerInfo, nullptr, &_sampler), VK_SUCCESS, "VulkanDevice: Failed to create VkSampler...");
+};
+
+/* Setter Functions*/
+void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
+{
+    _surface = surface;
+}
 /* Getter Functions*/
 
 VkDevice VulkanDevice::GetVkDevice()
 {
     return _device.device;
+};
+
+VkSampler VulkanDevice::GetGlobalVkSampler()
+{
+    return _sampler;
 };
 
 VmaAllocator VulkanDevice::GetVmaAllocator()
@@ -274,8 +294,8 @@ VkSemaphore VulkanDevice::GetImageAvailableSemaphore(uint32_t currentFrame)
 
 VkSemaphore VulkanDevice::GetRenderFinshedSemaphore(uint32_t currentFrame)
 {
-    auto maxInflight = dynamic_cast<Context*>(_pVulkanContext)->getMaxFramesInFlight();
-    return _semaphores[currentFrame + maxInflight];
+    
+    return _semaphores[currentFrame + _pVulkanContext->getMaxFramesInFlight()];
 };
 
 VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)

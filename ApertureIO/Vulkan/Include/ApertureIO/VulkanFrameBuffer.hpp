@@ -34,9 +34,13 @@ class VulkanFrameBuffer : public FrameBuffer
     VkExtent2D GetExtent();
     VkFramebuffer GetIndexFramebuffer(uint32_t imageIndex);
 
+    void Rebuild();
+
+    bool CheckRebuildInProgress();
+
     private:
 
-    friend VulkanShader;
+    friend class VulkanShader;
     /* Private Functions */
     VkRenderPass CreateVkRenderPass();
 
@@ -61,5 +65,7 @@ class VulkanFrameBuffer : public FrameBuffer
 
     // if it is a swapchain store it.
     VkSwapchainKHR _swapchain;
+    
+    bool _requestedRebuild = {false};
 }; 
 };

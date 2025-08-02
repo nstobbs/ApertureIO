@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ApertureIO/GenericFileManager.hpp"
+
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/RenderContext.hpp"
@@ -9,6 +11,7 @@
 #include <efsw/efsw.hpp>
 
 #include <string>
+#include <filesystem>
 #include <unordered_map>
 
 namespace Aio {
@@ -24,71 +27,55 @@ struct ShaderCreateInfo
     Context* pContext;
     ShaderType type;
     std::string shaderName;
-    std::string sourceFilepath;
+    std::filesystem::path sourceFilepath;
 };
+
+/**
+ * @class Shader
+ * @brief A Shader Program that runs on a logical Aio::Device.
+ * This can be a Compute Shaders for running calculation on the GPU, or
+ *  Graphics Shaders for use of fixed functions on graphics rendering tasks.
+ */
 
 class Shader
 {
-    public:
+public:
     static Shader* CreateShader(ShaderCreateInfo& createInfo);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
     
-    virtual void rebuildShader() = 0;
+    virtual void sourceFileModified() = 0;
     
-    std::string& GetSourceFilePath();
+    std::filesystem::path& GetSourceFilePath();
     std::string& GetName();
 
     virtual void SetVec4(std::string name, glm::vec4 value) = 0;
     virtual void SetFloat(std::string name, float value) = 0;
 
-    protected:
+protected:
     std::string _name;
-    std::string _sourceFilepath;
+    std::filesystem::path _sourceFilepath;
     std::vector<std::string> _uniformBufferNames;
 };
 
-/* TODO: Hot-Loading Notes, the shaderLibaray will be watching the source files for any chanages to the files.
-Once we get an event back that one of the shader source files have changed. Then we start the rebuild shader
-process. The Listening and Creations of New Shaders should happen on new threads.*/
-
-class ShaderManager;
-
-class ShaderListener : public efsw::FileWatchListener
-{   
-    public:
-    static ShaderListener* CreateShaderListener(ShaderManager* manager);
-    void handleFileAction( efsw::WatchID watchid, const std::string& dir,
-								   const std::string& filename, efsw::Action action,
-								   std::string oldFilename) override;
-    private:
-    ShaderManager* _pManager;
-};
-
-//////////////////////////////////////////////
-/// ShaderManager - Hot-Reloading Shaders ///
-/////////////////////////////////////////////
-//TODO: Maybe this class can be more generic so it can be used for other
-// objects like textures, obj, etc...
-
-class ShaderManager
+/**
+ * @class ShaderLibrary
+ * @brief ShaderLibrary Creates and Stores any shaders. Returns shaders if requested.
+ *  Rebuilds any Shaders when the source file has been modified via calling on sourceFileModified().
+ */
+class ShaderLibrary
 {
-    public:
-    ShaderManager();
-
+public:
+    ShaderLibrary(std::string folderPath);
     Shader* GetShader(std::string& name);
     void AddShader(Shader* shader);
     void CreateShader(ShaderCreateInfo& createInfo);
     void DestroyShader(std::string& name);
     
-    private:
+private:
     std::unordered_map<std::string, Shader*> _shaders;
-    
-    efsw::FileWatcher* _pFileWatcher;
-    ShaderListener* _pShaderListener;
-
-    friend class ShaderListener;
+    ShaderFileManager _shaderFileManager;
 };
 
 }; // End of Aio Namespace 

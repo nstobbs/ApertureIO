@@ -1,2 +1,4 @@
 add_subdirectory(vk-bootstrap)
 add_subdirectory(VulkanMemoryAllocator)
+
+include(stb.cmake)

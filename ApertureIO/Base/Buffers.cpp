@@ -20,6 +20,11 @@ BufferLayout Buffer::GetBufferLayout()
     return _layout;
 };
 
+uint32_t Buffer::Count()
+{
+    return _count;
+}
+
 void Buffer::SetBufferLayout(BufferLayout layout)
 {
     _layout = layout;

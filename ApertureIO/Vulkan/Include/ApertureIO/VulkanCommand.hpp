@@ -9,6 +9,7 @@
 #include "ApertureIO/Command.hpp"
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/RenderContext.hpp"
+#include "ApertureIO/Handles.hpp"
 
 #include <vector>
 #include <array>
@@ -27,13 +28,14 @@ class VulkanCommand : public Command
     //void DispatchCompute(RenderContext& renderContext) override;
     //void Clear(RenderContext& renderContext) override; //TODO maybe move this into framebuffer??
 
+    /* Static Functions */
     static void CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t size);
+    static void CopyBufferToImage(VulkanDevice* pDevice, VkBuffer srcBuffer, VkImage dstImage, uint32_t width, uint32_t height);
+    static VkCommandBuffer beginSingleTimeCommandBuffer(VulkanDevice* pDevice);
+    static void endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandBuffer commandBuffer);
 
     private:
     void createCommandBuffers(VulkanDevice* pDevice);
-
-    static VkCommandBuffer beginSingleTimeCommandBuffer(VulkanDevice* pDevice);
-    static void endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandBuffer commandBuffer);
     
     Context* _pContext;
     VulkanDevice* _pDevice;

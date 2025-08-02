@@ -1,5 +1,5 @@
-add_library(Window STATIC 
-        Window.cpp
+add_library(Window STATIC
+    WindowGLFWImpl.cpp
 )
 
 target_include_directories(Window PUBLIC 
@@ -8,8 +8,9 @@ target_include_directories(Window PUBLIC
 
 target_link_libraries(Window
     glfw
-    
     Aio::Common
+    Aio::Base
+    Aio::Vulkan
 )
 
-add_library(Aio::Window ALIAS Window)
+add_library(TestApplication:Window ALIAS Window) 
