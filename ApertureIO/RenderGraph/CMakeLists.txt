@@ -1,13 +1,13 @@
-add_library(RenderGraph STATIC
-                RenderGraph.cpp
-)
+#add_library(RenderGraph STATIC
+#                RenderGraph.cpp
+#)
 
-target_include_directories(RenderGraph PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+#target_include_directories(RenderGraph PUBLIC 
+#        ${CMAKE_CURRENT_SOURCE_DIR}/include
+#)
 
-target_link_libraries(RenderGraph
-        Aio::Base
-)
+#target_link_libraries(RenderGraph
+#        Aio::Base
+#)
 
-add_library(Aio::RenderGraph ALIAS RenderGraph)
+#add_library(Aio::RenderGraph ALIAS RenderGraph)

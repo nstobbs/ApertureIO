@@ -34,9 +34,9 @@ void main()
     vec2 fixedUv = inUv.xy;
     float test = GetResource(testUniform, 0).a;
 
-    outColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    //outColor = vec4(inColor, 1.0f);
-    outColor = outColor + vec4(fixedUv.x, fixedUv.y, 0.0f, 1.0f);
+    //outColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    outColor = vec4(inColor, 1.0f);
+    //outColor = outColor + vec4(fixedUv.x, fixedUv.y, 0.0f, 1.0f);
     outColor = outColor * vec4(test, test, test, 1.0f); 
     outColor = outColor + texture(uGlobalTextures[0], fixedUv);
 }
