@@ -42,7 +42,7 @@ void VulkanContext::init()
     volkLoadInstance(_instance);
     
     // boot up the shader compiler
-    _compiler = shaderc_compiler_initialize();
+    _compiler = new shaderc::Compiler();
     // TODO: create an teardown function for this class
 };
 
@@ -55,12 +55,11 @@ void VulkanContext::SetRequiredExtensions(const char** extensions, uint32_t coun
 VkInstance VulkanContext::GetVkInstance()
 {
     return _instance.instance;
-}
+};
 
-shaderc_compiler_t VulkanContext::GetShadercCompiler()
+shaderc::Compiler* VulkanContext::GetShadercCompiler()
 {
     return _compiler;
 };
-
 
 } // End Aio namespace

@@ -15,14 +15,15 @@ class VulkanContext : public Context
     
     /* Getter Functions */
     VkInstance GetVkInstance(); //TODO Should be a pointer to the instance
-    shaderc_compiler_t GetShadercCompiler();
+    shaderc::Compiler* GetShadercCompiler();
     
     void SetRequiredExtensions(const char** extensions, uint32_t count);
 
     private:
 
     vkb::Instance _instance; // holds the vulkan instance
-    shaderc_compiler_t _compiler;
+    shaderc::Compiler* _compiler;
+
     friend class VulkanDevice; //TODO: Find a way to remove this...
     const char** _requiredExtensions;
     uint32_t _requiredExtensionsCount;

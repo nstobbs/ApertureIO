@@ -3,7 +3,6 @@
 #include <volk.h>
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
-#include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
 
 #include <string>

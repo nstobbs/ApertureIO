@@ -3,6 +3,7 @@
 #include "ApertureIO/VulkanFrameBuffer.hpp"
 
 #include "ApertureIO/Logger.hpp"
+#include <memory>
 
 namespace Aio {
 
@@ -425,7 +426,7 @@ VkShaderModule VulkanShader::createShaderModule(std::vector<uint32_t>& code)
 {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
+    createInfo.codeSize = code.size() * sizeof(uint32_t);
     createInfo.pCode = code.data();
     
     VkShaderModule shaderModule;
@@ -455,27 +456,25 @@ std::vector<uint32_t> VulkanShader::compileShaderSource(std::string& code, Sourc
             break;
     }
     
-    shaderc_compilation_result_t result = shaderc_compile_into_spv(
-                                            _pContext->GetShadercCompiler(), code.c_str(),
-                                            code.size(), shadercType,
-                                            shaderName.c_str(), "main", nullptr);
+    shaderc::Compiler* compiler = _pContext->GetShadercCompiler();
+    shaderc::CompileOptions options;
+    FileIncluder includer;
+    options.SetIncluder(std::make_unique<FileIncluder>());
 
-    auto compileStatus = shaderc_result_get_compilation_status(result);
+    auto result = compiler->CompileGlslToSpv(code.c_str(), code.size(),
+                                                    shadercType, shaderName.c_str(), options);
+
+    auto compileStatus = result.GetCompilationStatus();
     if (compileStatus != shaderc_compilation_status_success)
     {
-        auto msg = "Failed to Compile: " + GetName();
+        auto msg = "Failed to Compile: " + shaderName;
         Logger::LogError(msg);
-        Logger::LogError(shaderc_result_get_error_message(result));
+        Logger::LogError(result.GetErrorMessage());
         throw std::runtime_error("");
     }
-
-    auto compiledCodeSize = shaderc_result_get_length(result);
-    auto compiledCodePointer = shaderc_result_get_bytes(result);
     
-    //TODO: this seems like it would be way to big???
-    std::vector<uint32_t> compiledCode(compiledCodeSize); 
-    memcpy(compiledCode.data(), compiledCodePointer, compiledCodeSize);
-    shaderc_result_release(result);
+    std::vector<uint32_t> compiledCode(result.cbegin(), result.cend());
+    // TODO: release the compiled shader 
     return compiledCode;
 };
 
@@ -497,6 +496,33 @@ VkPipeline VulkanShader::GetPipeline()
 VkPipelineLayout VulkanShader::GetPipelineLayout()
 {
     return _layout;
+};
+
+
+// FileIncluder Functions
+
+shaderc_include_result* FileIncluder::GetInclude(const char* requested_source,
+                                               shaderc_include_type type,
+                                               const char* requesting_source,
+                                               size_t include_depth)
+{
+    //TODO: Comeback and fix hardcoded file path
+    _sourceCode = FileIO::ReadSourceFile(std::string("./Shaders/ApertureIO.glsl"));
+    _sourceCodeSize = _sourceCode.size();
+
+    _name = std::string(requested_source);
+    _nameSize = _name.size();
+
+    shaderc_include_result* result = new shaderc_include_result{_name.c_str(), _nameSize, _sourceCode.c_str(), _sourceCodeSize, nullptr};
+    return result;
+};
+
+void FileIncluder::ReleaseInclude(shaderc_include_result* data)
+{
+    //TODO: come back and fixme
+    //delete[] data->source_name;
+    //delete[] data->content;
+    //delete data;
 };
 
 };
