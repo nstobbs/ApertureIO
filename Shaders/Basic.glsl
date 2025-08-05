@@ -22,6 +22,7 @@ void main()
 #version 440
 #include "ApertureIO.glsl"
 
+
 layout (location = 0) in vec3 inColor;
 layout (location = 1) in vec3 inUv;
 
@@ -39,4 +40,5 @@ void main()
     //outColor = outColor + vec4(fixedUv.x, fixedUv.y, 0.0f, 1.0f);
     outColor = outColor * vec4(test, test, test, 1.0f); 
     outColor = outColor + texture(uGlobalTextures[0], fixedUv);
+
 }
