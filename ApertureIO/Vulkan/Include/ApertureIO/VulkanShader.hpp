@@ -92,4 +92,23 @@ class VulkanShader : public Shader
     size_t _previousHash;
 };
 
+// FileIncluder Class For Shaderc to be able to compile shaders with headers files
+// 
+class FileIncluder : public shaderc::CompileOptions::IncluderInterface
+{
+public:
+    shaderc_include_result* GetInclude(const char* requested_source,
+                                               shaderc_include_type type,
+                                               const char* requesting_source,
+                                               size_t include_depth) override;
+    void ReleaseInclude(shaderc_include_result* data) override;
+
+private:
+    std::string _name;
+    std::string _sourceCode;
+    uint32_t _nameSize;
+    uint32_t _sourceCodeSize;
+
+};
+
 }; // End of Aio namespace
