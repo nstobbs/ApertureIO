@@ -16,7 +16,7 @@
 
 namespace Aio {
 
-enum ShaderType {
+enum class ShaderType {
     Graphics = 0,
     Compute = 1
 };

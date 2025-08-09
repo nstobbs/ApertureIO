@@ -9,6 +9,7 @@ void Logger::LogError(std::string text)
     std::cout << "Error: ";
     resetPrintColour();
     std::cout << text << "\n";
+    throw std::runtime_error("Exiting..");
 };
 
 void Logger::LogWarn(std::string text)

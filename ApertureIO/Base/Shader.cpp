@@ -12,7 +12,7 @@ Shader* Shader::CreateShader(ShaderCreateInfo& createInfo)
     auto API =  createInfo.pContext->getRendererAPI();
     switch (API)
     {
-        case eVulkan:
+        case RendererAPI::eVulkan:
             Shader* shader = new VulkanShader(createInfo);
             shader->_sourceFilepath = createInfo.sourceFilepath;
             return shader;

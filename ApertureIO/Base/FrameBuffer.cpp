@@ -7,7 +7,7 @@ FrameBuffer* FrameBuffer::CreateFrameBuffer(Device* pDevice, Context* pContext)
 {
     switch(pContext->getRendererAPI())
     {
-        case eVulkan:
+        case RendererAPI::eVulkan:
             VulkanFrameBuffer* framebuffer = new VulkanFrameBuffer(pDevice, pContext);
             return framebuffer;
     }

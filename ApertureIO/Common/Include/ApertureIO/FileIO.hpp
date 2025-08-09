@@ -6,7 +6,7 @@
 namespace Aio 
 {
 
-enum SourceFileType
+enum class SourceFileType
 {
     NoneShader = -1,
     VertexShader = 0,

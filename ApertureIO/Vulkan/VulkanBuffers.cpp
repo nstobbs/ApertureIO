@@ -51,7 +51,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
        // free the uneeded buffer
        vmaDestroyBuffer(allocator, buffer.vkBufferHandle, buffer.vmaAllocationHandle);
    }
-   else if (createInfo->type = BufferType::Uniform) 
+   else if (createInfo->type == BufferType::Uniform) 
    {    
         auto buffer = createVkBuffer(size,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 

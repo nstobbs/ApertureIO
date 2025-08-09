@@ -15,7 +15,7 @@ namespace Aio {
 
 namespace Aio {
 
-enum BufferType
+enum class BufferType
 {
     Vertex = 0,
     Index = 1,

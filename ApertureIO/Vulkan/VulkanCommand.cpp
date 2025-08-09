@@ -8,35 +8,13 @@ VulkanCommand::VulkanCommand(Context* context, Device* device)
     _pDevice = dynamic_cast<VulkanDevice*>(device);
 };
 
-void VulkanCommand::createCommandBuffers(VulkanDevice* pDevice)
-{
-    // Create the Required Commands Buffers Need for Each Frame in Flight.
-    std::vector<VkCommandBuffer> commandBuffers;
-
-    uint32_t count = _pContext->getMaxFramesInFlight();
-    commandBuffers.resize(count);
-
-    VkCommandBufferAllocateInfo allocaInfo{};
-    allocaInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocaInfo.commandPool = pDevice->_commandPool;
-    allocaInfo.commandBufferCount = count;
-    allocaInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    VK_ASSERT(vkAllocateCommandBuffers(pDevice->GetVkDevice(), &allocaInfo, commandBuffers.data()), VK_SUCCESS, "Create Command Buffers");
-
-    // TODO: Come back and handle the command buffers better.
-    for(auto commandBuffer : commandBuffers)
-    {
-        pDevice->_commandBuffers.push_back(commandBuffer);
-    };
-};
 
 VkCommandBuffer VulkanCommand::beginSingleTimeCommandBuffer(VulkanDevice* pDevice)
 {
     VkCommandBuffer commandBuffer;
     VkCommandBufferAllocateInfo allocaInfo{};
     allocaInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocaInfo.commandPool = pDevice->_commandPool;
+    allocaInfo.commandPool = pDevice->GetGlobalCommandPool();
     allocaInfo.commandBufferCount = 1;
     allocaInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
@@ -63,7 +41,7 @@ void VulkanCommand::endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandB
     VK_ASSERT(vkQueueSubmit(pDevice->GetGraphicVkQueue(), 1, &submitInfo, VK_NULL_HANDLE), VK_SUCCESS, "Sumbit One Time CommandBuffer");
     VK_ASSERT(vkQueueWaitIdle(pDevice->GetGraphicVkQueue()), VK_SUCCESS, "Wait on One Time CommandBuffer");
 
-    vkFreeCommandBuffers(pDevice->GetVkDevice(), pDevice->_commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(pDevice->GetVkDevice(), pDevice->GetGlobalCommandPool(), 1, &commandBuffer);
 };
 
 void VulkanCommand::CopyBuffer(VulkanDevice* pDevice, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t size)
@@ -100,34 +78,72 @@ void VulkanCommand::CopyBufferToImage(VulkanDevice* pDevice, VkBuffer srcBuffer,
     endSingleTimeCommandBuffer(pDevice, commandBuffer);
 };
 
-void VulkanCommand::StartCommand(RenderContext& renderContext)
+void VulkanCommand::BeginFrame(RenderContext& renderContext)
 {
-    //auto device = dynamic_cast<VulkanDevice*>(pDevice); 
-    //createCommandBuffers(device);
+    renderContext.IsPaused();
+
+    auto currentFrame = _pContext->getCurrentFrame();
+    auto fence = _pDevice->GetInFlightFence(currentFrame);
+    auto device = _pDevice->GetVkDevice();
+    auto target = static_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
+
+    vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+
+    _pDevice->ResetPools(currentFrame);
+    auto imageAvailable = _pDevice->GetNextSemaphore(currentFrame);
+
+    VK_ASSERT(vkAcquireNextImageKHR(device, target->GetSwapChain(), UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &_imageIndex),
+                                                                                          VK_SUCCESS, "Acquire Next Image");
+    
+    vkResetFences(device, 1, &fence);
 };
 
+void VulkanCommand::EndFrame(RenderContext& renderContext)
+{  
+    auto currentFrame = _pContext->getCurrentFrame();
+    auto device = _pDevice->GetVkDevice();
+    auto fence = _pDevice->GetInFlightFence(currentFrame);
+    auto renderFinished = _pDevice->GetCurrentSemaphore(currentFrame);
+    auto commandBuffer = _pDevice->GetCurrentCommandBuffer(currentFrame);
+    auto graphicsQueue = _pDevice->GetGraphicVkQueue();
+    auto presentQueue = _pDevice->GetPresentVkQueue();
+    auto target = static_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
+    
+    /* Present Frame */
+    VkSemaphore finishedSemaphores[] = {renderFinished};
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = finishedSemaphores;
+
+    VkSwapchainKHR swapChains[] = {target->GetSwapChain()}; 
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &_imageIndex;
+
+    presentInfo.pResults = nullptr;
+
+    VK_ASSERT(vkQueuePresentKHR(presentQueue, &presentInfo), VK_SUCCESS, "Submit Present");
+
+    // TODO: Check the current framebuffer for any resize event. If resized, re create the swapchain 
+    // also check if the swapchain it out of date
+
+    _pContext->nextFrame();
+};
+
+
 void VulkanCommand::Draw(RenderContext& renderContext)
-{   
-    renderContext.IsPaused(); // Pauses Rendering Thread if Required
+{
+    auto currentFrame = _pContext->getCurrentFrame();
+    auto imageAvailable = _pDevice->GetCurrentSemaphore(currentFrame);
+    auto renderFinished = _pDevice->GetNextSemaphore(currentFrame);
+    auto commandBuffer = _pDevice->GetCurrentCommandBuffer(currentFrame);
+    auto shader = static_cast<VulkanShader*>(renderContext._Shader);
+    auto target = static_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
+    auto viewport = shader->GetViewport();
+    auto scissor = shader->GetScissor();
 
-    //TODO: Break this function down to more smaller ones
-    uint32_t currentFrame = _pContext->getCurrentFrame();
-    VkDevice device = _pDevice->GetVkDevice();
-    VkCommandBuffer commandBuffer = _pDevice->GetCommandBuffer(currentFrame);
-    VkFence inFlightFence = _pDevice->GetInFlightFence(currentFrame);
-    VulkanFrameBuffer* target = dynamic_cast<VulkanFrameBuffer*>(renderContext._TargetFrameBuffer);
-    VulkanShader* shader = dynamic_cast<VulkanShader*>(renderContext._Shader);
-    VkViewport viewport = shader->GetViewport();
-    VkRect2D scissor = shader->GetScissor();
-    
-    vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-
-    uint32_t imageIndex;
-    VK_ASSERT(vkAcquireNextImageKHR(device, target->GetSwapChain(), UINT64_MAX, _pDevice->GetImageAvailableSemaphore(currentFrame), VK_NULL_HANDLE, &imageIndex),
-                                                                                                                                                VK_SUCCESS, "Acquire Next Image");
-    
-    vkResetFences(device, 1, &inFlightFence);
-    vkResetCommandBuffer(commandBuffer, 0);
+    renderContext.IsPaused();
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -136,15 +152,14 @@ void VulkanCommand::Draw(RenderContext& renderContext)
 
     VK_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo), VK_SUCCESS, "Begin Command Buffer - VulkanCommand::Draw");
 
-    
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = target->GetRenderPass();
-    renderPassInfo.framebuffer = target->GetIndexFramebuffer(imageIndex);
+    renderPassInfo.framebuffer = target->GetIndexFramebuffer(_imageIndex);
     renderPassInfo.renderArea.offset = {0,0};
     renderPassInfo.renderArea.extent = target->GetExtent();
 
-    //TODO: Clear Command Shouild be handled in Clear();
+    //TODO: Clear Command Should be handled in Clear() or By the FrameBuffer it self.. maybe
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
     clearValues[1].depthStencil = {1.0f, 0};
@@ -167,6 +182,7 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->GetPipelineLayout(), 0, 1, &set, 0, nullptr);
 
+    /* Push Buffer and Texture Handles */
     // Add Uniform Buffers And Textures Handles to Push Constant
     // TODO: Maybe it can be RenderContext job to have this sorted out...
     HandlesPushConstant handlesToPush{};
@@ -174,14 +190,14 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     handlesToPush.textureHandles[0] = (TextureHandle)renderContext._Textures[0]->GetTextureHandle(); // TODO: fix this, testing
     vkCmdPushConstants(commandBuffer, shader->GetPipelineLayout(), VK_SHADER_STAGE_ALL, 0, sizeof(HandlesPushConstant), &handlesToPush);
 
-    // DRAW COMMAND!
+    /* Draw Command */
     vkCmdDrawIndexed(commandBuffer, renderContext._IndexBuffer->Count(), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
     VK_ASSERT(vkEndCommandBuffer(commandBuffer), VK_SUCCESS, "End Command Buffer");
 
-    // Sumbit and Preset
-    VkSemaphore waitSemaphores[] = {_pDevice->GetImageAvailableSemaphore(currentFrame)};
+    /* Sumbit Draw Command Buffer */
+    VkSemaphore waitSemaphores[] = {imageAvailable};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo submitInfo{};
@@ -193,31 +209,13 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    VkSemaphore finshedSemaphores[] = {_pDevice->GetRenderFinshedSemaphore(currentFrame)};
+    VkSemaphore finishedSemaphores[] = {renderFinished};
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = finshedSemaphores;
+    submitInfo.pSignalSemaphores = finishedSemaphores;
     VK_ASSERT(vkQueueSubmit(_pDevice->GetGraphicVkQueue(), 1, &submitInfo, _pDevice->GetInFlightFence(currentFrame)), VK_SUCCESS, "Submit CommandBuffer");
 
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = finshedSemaphores;
-
-    VkSwapchainKHR swapChains[] = {target->GetSwapChain()}; 
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &imageIndex;
-
-    presentInfo.pResults = nullptr;
-
-    VK_ASSERT(vkQueuePresentKHR(_pDevice->GetPresentVkQueue(), &presentInfo), VK_SUCCESS, "Submit Present");
-
-    // TODO: Check the current framebuffer for any resize event. If resized, re create the swapchain 
-    // also check if the swapchain it out of date
-    if (target->CheckRebuildInProgress())
-    {
-        
-    }
+    /* Index to Next Command Buffer */
+    _pDevice->GetNextCommandBuffer(currentFrame);
 };
 
 }; // End of Aio 

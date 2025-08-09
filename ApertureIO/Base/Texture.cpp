@@ -10,7 +10,7 @@ Texture* Texture::CreateTexture(TextureCreateInfo createInfo)
 {
     switch(createInfo.context->getRendererAPI())
     {
-        case Aio::eVulkan:
+        case RendererAPI::eVulkan:
             return new VulkanTexture(createInfo);
             break;
     }

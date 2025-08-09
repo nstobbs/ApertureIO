@@ -17,7 +17,7 @@ namespace Aio {
 namespace Aio {
 
 //TODO Do you want to mix color and depth formats with data formating?
-enum FrameBufferPixelFormat
+enum class FrameBufferPixelFormat
 {
     NONE_PIXEL_FORMAT = 0,
     COLOR_RGBA_8888 = 1,

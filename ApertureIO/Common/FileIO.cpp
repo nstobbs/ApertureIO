@@ -32,7 +32,7 @@ std::string FileIO::SplitOutShader(std::string& sourceCode, SourceFileType shade
     std::istringstream stream(sourceCode);
     std::string line;
 
-    SourceFileType currentType = NoneShader;
+    SourceFileType currentType = SourceFileType::NoneShader;
 
     while(std::getline(stream, line))
     {
@@ -40,20 +40,20 @@ std::string FileIO::SplitOutShader(std::string& sourceCode, SourceFileType shade
         {   
             if(line.find("Vertex") != std::string::npos)
             {
-                currentType = VertexShader;
+                currentType = SourceFileType::VertexShader;
 
             } else if (line.find("Fragment") != std::string::npos)
             {
-                currentType = FragmentShader;
+                currentType = SourceFileType::FragmentShader;
 
             } else if (line.find("Compute") != std::string::npos)
             {
 
-                currentType = ComputeShader;
+                currentType = SourceFileType::ComputeShader;
 
             };
         } else {
-            if (currentType != NoneShader)
+            if (currentType != SourceFileType::NoneShader)
             {
                 output[static_cast<int>(currentType)] << line << "\n";
             }

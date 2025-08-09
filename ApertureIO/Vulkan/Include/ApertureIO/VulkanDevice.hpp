@@ -2,6 +2,7 @@
 
 #include "ApertureIO/VulkanCommon.hpp"
 #include "ApertureIO/VulkanContext.hpp"
+#include "ApertureIO/VulkanCmdPool.hpp"
 
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Context.hpp"
@@ -10,6 +11,7 @@
 namespace Aio {
 
 class VulkanContext;
+class VulkanSemaphorePool;
 
 class VulkanDevice : public Device
 {
@@ -18,8 +20,12 @@ public:
     bool init() override;
 
     void SetVkSurfaceKHR(VkSurfaceKHR surface);
+    
+    void ResetPools(uint32_t currentFrame);
 
     VkDevice GetVkDevice();
+    vkb::Device GetVkBootStrapDevice();
+
     VkSampler GetGlobalVkSampler();
     VmaAllocator GetVmaAllocator();
     VkDescriptorSetLayout GetBindlessLayout();
@@ -27,15 +33,18 @@ public:
     VkQueue GetPresentVkQueue();
     VkQueue GetComputeVkQueue();
     VkQueue GetGraphicVkQueue();
+    VkCommandPool GetGlobalCommandPool();
 
-    VkSemaphore GetImageAvailableSemaphore(uint32_t currentFrame);
-    VkSemaphore GetRenderFinshedSemaphore(uint32_t currentFrame);
+    VkSemaphore GetCurrentSemaphore(uint32_t currentFrame);
+    VkSemaphore GetNextSemaphore(uint32_t currentFrame);
+
+    VkCommandBuffer GetCurrentCommandBuffer(uint32_t currentFrame);
+    VkCommandBuffer GetNextCommandBuffer(uint32_t currentFrame);
+
     VkFence GetInFlightFence(uint32_t currentFrame);
-    VkCommandBuffer GetCommandBuffer(uint32_t currentFrame);
     
 
-    friend class VulkanFrameBuffer;
-    friend class VulkanCommand;
+    friend class VulkanFrameBuffer; // TODO: remove this
 
 private:
 
@@ -56,12 +65,13 @@ private:
     VkDescriptorSet _bindlessDescriptorSet;
     VkDescriptorSetLayout _bindlessLayout;
     
-    /* CommandsBuffers and Sync */
-    VkCommandPool _commandPool;
-    std::vector<VkCommandBuffer> _commandBuffers;
+    /* CommandBuffers */
+    std::vector<VulkanCmdPool> _cmdPools;
+    VkCommandPool _globalCommandPool;
 
+    /* Sync Objects*/
     std::vector<VkFence> _fences;
-    std::vector<VkSemaphore> _semaphores;
+    std::vector<VulkanSemaphorePool> _semaphorePools;
 
     /* Global Samplers For Texture Reading */
     //TODO: Create an SamplersManager

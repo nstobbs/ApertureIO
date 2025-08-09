@@ -16,8 +16,8 @@ class Command
     public:
         static Command* CreateCommand(Context* context, Device* device);
 
-        virtual void StartCommand(RenderContext& renderContext) = 0;
-        //virtual void EndCommand(RenderContext& renderContext) = 0;
+        virtual void BeginFrame(RenderContext& renderContext) = 0;
+        virtual void EndFrame(RenderContext& renderContext) = 0;
         virtual void Draw(RenderContext& renderContext) = 0;
         //virtual void DrawInstance(RenderContext& renderContext) = 0;
         //virtual void DispatchCompute(RenderContext& renderContext) = 0;

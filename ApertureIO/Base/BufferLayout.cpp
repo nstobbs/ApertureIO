@@ -20,13 +20,13 @@ size_t BufferLayout::calculateStride()
     {
         switch(element.type)
         {
-            case Float:
+            case BufferElementType::Float:
                 stride += sizeof(float) * element.count;
                 break;
-            case Int:
+            case BufferElementType::Int:
                 stride += sizeof(uint32_t) * element.count;
                 break;
-            case Bool:
+            case BufferElementType::Bool:
                 stride += sizeof(bool) * element.count;
                 break;
         }

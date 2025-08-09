@@ -48,7 +48,7 @@ int main()
     selected graphics api */
     //std::shared_ptr<Aio::Context> context = std::make_shared<Aio::Context>(Aio::Context::CreateContext());
     Aio::Context* context = Aio::Context::CreateContext();
-    context->setRendererAPI(Aio::eVulkan); // TODO current this isn't needed for this system rn
+    context->setRendererAPI(Aio::RendererAPI::eVulkan); // TODO current this isn't needed for this system rn
 
     /* Window to Render to...*/
     TestApplication::WindowGLFWImpl* window = new TestApplication::WindowGLFWImpl(context);
@@ -86,17 +86,17 @@ int main()
     /* Vertex Buffer*/
     Aio::BufferElement positionElement{};
     positionElement.count = 3;
-    positionElement.type = Aio::Float;
+    positionElement.type = Aio::BufferElementType::Float;
     positionElement.normalized = false;
 
     Aio::BufferElement colourElement{};
     colourElement.count = 3;
-    colourElement.type = Aio::Float;
+    colourElement.type = Aio::BufferElementType::Float;
     colourElement.normalized = false;
 
     Aio::BufferElement uvElement{};
     uvElement.count = 3;
-    uvElement.type = Aio::Float;
+    uvElement.type = Aio::BufferElementType::Float;
     uvElement.normalized = false;
 
     Aio::BufferLayout vertexLayout;
@@ -138,7 +138,7 @@ int main()
     /* Index Buffer*/
     Aio::BufferElement indexElement{};
     indexElement.count = 1;
-    indexElement.type = Aio::Int;
+    indexElement.type = Aio::BufferElementType::Int;
     indexElement.normalized = false;
 
     Aio::BufferLayout indexLayout;
@@ -167,7 +167,7 @@ int main()
 
     Aio::BufferElement floatElement{};
     floatElement.count = 1;
-    floatElement.type = Aio::Float;
+    floatElement.type = Aio::BufferElementType::Float;
     floatElement.normalized = false;
 
     Aio::BufferLayout uniformLayout;
@@ -237,8 +237,9 @@ int main()
         testUniformData.a = result;
         uniformBuffer->UploadToDevice(&testUniformData);
 
+        GPU->pCommand->BeginFrame(rContext);
         GPU->pCommand->Draw(rContext);
-        context->nextFrame();
+        GPU->pCommand->EndFrame(rContext);
         /* End */
     };
 

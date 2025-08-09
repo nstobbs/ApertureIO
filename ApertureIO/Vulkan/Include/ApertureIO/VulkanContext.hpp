@@ -10,7 +10,7 @@ namespace Aio {
 
 class VulkanContext : public Context
 {
-    public:
+public:
     void init() override; // TODO replace void to bool so we can check that the init errored!
     
     /* Getter Functions */
@@ -19,7 +19,7 @@ class VulkanContext : public Context
     
     void SetRequiredExtensions(const char** extensions, uint32_t count);
 
-    private:
+private:
 
     vkb::Instance _instance; // holds the vulkan instance
     shaderc::Compiler* _compiler;

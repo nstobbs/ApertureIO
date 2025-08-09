@@ -10,7 +10,7 @@ Buffer* Buffer::CreateBuffer(BufferCreateInfo* createInfo)
     auto API = createInfo->context->getRendererAPI();
     switch(API)
     {
-        case eVulkan:
+        case RendererAPI::eVulkan:
             return new VulkanBuffer(createInfo);
     }
 };

@@ -39,7 +39,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     // framebuffers for swapchains must have the swapchain format at index 0.
     _formats.push_back(swapchain.image_format);
     std::string name = "Colour_Output";
-    _layers.insert(std::make_pair(name, COLOR_RGBA_8888));
+    _layers.insert(std::make_pair(name, FrameBufferPixelFormat::COLOR_RGBA_8888));
     _layerCount++;
     /* Image Layout when using as a swapchain.
     the image layout in arrays will be 
@@ -90,7 +90,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
         
         switch(layer.second)
         {   
-            case COLOR_RGBA_8888:
+            case FrameBufferPixelFormat::COLOR_RGBA_8888:
                 layerInfo.format = _formats[layerCount];
                 layerInfo.samples = VK_SAMPLE_COUNT_1_BIT;
                 

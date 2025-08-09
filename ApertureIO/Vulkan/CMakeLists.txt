@@ -1,5 +1,7 @@
 add_library(Vulkan STATIC 
         VulkanBuffers.cpp
+        VulkanCmdPool.cpp
+        VulkanSemaphorePool.cpp
         VulkanCommand.cpp
         VulkanCommon.cpp
         VulkanContext.cpp

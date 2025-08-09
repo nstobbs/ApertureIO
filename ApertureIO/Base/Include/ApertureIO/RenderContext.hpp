@@ -31,7 +31,7 @@ namespace Aio {
 
 class RenderContext
 {
-    public:
+public:
     size_t GetHash();
     
     void IsPaused(); // TODO: not a good name since it doesn't return an bool anymore.
@@ -51,7 +51,7 @@ class RenderContext
     Shader* _Shader;
     FrameBuffer* _TargetFrameBuffer;
 
-    private:
+private:
 
     std::mutex mtx;
     std::condition_variable cv;

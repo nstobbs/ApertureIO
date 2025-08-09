@@ -4,7 +4,7 @@
 
 namespace Aio {
 
-enum RendererAPI {
+enum class RendererAPI {
     eNone = 0,
     eVulkan = 1
 };
@@ -26,8 +26,8 @@ public:
 
 private:
     bool _started;
-    RendererAPI _rendererAPI = eVulkan;
-    uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    RendererAPI _rendererAPI = RendererAPI::eVulkan;
+    uint32_t MAX_FRAMES_IN_FLIGHT = 2; // TODO: Feel like this should be a const in Context or something...
     uint32_t CurrentFrame = 0;
 };
 } //End Aio namespace

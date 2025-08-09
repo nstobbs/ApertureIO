@@ -18,12 +18,13 @@ namespace Aio {
 
 class VulkanCommand : public Command
 {
-    public:
+public:
     VulkanCommand(Context* context, Device* device);
     
-    void StartCommand(RenderContext& renderContext) override;
-    //void EndCommand(RenderContext& renderContext) override;
+    void BeginFrame(RenderContext& renderContext) override;
+    void EndFrame(RenderContext& renderContext) override;
     void Draw(RenderContext& renderContext) override;
+
     //void DrawInstance(RenderContext& renderContext) override;
     //void DispatchCompute(RenderContext& renderContext) override;
     //void Clear(RenderContext& renderContext) override; //TODO maybe move this into framebuffer??
@@ -34,9 +35,9 @@ class VulkanCommand : public Command
     static VkCommandBuffer beginSingleTimeCommandBuffer(VulkanDevice* pDevice);
     static void endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandBuffer commandBuffer);
 
-    private:
-    void createCommandBuffers(VulkanDevice* pDevice);
+private:
     
+    uint32_t _imageIndex;
     Context* _pContext;
     VulkanDevice* _pDevice;
 };

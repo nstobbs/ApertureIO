@@ -15,7 +15,7 @@ enum class BufferBytesLayout
 };
 
 
-enum BufferElementType
+enum class BufferElementType
 {
     Float = 0,
     Int = 1,

@@ -1,6 +1,7 @@
 #define VMA_IMPLEMENTATION
 
 #include "ApertureIO/VulkanDevice.hpp"
+#include "ApertureIO/VulkanSemaphorePool.hpp"
 
 #include <array>
 #include <string>
@@ -77,13 +78,6 @@ bool VulkanDevice::init()
 
     vmaCreateAllocator(&allocatorCreateInfo, &_allocator);
 
-    /* Create Command Pool */
-    VkCommandPoolCreateInfo commandPoolInfo{};
-    commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    commandPoolInfo.queueFamilyIndex = _device.get_queue_index(vkb::QueueType::graphics).value();
-    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    VK_ASSERT(vkCreateCommandPool(GetVkDevice(), &commandPoolInfo, nullptr, &_commandPool), VK_SUCCESS, "Create Graphics Command Pool");
-
     /* Create Descriptor Pool */
     //TODO Use PhysicalDevice to find limits and set them here.
     uint32_t maxLimit = 1024;
@@ -118,17 +112,8 @@ bool VulkanDevice::init()
     // TODO: should sync objects be part of the device?
     // create sync objects
     uint32_t inFlight = _pVulkanContext->getMaxFramesInFlight();
-    
-    // image available
-    // render finished
-    // 0 1 is image available
-    // 2 3 is render finshed  
-    //TODO: come back and handle this better.
-    VkSemaphoreCreateInfo semaphoreCreateInfo{};
-    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    _semaphores.resize(inFlight * 2);
 
-    // in flight  
+    /* Fences Per Frame In Flight */
     VkFenceCreateInfo fenceCreateInfo{};
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -136,20 +121,30 @@ bool VulkanDevice::init()
 
     for (int i = 0; i < inFlight; i++)
     {
-        VK_ASSERT(vkCreateSemaphore(GetVkDevice(), &semaphoreCreateInfo, nullptr, &_semaphores[i]), VK_SUCCESS, "Create Semaphores");
-        VK_ASSERT(vkCreateSemaphore(GetVkDevice(), &semaphoreCreateInfo, nullptr, &_semaphores[i + inFlight]), VK_SUCCESS, "Create Semaphores");
         VK_ASSERT(vkCreateFence(GetVkDevice(), &fenceCreateInfo, nullptr, &_fences[i]), VK_SUCCESS, "Create Fences");
     };
 
-    // create commands buffers per frame.
-    _commandBuffers.resize(inFlight);
-    VkCommandBufferAllocateInfo allocateInfo{};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocateInfo.commandBufferCount = inFlight;
-    VK_ASSERT(vkAllocateCommandBuffers(GetVkDevice(), &allocateInfo, _commandBuffers.data()), VK_SUCCESS, "Create Command Buffers");
-    
+    /* Create an VulkanSemaphorePool for each Frame in Flight */
+    for (int i = 0; i < inFlight; i++)
+    {
+        auto syncPool = VulkanSemaphorePool(this);
+        _semaphorePools.push_back(syncPool);
+    };
+
+    /* Create an VulkanCmdPool for each Frame in Flight */
+    for (int i = 0; i < inFlight; i++)
+    {
+        auto cmdPool = VulkanCmdPool(this);
+        _cmdPools.push_back(cmdPool);
+    };
+
+    /* Command Pool for Creating One Time Use Command Buffers*/
+    VkCommandPoolCreateInfo commandPoolInfo{};
+    commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    commandPoolInfo.queueFamilyIndex = _device.get_queue_index(vkb::QueueType::graphics).value();
+    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VK_ASSERT(vkCreateCommandPool(GetVkDevice(), &commandPoolInfo, nullptr, &_globalCommandPool), VK_SUCCESS, "Create Global Command Pool");
+
     return true;
 };
 
@@ -225,6 +220,12 @@ void VulkanDevice::createGlobalTextureSampler()
     VK_ASSERT(vkCreateSampler(GetVkDevice(), &samplerInfo, nullptr, &_sampler), VK_SUCCESS, "VulkanDevice: Failed to create VkSampler...");
 };
 
+void VulkanDevice::ResetPools(uint32_t currentFrame)
+{
+    _cmdPools[currentFrame].ResetPool(this);
+    _semaphorePools[currentFrame].ResetPool();
+};
+
 /* Setter Functions*/
 void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
 {
@@ -235,6 +236,11 @@ void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
 VkDevice VulkanDevice::GetVkDevice()
 {
     return _device.device;
+};
+
+vkb::Device VulkanDevice::GetVkBootStrapDevice()
+{
+    return _device;
 };
 
 VkSampler VulkanDevice::GetGlobalVkSampler()
@@ -287,15 +293,15 @@ VkQueue VulkanDevice::GetGraphicVkQueue()
     return result.value();
 };
 
-VkSemaphore VulkanDevice::GetImageAvailableSemaphore(uint32_t currentFrame)
+VkSemaphore VulkanDevice::GetCurrentSemaphore(uint32_t currentFrame)
 {
-    return _semaphores[currentFrame];
+    return _semaphorePools[currentFrame].GetCurrentSemaphore();
 };
 
-VkSemaphore VulkanDevice::GetRenderFinshedSemaphore(uint32_t currentFrame)
+VkSemaphore VulkanDevice::GetNextSemaphore(uint32_t currentFrame)
 {
     
-    return _semaphores[currentFrame + _pVulkanContext->getMaxFramesInFlight()];
+    return _semaphorePools[currentFrame].GetNextSemaphore();
 };
 
 VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)
@@ -303,9 +309,19 @@ VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)
     return _fences[currentFrame];
 };
 
-VkCommandBuffer VulkanDevice::GetCommandBuffer(uint32_t currentFrame)
+VkCommandBuffer VulkanDevice::GetCurrentCommandBuffer(uint32_t currentFrame)
 {
-    return _commandBuffers[currentFrame];
+    return _cmdPools[currentFrame].GetCurrentCommandBuffer();
+};
+
+VkCommandBuffer VulkanDevice::GetNextCommandBuffer(uint32_t currentFrame)
+{
+    return _cmdPools[currentFrame].GetNextCommandBuffer();
+}
+
+VkCommandPool VulkanDevice::GetGlobalCommandPool()
+{
+    return _globalCommandPool;
 };
 
 
