@@ -38,12 +38,7 @@ struct TestUniformStuct
 };
 
 int main()
-{
-    Aio::Logger::LogWarn("Logger Tests 1...");
-    Aio::Logger::LogInfo("Logger Tests 2...");
-    Aio::Logger::LogError("Logger Tests 3...");
-
-    
+{   
     /* The Context handles all of the instance loading, extensions, validation layers and other stuff related to the
     selected graphics api */
     //std::shared_ptr<Aio::Context> context = std::make_shared<Aio::Context>(Aio::Context::CreateContext());
