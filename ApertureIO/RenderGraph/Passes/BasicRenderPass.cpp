@@ -72,6 +72,10 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
     vertexLayout.AddBufferElement(positionElement);
     vertexLayout.AddBufferElement(colourElement);
     vertexLayout.AddBufferElement(uvElement);
+
+    //TODO: use a different type instead of the vector.
+    // As we want to be able to have vec3s and vec2s in the same array
+    // as we will be able to find them correctly with the bufferLayout
     
     /* Vertex Data */
     std::vector<glm::vec3> vertices;
@@ -102,7 +106,7 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
 
     /* Create Vertex Buffer  */
     Buffer* vertexBuffer = Buffer::CreateBuffer(&vertexInfo);
-    renderGraph->EmplaceBufferPtr("vertexBuffer", vertexBuffer);
+    renderGraph->StoreBufferPtr("vertexBuffer", vertexBuffer);
 
     BufferElement indexElement{};
     indexElement.count = 1;
@@ -124,16 +128,16 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
 
     /* Index CreateInfo */
     BufferCreateInfo indexInfo{};
-    indexBufferInfo.type = BufferType::Index;
-    indexBufferInfo.context = renderGraph->GetContextPtr();;
-    indexBufferInfo.device = renderGraph->GetDevicePtr();
-    indexBufferInfo.data = indices.data();
-    indexBufferInfo.layout = indexLayout;
-    indexBufferInfo.count = static_cast<uint32_t>(indices.size());
+    indexInfo.type = BufferType::Index;
+    indexInfo.context = renderGraph->GetContextPtr();;
+    indexInfo.device = renderGraph->GetDevicePtr();
+    indexInfo.data = indices.data();
+    indexInfo.layout = indexLayout;
+    indexInfo.count = static_cast<uint32_t>(indices.size());
 
     /* Create Index Buffer  */
     Buffer* indexBuffer = Buffer::CreateBuffer(&indexInfo);
-    renderGraph->EmplaceBufferPtr("indexBuffer", indexBuffer);
+    renderGraph->StoreBufferPtr("indexBuffer", indexBuffer);
 
     /* Uniform Layout*/
     BufferElement floatElement{};
@@ -145,19 +149,19 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
     uniformLayout.AddBufferElement(floatElement);
 
     /* Uniform CreateInfo */
-    BufferCreateInfo uniformBufferInfo{};
-    uniformBufferInfo.type = BufferType::Uniform;
-    uniformBufferInfo.context = renderGraph->GetContextPtr();
-    uniformBufferInfo.device = renderGraph->GetDevicePtr();
-    uniformBufferInfo.data = nullptr;
-    uniformBufferInfo.layout = uniformLayout;
-    uniformBufferInfo.count = 1;
+    BufferCreateInfo uniformInfo{};
+    uniformInfo.type = BufferType::Uniform;
+    uniformInfo.context = renderGraph->GetContextPtr();
+    uniformInfo.device = renderGraph->GetDevicePtr();
+    uniformInfo.data = nullptr;
+    uniformInfo.layout = uniformLayout;
+    uniformInfo.count = 1;
 
     /* Create Uniform Buffer and Upload Data */
-    Buffer* uniformBuffer = Buffer::CreateBuffer(&uniformBufferInfo);
+    Buffer* uniformBuffer = Buffer::CreateBuffer(&uniformInfo);
     _uniformData.a = 1.0f;
     uniformBuffer->UploadToDevice(&_uniformData);
-    renderGraph->EmplaceBufferPtr("uniformBuffer", uniformBuffer);
+    renderGraph->StoreBufferPtr("uniformBuffer", uniformBuffer);
     
     /* Texture CreateInfo */
     Aio::TextureCreateInfo basicTextureInfo{};
@@ -167,7 +171,9 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
 
     /* Create Texture */
     Texture* basicTexture = Texture::CreateTexture(&basicTextureInfo);
-    renderGraph->EmplaceTexturePtr("basicTexture", basicTexture);
+    renderGraph->StoreTexturePtr("basicTexture", basicTexture);
+    
+    _startTime = std::chrono::system_clock::now();
 };
 
 void BasicRenderPass::PreExecutePass(RenderGraph* renderGraph)
@@ -177,12 +183,22 @@ void BasicRenderPass::PreExecutePass(RenderGraph* renderGraph)
     renderGraph->GetBufferPtr("indexBuffer")->Bind(_pRenderContext);
     renderGraph->GetBufferPtr("uniformBuffer")->Bind(_pRenderContext);
     renderGraph->GetTexturePtr("basicTexture")->Bind(_pRenderContext);
-    _pShader->bind(_pRenderContext);
+    _pShader->Bind(_pRenderContext);
 };
 
 void BasicRenderPass::ExecutePass(RenderGraph* renderGraph)
 {
     renderGraph->GetDevicePtr()->pCommand->Draw(_pRenderContext);
+    updateUniformData(renderGraph);
+};
+
+void BasicRenderPass::updateUniformData(RenderGraph* renderGraph)
+{
+    std::chrono::duration<float> time = std::chrono::system_clock::now() - _startTime;
+    float factor = 0.5f;
+    float result = 0.5f * (std::sin(2 * PI * factor * time.count()) + 1.0);
+    _uniformData.a = result;
+    renderGraph->GetBufferPtr("uniformBuffer")->UploadToDevice(&_uniformData);
 };
 
 };

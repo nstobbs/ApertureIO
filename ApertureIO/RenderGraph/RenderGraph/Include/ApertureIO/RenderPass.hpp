@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ApertureIO/RenderContext.hpp
+#include "ApertureIO/RenderContext.hpp"
 #include "ApertureIO/Shader.hpp"
-#include "ApertureIO/Handles.hpp
+#include "ApertureIO/Handles.hpp"
 #include "ApertureIo/Buffers.hpp"
 
 #include <string>
@@ -46,13 +46,12 @@ class RenderGraph; // Forward Declarations
 class RenderPass
 {
 public:
-    virtual RenderPass(RenderGraph* renderGraph) = 0; /* Constructors */
     virtual void InitialiseResources(RenderGraph* renderGraph) = 0; /* Allocated Required Resources */
     virtual void PreExecutePass(RenderGraph* renderGraph) = 0; /* Runs before the start of the MainRenderLoop. For Binding to RenderContext */
     virtual void ExecutePass(RenderGraph* renderGraph) = 0; /* Sumbits the Pass for Rendering */
     
-
     void AppendRenderPass(RenderPass* pRenderPass);
+    std::vector<RenderPass*> GetNextsRenderPasses();
     std::vector<ResourceAccess> GetResourcesAccess();
 
 protected:
@@ -63,6 +62,6 @@ protected:
 
 /* Rendering Objects */
     Shader* _pShader = {nullptr};
-    RenderContext* _pRenderContext = {nullptr};
+    RenderContext _pRenderContext;
 };
 };

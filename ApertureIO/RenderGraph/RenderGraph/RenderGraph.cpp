@@ -22,12 +22,32 @@ void RenderGraph::AppendRenderPass(RenderPass* pass)
 
 void RenderGraph::StoreBufferPtr(std::string name, Buffer* pBuffer)
 {
-    _pBuffersMap.emplace(name, pBuffer);
+    if (_pBuffersMap.find(name) != _pBuffersMap.end())
+    {
+        if (_pBuffersMap.at(name) == nullptr)
+        {
+            _pBuffersMap[name] = pBuffer;
+        }
+    }
+    else
+    {
+        _pBuffersMap.emplace(name, pBuffer);
+    }
 };
 
 void RenderGraph::StoreTexturePtr(std::string name, Texture* pTexture)
 {
-    _pBuffersMap.emplace(name, pBuffer);
+    if (_pTexturesMap.find(name) != _pTexturesMap.end())
+    {
+        if (_pTexturesMap.at(name) == nullptr)
+        {
+            _pTexturesMap[name] = pTexture;
+        }
+    }
+    else
+    {
+        _pTexturesMap.emplace(name, pTexture);
+    }
 };
 
 Buffer* RenderGraph::GetBufferPtr(std::string name)
@@ -35,7 +55,7 @@ Buffer* RenderGraph::GetBufferPtr(std::string name)
     auto buffer = _pBuffersMap.at(name);
     if (!buffer)
     {
-        auto msg = "Tried Accessing " + name + " but resource handle was a nullptr."
+        auto msg = "Tried Accessing " + name + " but resource handle was a nullptr.";
         Logger::LogError(msg);
     }
     return buffer;
@@ -69,8 +89,8 @@ FrameBuffer* RenderGraph::GetTargetFrameBufferPtr()
 
 std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
 {
-    set<RenderPass*> visited;
-    stack<RenderPass*> output;
+    std::set<RenderPass*> visited;
+    std::stack<RenderPass*> output;
 
     auto travelGraph = [&](auto&& self, RenderPass* pRenderPass) -> void {
         if (visited.find(pRenderPass) == visited.end())
@@ -78,7 +98,7 @@ std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
             visited.emplace(pRenderPass);
         };
 
-        for (auto pass : pRenderPass->_nextsPasses)
+        for (auto pass : pRenderPass->GetNextsRenderPasses())
         {
             if (visited.find(pass) == visited.end())
             {
@@ -86,7 +106,7 @@ std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
             };
         };
 
-        output.push_back(pRenderPass);
+        output.push(pRenderPass);
     };
 
     for (auto pass : _renderPasses)
@@ -97,7 +117,13 @@ std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
         }
     };
 
-    std::vector<RenderPass*> result(output.rend(), output.rbegin());
+
+    std::vector<RenderPass*> result;
+    while(!output.empty())
+    {
+        result.push_back(output.top());
+        output.pop();
+    };
     return result;
 };
 
@@ -140,14 +166,14 @@ void RenderGraph::RenderFrame()
 {
     auto taskOrder = sortGraphTaskOrder();
     RenderContext tempContext;
-    _pTargetSwapChain.bind(tempContext);
+    _pTargetSwapChain->Bind(tempContext);
 
-    GetDevicePtr()->pCommand->BeginFrame(&tempContext);
+    GetDevicePtr()->pCommand->BeginFrame(tempContext);
     for (auto pass : taskOrder)
     {
         pass->ExecutePass(this);
     };
-    GetDevicePtr()->pCommand->EndFrame(&tempContext);
+    GetDevicePtr()->pCommand->EndFrame(tempContext);
 };
 
 };

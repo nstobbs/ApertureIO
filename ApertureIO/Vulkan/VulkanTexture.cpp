@@ -6,11 +6,11 @@
 namespace Aio
 {
 
-VulkanTexture::VulkanTexture(TextureCreateInfo createInfo)
+VulkanTexture::VulkanTexture(TextureCreateInfo* createInfo)
 {
-    _pDevice = dynamic_cast<VulkanDevice*>(createInfo.device);
-    _pContext = dynamic_cast<VulkanContext*>(createInfo.context);
-    _filepath = createInfo.filePath;
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
+    _pContext = dynamic_cast<VulkanContext*>(createInfo->context);
+    _filepath = createInfo->filePath;
 
     // Read the Source File
     readTextureSourceFile();

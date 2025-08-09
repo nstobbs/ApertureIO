@@ -6,9 +6,9 @@
 namespace Aio 
 {
 
-Texture* Texture::CreateTexture(TextureCreateInfo createInfo)
+Texture* Texture::CreateTexture(TextureCreateInfo* createInfo)
 {
-    switch(createInfo.context->getRendererAPI())
+    switch(createInfo->context->getRendererAPI())
     {
         case RendererAPI::eVulkan:
             return new VulkanTexture(createInfo);

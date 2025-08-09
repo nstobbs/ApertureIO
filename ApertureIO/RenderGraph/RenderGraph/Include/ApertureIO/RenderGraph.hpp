@@ -41,15 +41,14 @@ public:
     FrameBuffer* GetTargetFrameBufferPtr();
 
 private:
-    bool isValid(); /* Checks the Graph is Still Valid for Rendering */
     std::vector<RenderPass*> sortGraphTaskOrder(); /* Returns an vector<RenderPass*> in order for tasking. */
 
     Device* _pDevice;
     Context* _pContext;
     FrameBuffer* _pTargetSwapChain;
 
-    std::unordered_map<Buffer*, std::string> _pBuffersMap;
-    std::unordered_map<Texture*, std::string> _pTexturesMap;
+    std::unordered_map<std::string, Buffer*> _pBuffersMap;
+    std::unordered_map<std::string, Texture*> _pTexturesMap;
 
     std::vector<RenderPass*> _renderPasses;
     size_t _hash; /* A Combined Hash Of all of the RenderContext hashes within the graph.*/

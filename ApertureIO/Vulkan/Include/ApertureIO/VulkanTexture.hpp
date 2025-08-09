@@ -10,7 +10,7 @@ namespace Aio
 class VulkanTexture : public Texture
 {
 public:
-    VulkanTexture(TextureCreateInfo createInfo);
+    VulkanTexture(TextureCreateInfo* createInfo);
 
     TextureHandle* GetTextureHandle() override;
     void Bind(RenderContext& rContext) override;

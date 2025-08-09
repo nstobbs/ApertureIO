@@ -28,7 +28,7 @@ struct TextureCreateInfo
 class Texture
 {
 public:
-    static Texture* CreateTexture(TextureCreateInfo createInfo);
+    static Texture* CreateTexture(TextureCreateInfo* createInfo);
 
     virtual TextureHandle* GetTextureHandle() = 0;
     virtual void Bind(RenderContext& rContext) = 0;
@@ -58,7 +58,7 @@ protected:
 class TextureManager
 {
 public:
-    void CreateTexture(TextureCreateInfo createInfo);
+    void CreateTexture(TextureCreateInfo* createInfo);
     void AddTexture(Texture* ptrTexture);
 
 private:
