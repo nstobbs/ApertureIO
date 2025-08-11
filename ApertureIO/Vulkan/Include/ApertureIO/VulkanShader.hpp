@@ -16,6 +16,7 @@
 
 namespace Aio {
 
+//TODO: Don't know why this is in shader...?
 struct HandlesPushConstant{
     BufferHandle bufferHandles[16];
     TextureHandle textureHandles[16];

@@ -79,19 +79,19 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
     
     /* Vertex Data */
     std::vector<glm::vec3> vertices;
-    vertices.push_back(glm::vec3(-1.0f, 1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(-0.75f, 0.75f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // ColourElement
     vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // uvElement
 
-    vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(0.75f, 0.75f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // ColourElement
     vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f)); // uvElement
     
-    vertices.push_back(glm::vec3(-1.0f, -1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(-0.75f, -0.75f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f)); // ColourElement
     vertices.push_back(glm::vec3(0.0f, 0.0f, 0.0f)); // uvElement
 
-    vertices.push_back(glm::vec3(1.0f, -1.0f, 0.0f)); // PositionElement
+    vertices.push_back(glm::vec3(0.75f, -0.75f, 0.0f)); // PositionElement
     vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f)); // ColourElement
     vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); // uvElement
 

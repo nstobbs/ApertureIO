@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ApertureIO/Texture.hpp"
 #include "ApertureIO/VulkanCommon.hpp"
 #include "ApertureIO/VulkanDevice.hpp"
@@ -18,6 +20,7 @@ public:
 
     void sourceFileModified() override;
 
+    //TODO: need some stuff of sub class for images. For shadred stuff like FrameBuffer and Textures. Just VulkanImage related.
     void setImageLayout(VkImageLayout targetLayout);
 
 private:
