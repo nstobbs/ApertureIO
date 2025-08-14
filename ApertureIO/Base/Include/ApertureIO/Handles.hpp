@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint> //?? first time ive ever included this for uint32_t 
+#include <cstdint>
 
 /* TODO: Consider replacing the uint32_t for a uint16_t instead.
 This would means we would have less buffers and textures on each device.

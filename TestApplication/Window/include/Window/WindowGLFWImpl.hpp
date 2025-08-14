@@ -21,20 +21,20 @@ class WindowGLFWImpl : public Window
 {
 public:
 
-    WindowGLFWImpl(Aio::Context* context);
+    WindowGLFWImpl(WeakPtr<Context> context);
     ~WindowGLFWImpl();
 
     std::pair<const char**, uint32_t> GetRequiredInstanceExtensions() override;
     VkSurfaceKHR GetVkSurface() override;
 
-    void SetActiveFrameBuffer(Aio::FrameBuffer* framebuffer) override;
+    void SetActiveFrameBuffer(WeakPtr<Aio::FrameBuffer> framebuffer) override;
 
     void triggerFrameBufferRebuild();
     bool shouldClose();
 
 private:
-    GLFWwindow* _pWindow = {nullptr};
-    Aio::Context* _pContext = {nullptr};
+    SharedPtr<GLFWwindow> _pWindow;
+    SharedPtr<Aio::Context> _pContext;
     VkSurfaceKHR _surface = {VK_NULL_HANDLE};
 };
 

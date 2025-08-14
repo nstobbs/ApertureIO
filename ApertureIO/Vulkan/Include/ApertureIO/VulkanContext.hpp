@@ -15,16 +15,15 @@ public:
     
     /* Getter Functions */
     VkInstance GetVkInstance(); //TODO Should be a pointer to the instance
-    shaderc::Compiler* GetShadercCompiler();
+    SharedPtr<shaderc::Compiler> GetShadercCompiler();
     
     void SetRequiredExtensions(const char** extensions, uint32_t count);
 
 private:
 
     vkb::Instance _instance; // holds the vulkan instance
-    shaderc::Compiler* _compiler;
-
-    friend class VulkanDevice; //TODO: Find a way to remove this...
+    SharedPtr<shaderc::Compiler> _compiler;
+    /* Window Extension*/
     const char** _requiredExtensions;
     uint32_t _requiredExtensionsCount;
     

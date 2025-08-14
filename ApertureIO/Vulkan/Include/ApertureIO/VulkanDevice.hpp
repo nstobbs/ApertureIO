@@ -16,7 +16,7 @@ class VulkanSemaphorePool;
 class VulkanDevice : public Device
 {
 public:
-    VulkanDevice(Context* context);
+    VulkanDevice(WeakPtr<Context> pContext);
     bool init() override;
 
     void SetVkSurfaceKHR(VkSurfaceKHR surface);
@@ -47,8 +47,7 @@ public:
     friend class VulkanFrameBuffer; // TODO: remove this
 
 private:
-
-    VulkanContext* _pVulkanContext;
+    WeakPtr<VulkanContext> _pVulkanContext;
 
     vkb::PhysicalDevice _physicalDevice;
     vkb::Device _device;

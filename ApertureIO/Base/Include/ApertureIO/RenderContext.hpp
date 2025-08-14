@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ApertureIO/Logger.hpp"
+
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/Command.hpp"
@@ -8,26 +10,25 @@
 #include "ApertureIO/Shader.hpp"
 #include "ApertureIO/Texture.hpp"
 
-#include "ApertureIO/Logger.hpp"
-
-#include <functional>
 #include <atomic>
-#include <mutex>
-#include <condition_variable>
 #include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <mutex>
 #include <thread>
 #include <vector>
 
 namespace Aio {
-    class Buffer;
-    class Shader;
-    class FrameBuffer;
-    class Texture;
 }
 
 /* singleton object that store the currently Bound objects
 to be used for rendering the current object. */
 namespace Aio {
+
+class Buffer;
+class Shader;
+class FrameBuffer;
+class Texture;
 
 class RenderContext
 {
@@ -38,19 +39,18 @@ public:
     void PauseRendering();
     void UnpauseRendering();
 
-    Device* _Device;
-    Context* _Context;
+    WeakPtr<Device> _Device;
+    WeakPtr<Context> _Context;
     
-    Buffer* _VertexBuffer;
-    Buffer* _IndexBuffer;
+    WeakPtr<Buffer> _VertexBuffer;
+    WeakPtr<Buffer> _IndexBuffer;
 
-    std::vector<Buffer*> _UniformBuffers;
-    std::vector<Buffer*> _StorageBuffers;
-    std::vector<Texture*> _Textures;
+    std::vector<WeakPtr<Buffer>> _UniformBuffers;
+    std::vector<WeakPtr<Buffer>> _StorageBuffers;
+    std::vector<WeakPtr<Buffer>> _Textures;
 
-    Shader* _Shader;
-    FrameBuffer* _TargetFrameBuffer;
-
+    WeakPtr<Shader> _Shader;
+    WeakPtr<FrameBuffer> _TargetFrameBuffer;
 private:
 
     std::mutex mtx;

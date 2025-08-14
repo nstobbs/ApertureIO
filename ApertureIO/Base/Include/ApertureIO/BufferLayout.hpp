@@ -32,7 +32,7 @@ struct BufferElement
 class BufferLayout
 {
     public:
-    void AddBufferElement(BufferElement element);
+    void AddBufferElement(const BufferElement& element);
     uint32_t GetElementCount();
     size_t GetStride();
     BufferElement GetBufferElementAt(uint32_t index);

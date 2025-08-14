@@ -18,10 +18,10 @@ public:
     virtual std::pair<const char**, uint32_t> GetRequiredInstanceExtensions() = 0;
     virtual VkSurfaceKHR GetVkSurface() = 0;
     
-    virtual void SetActiveFrameBuffer(Aio::FrameBuffer* framebuffer) = 0; 
+    virtual void SetActiveFrameBuffer(WeakPtr<Aio::FrameBuffer> framebuffer) = 0; 
 
-    protected:
-    Aio::VulkanFrameBuffer* _pFramebuffer;
+protected:
+    WeakPtr<Aio::VulkanFrameBuffer> _pFramebuffer;
 };
 
 }

@@ -29,16 +29,16 @@ public:
     GenericFileManager(std::string folderPath);
     ~GenericFileManager();    
     
-    void AddFileToWatch(std::filesystem::path folderPath, T* object);
+    void AddFileToWatch(std::filesystem::path folderPath, std::shared_ptr<T> object);
     void RemoveFileFromWatch(std::filesystem::path filePath);
-    void RemoveObjectFromWatch(T* object);
+    void RemoveObjectFromWatch(std::shared_ptr<T> object);
 
 private:
     friend class GenericFileListener<T>;
 
     efsw::FileWatcher* _pWatcher;
     std::unordered_map<std::filesystem::path, efsw::WatchID> _watchingFolders;
-    std::unordered_map<std::filesystem::path, T*> _watchingFiles;
+    std::unordered_map<std::filesystem::path, std::shared_ptr<T>> _watchingFiles;
     GenericFileListener<T>* _pListener;
 };
 

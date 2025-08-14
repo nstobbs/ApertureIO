@@ -3,12 +3,12 @@
 
 namespace Aio {
 
-FrameBuffer* FrameBuffer::CreateFrameBuffer(Device* pDevice, Context* pContext)
+std::shared_ptr<FrameBuffer> FrameBuffer::CreateFrameBuffer(const FrameBufferCreateInfo& createInfo)
 {
-    switch(pContext->getRendererAPI())
+    switch(createInfo.pDevice->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            VulkanFrameBuffer* framebuffer = new VulkanFrameBuffer(pDevice, pContext);
+            VulkanFrameBuffer* framebuffer = new VulkanFrameBuffer(createInfo);
             return framebuffer;
     }
 };

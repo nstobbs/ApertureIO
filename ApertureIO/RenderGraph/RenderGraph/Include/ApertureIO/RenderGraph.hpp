@@ -25,32 +25,32 @@ submiting jobs to the gpu to process.
 class RenderGraph
 {
 public:
-    RenderGraph(Device* pDevice, Context* pContext, FrameBuffer* pTargetSwapChain);
-    void AppendRenderPass(RenderPass* pass);
+    RenderGraph(WeakPtr<Device> pDevice, WeakPtr<Context> pContext, WeakPtr<FrameBuffer> pTargetSwapChain);
+    void AppendRenderPass(WeakPtr<RenderPass> pass);
     
     void CompileGraph(); /* Preps the Graph for Rendering, allocate required resources. */
     void RenderFrame(); /* Renders Current Frame*/
 
-    void StoreBufferPtr(std::string name, Buffer* pBuffer);
-    void StoreTexturePtr(std::string name, Texture* pTexture);
+    void StoreBufferPtr(std::string name, SharedPtr<Buffer> pBuffer);
+    void StoreTexturePtr(std::string name, SharedPtr<Texture> pTexture);
 
-    Buffer* GetBufferPtr(std::string name);
-    Texture* GetTexturePtr(std::string name);
-    Context* GetContextPtr();
-    Device* GetDevicePtr();
-    FrameBuffer* GetTargetFrameBufferPtr();
+    SharedPtr<Buffer> GetBuffer(std::string name);
+    SharedPtr<Texture> GetTexture(std::string name);
+    SharedPtr<Context> GetContext();
+    SharedPtr<Device> GetDevice();
+    SharedPtr<FrameBuffer> GetTargetFrameBuffer();
 
 private:
-    std::vector<RenderPass*> sortGraphTaskOrder(); /* Returns an vector<RenderPass*> in order for tasking. */
+    std::vector<SharedPtr<RenderPass>> sortGraph(); /* Does Topological Sort on the DAG */
 
-    Device* _pDevice;
-    Context* _pContext;
-    FrameBuffer* _pTargetSwapChain;
+    WeakPtr<Device> _pDevice;
+    WeakPtr<Context> _pContext;
+    WeakPtr<FrameBuffer> _pTargetSwapChain;
 
-    std::unordered_map<std::string, Buffer*> _pBuffersMap;
-    std::unordered_map<std::string, Texture*> _pTexturesMap;
+    std::unordered_map<std::string, SharedPtr<Buffer>> _pBuffersMap;
+    std::unordered_map<std::string, SharedPtr<Texture>> _pTexturesMap;
 
-    std::vector<RenderPass*> _renderPasses;
+    std::vector<SharedPtr<RenderPass>> _renderPasses;
     size_t _hash; /* A Combined Hash Of all of the RenderContext hashes within the graph.*/
 };
 

@@ -6,27 +6,23 @@
 
 #include <vector>
 
-//TODO: dont know why this fixs issue with command 
-namespace Aio {
 class Command;
-}
 
 namespace Aio {
 
 class Device
 {
     public:
-    static Device* CreateDevice(Context* context);
+    static SharedPtr<Device> CreateDevice(WeakPtr<Context> context);
     virtual bool init() = 0;
 
     BufferHandle CreateUniformBufferHandle();
     BufferHandle CreateStorageBufferHandle();
     TextureHandle CreateTextureHandle();
 
-    Command* pCommand;
+    SharedPtr<Command> pCommand; // TODO: Should Command Be Here.
 
     private:
-    bool _started; // TODO: is this even used at all?
 
     std::vector<BufferHandle> _uniformBufferHandles;
     std::vector<BufferHandle> _storageBufferHandles;

@@ -10,6 +10,7 @@
 
 namespace Aio
 {
+
 enum class RenderPassType
 {
     Graphics = 0,
@@ -46,22 +47,22 @@ class RenderGraph; // Forward Declarations
 class RenderPass
 {
 public:
-    virtual void InitialiseResources(RenderGraph* renderGraph) = 0; /* Allocated Required Resources */
-    virtual void PreExecutePass(RenderGraph* renderGraph) = 0; /* Runs before the start of the MainRenderLoop. For Binding to RenderContext */
-    virtual void ExecutePass(RenderGraph* renderGraph) = 0; /* Sumbits the Pass for Rendering */
+    virtual void InitialiseResources(WeakPtr<RenderGraph> renderGraph) = 0; /* Allocated Required Resources */
+    virtual void PreExecutePass(WeakPtr<RenderGraph> renderGraph) = 0; /* Runs before the start of the MainRenderLoop. For Binding to RenderContext */
+    virtual void ExecutePass(WeakPtr<RenderGraph> renderGraph) = 0; /* Sumbits the Pass for Rendering */
     
-    void AppendRenderPass(RenderPass* pRenderPass);
-    std::vector<RenderPass*> GetNextsRenderPasses();
+    void AppendRenderPass(WeakPtr<RenderPass> pRenderPass);
+    std::vector<SharedPtr<RenderPass>> GetNextsRenderPasses();
     std::vector<ResourceAccess> GetResourcesAccess();
 
 protected:
     std::string _name;
     RenderPassType _type;
     std::vector<ResourceAccess> _resourcesAccess;
-    std::vector<RenderPass*> _nextsPasses;
+    std::vector<SharedPtr<RenderPass>> _nextsPasses;
 
 /* Rendering Objects */
-    Shader* _pShader = {nullptr};
+    SharedPtr<Shader> _pShader;
     RenderContext _pRenderContext;
 };
 };

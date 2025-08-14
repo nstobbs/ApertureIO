@@ -12,9 +12,9 @@ namespace Aio
 class VulkanTexture : public Texture
 {
 public:
-    VulkanTexture(TextureCreateInfo* createInfo);
+    VulkanTexture(const TextureCreateInfo& createInfo);
 
-    TextureHandle* GetTextureHandle() override;
+    TextureHandle GetTextureHandle() override;
     void Bind(RenderContext& rContext) override;
     void Unbind() override;
 
@@ -26,8 +26,8 @@ public:
 private:
     TextureHandle storeTextureHandle(); //TODO: Maybe this store texture handles should be virtual in texture class and these becomes override funcs instead ?
 
-    VulkanDevice* _pDevice;
-    VulkanContext* _pContext;
+    WeakPtr<VulkanDevice> _pDevice;
+    WeakPtr<VulkanContext> _pContext;
     
     VkImage _image;
     VkImageView _imageView;

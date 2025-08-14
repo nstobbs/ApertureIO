@@ -7,11 +7,8 @@
 #include "ApertureIO/RenderContext.hpp"
 
 #include <glm/glm.hpp>
-#include <efsw/efsw.h>
-#include <efsw/efsw.hpp>
 
 #include <string>
-#include <filesystem>
 #include <unordered_map>
 
 namespace Aio {
@@ -23,10 +20,10 @@ enum class ShaderType {
 
 struct ShaderCreateInfo
 {
-    Device* pDevice;
-    Context* pContext;
+    WeakPtr<Device> pDevice;
+    WeakPtr<Context> pContext;
     ShaderType type;
-    std::string shaderName;
+    std::string name;
     std::filesystem::path sourceFilepath;
 };
 
@@ -40,7 +37,7 @@ struct ShaderCreateInfo
 class Shader
 {
 public:
-    static Shader* CreateShader(ShaderCreateInfo& createInfo);
+    static SharedPtr<Shader> CreateShader(const ShaderCreateInfo& createInfo);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
@@ -68,13 +65,13 @@ class ShaderLibrary
 {
 public:
     ShaderLibrary(std::string folderPath);
-    Shader* GetShader(std::string& name);
-    void AddShader(Shader* shader);
+    WeakPtr<Shader> GetShader(std::string& name);
+    void AddShader(WeakPtr<Shader> shader);
     void CreateShader(ShaderCreateInfo& createInfo);
     void DestroyShader(std::string& name);
     
 private:
-    std::unordered_map<std::string, Shader*> _shaders;
+    std::unordered_map<std::string, SharedPtr<Shader>> _shaders;
     ShaderFileManager _shaderFileManager;
 };
 

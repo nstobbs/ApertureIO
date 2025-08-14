@@ -9,6 +9,7 @@ add_library(Vulkan STATIC
         VulkanFrameBuffer.cpp
         VulkanShader.cpp
         VulkanTexture.cpp
+        VulkanImage.cpp
 )
 
 target_include_directories(Vulkan PUBLIC 

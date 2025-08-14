@@ -2,6 +2,7 @@
 
 #include "ApertureIO/VulkanContext.hpp"
 #include "ApertureIO/VulkanDevice.hpp"
+#include "ApertureIO/VulkanImage.hpp"
 
 #include "ApertureIO/FrameBuffer.hpp"
 #include "ApertureIO/RenderContext.hpp"
@@ -9,10 +10,8 @@
 #include "ApertureIO/Device.hpp"
 
 namespace Aio {
-    class VulkanShader;
-}
 
-namespace Aio {
+class VulkanShader;
 
 /* TODO: Worth looking into dynamic rendering and might remove the need for render passes
  https://docs.vulkan.org/samples/latest/samples/extensions/dynamic_rendering/README.html
@@ -20,11 +19,8 @@ namespace Aio {
  and just render to that instead.*/
 class VulkanFrameBuffer : public FrameBuffer
 {
-    public:
-    VulkanFrameBuffer(Device* device, Context* context);
-    VulkanFrameBuffer(Device* device);
-
-    bool init() override;
+public:
+    VulkanFrameBuffer(const FrameBufferCreateInfo& createInfo);
 
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
@@ -38,7 +34,7 @@ class VulkanFrameBuffer : public FrameBuffer
 
     bool CheckRebuildInProgress();
 
-    private:
+private:
 
     friend class VulkanShader; // TODO: Try and remove this friend class at some point
     /* Private Functions */
@@ -48,9 +44,10 @@ class VulkanFrameBuffer : public FrameBuffer
     std::vector<VkFramebuffer> RebuildVkFramebuffers();
 
     VkFramebuffer CreateVkFramebuffer(std::vector<VkImageView> layerAttachments, uint32_t layerCount);
+
     /* Private Data */
-    VulkanDevice* _pDevice;
-    VulkanContext* _pContext;
+    WeakPtr<VulkanDevice> _pDevice;
+    WeakPtr<VulkanContext> _pContext;
 
     //TODO we should know the sizes at construction time.
     //So this should be an fixed size array instead? 
@@ -58,9 +55,7 @@ class VulkanFrameBuffer : public FrameBuffer
     VkRenderPass _renderPass;
 
     // This data needs to be set before creating the renderPass
-    std::vector<VkImage> _images;
-    std::vector<VkImageView> _imageViews;
-    std::vector<VkFormat> _formats;
+    SharedPtr<VulkanImage> _pVulkanImage;
     VkExtent2D _extent;
 
     // if it is a swapchain store it.

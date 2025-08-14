@@ -23,7 +23,7 @@ class VulkanBuffer : public Buffer
 {
     public:
     ~VulkanBuffer();
-    VulkanBuffer(BufferCreateInfo* createInfo);
+    VulkanBuffer(const BufferCreateInfo& createInfo);
     
     /* Might need to function to rebuild the buffer */
     void rebuildBuffer(); //destory and rebuild the buffer.
@@ -32,7 +32,7 @@ class VulkanBuffer : public Buffer
     void Unbind() override;
 
     void UploadToDevice(void* data) override;
-    BufferHandle* GetBufferHandle() override;
+    BufferHandle GetBufferHandle() override;
 
     VkBuffer GetBuffer();
 
@@ -42,7 +42,7 @@ class VulkanBuffer : public Buffer
     BufferHandle storeBufferHandle();
     BufferHandle _handle;
     
-    VulkanDevice* _pDevice;
+    WeakPtr<VulkanDevice> _pDevice;
 
     BufferType _type;
     BufferLayout _layout;

@@ -24,8 +24,8 @@ enum class BufferType
 
 struct BufferCreateInfo
 {
-    Device* device;
-    Context* context;
+    WeakPtr<Device> device;
+    WeakPtr<Context> context;
     BufferType type;
     BufferLayout layout;
     void* data;
@@ -35,11 +35,11 @@ struct BufferCreateInfo
 class Buffer
 {
 public:
-    static Buffer* CreateBuffer(BufferCreateInfo* createInfo);
+    static SharedPtr<Buffer> CreateBuffer(BufferCreateInfo& createInfo);
 
     BufferLayout GetBufferLayout();
-    virtual BufferHandle* GetBufferHandle() = 0;
-    void SetBufferLayout(BufferLayout layout);
+    virtual BufferHandle& GetBufferHandle() = 0;
+    void SetBufferLayout(const BufferLayout& layout);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
@@ -51,35 +51,4 @@ protected:
     BufferLayout _layout;
     uint32_t _count;
 };
-
-// TODO: Rethink about buffers. Could we have a base buffer class that can be used to create index and vertex buffers from, as well as normal buffers??
-// TODO: These classes arent currently being used and can be removed.
-class IndexBuffer : public Buffer
-{
-    public:
-    static IndexBuffer* CreateIndexBuffer();
-
-    virtual void Bind();
-    virtual void Unbind();
-
-    private:
-};
-
-class VertexArray
-{
-    public:
-    void* getDataPtr();
-    size_t sizeOfArray();
-
-    void AddVertexBuffer();
-    void SetIndexBuffer();
-
-    virtual void Bind();
-    virtual void Unbind();
-
-    private:
-    std::vector<Buffer*> _pVertexBuffers;
-    Buffer* _pIndexBuffer;
-};
-
 }; // End Aio namespace

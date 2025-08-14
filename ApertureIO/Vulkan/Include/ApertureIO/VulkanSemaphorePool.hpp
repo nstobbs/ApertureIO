@@ -16,7 +16,7 @@ namespace Aio
 class VulkanSemaphorePool
 {
 public:
-    VulkanSemaphorePool(VulkanDevice* pDevice);
+    VulkanSemaphorePool(WeakPtr<VulkanDevice> pDevice);
     VkSemaphore GetCurrentSemaphore();
     VkSemaphore GetNextSemaphore();
     void ResetPool();
