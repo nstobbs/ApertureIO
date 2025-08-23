@@ -9,7 +9,7 @@ UniquePtr<Context> Context::CreateContext()
     switch(API)
     {
         case RendererAPI::eVulkan:
-            return std::make_unique<VulkanContext>(VulkanContext());
+            return std::make_unique<VulkanContext>();
         case RendererAPI::eNone:
             std::runtime_error("RendererAPI was't selected during Context creation!");
     };

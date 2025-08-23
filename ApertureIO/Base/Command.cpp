@@ -9,7 +9,7 @@ UniquePtr<Command> Command::CreateCommand(Context* context, Device* device)
     switch (API)
     {
         case RendererAPI::eVulkan:
-            return std::make_unique<VulkanCommand>(VulkanCommand(context, device));  
+            return std::make_unique<VulkanCommand>(context, device);  
     };
 };
 

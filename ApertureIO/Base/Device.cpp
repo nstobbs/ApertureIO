@@ -8,7 +8,7 @@ UniquePtr<Device> Device::CreateDevice(Context* context)
     switch(context->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            return std::make_unique<VulkanDevice>(VulkanDevice(context));
+            return std::make_unique<VulkanDevice>(context);
     }
  };
 

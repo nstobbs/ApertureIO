@@ -11,7 +11,7 @@ UniquePtr<Buffer> Buffer::CreateBuffer(BufferCreateInfo& createInfo)
     switch(API)
     {
         case RendererAPI::eVulkan:
-            return std::make_unique<VulkanBuffer>(VulkanBuffer(createInfo));
+            return std::make_unique<VulkanBuffer>(createInfo);
     }
 };
 
