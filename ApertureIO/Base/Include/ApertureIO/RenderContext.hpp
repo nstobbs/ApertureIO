@@ -19,16 +19,13 @@
 #include <vector>
 
 namespace Aio {
-}
 
 /* singleton object that store the currently Bound objects
 to be used for rendering the current object. */
-namespace Aio {
 
+class Device;
 class Buffer;
-class Shader;
 class FrameBuffer;
-class Texture;
 
 class RenderContext
 {
@@ -39,20 +36,20 @@ public:
     void PauseRendering();
     void UnpauseRendering();
 
-    WeakPtr<Device> _Device;
-    WeakPtr<Context> _Context;
+    Device* _Device;
+    Context* _Context;
     
-    WeakPtr<Buffer> _VertexBuffer;
-    WeakPtr<Buffer> _IndexBuffer;
+    Buffer* _VertexBuffer;
+    Buffer* _IndexBuffer;
 
-    std::vector<WeakPtr<Buffer>> _UniformBuffers;
-    std::vector<WeakPtr<Buffer>> _StorageBuffers;
-    std::vector<WeakPtr<Buffer>> _Textures;
+    std::vector<Buffer*> _UniformBuffers;
+    std::vector<Buffer*> _StorageBuffers;
+    std::vector<Texture*> _Textures;
 
-    WeakPtr<Shader> _Shader;
-    WeakPtr<FrameBuffer> _TargetFrameBuffer;
+    Shader* _Shader;
+    FrameBuffer* _TargetFrameBuffer;
+
 private:
-
     std::mutex mtx;
     std::condition_variable cv;
     std::atomic<bool> _isReloading = {false};

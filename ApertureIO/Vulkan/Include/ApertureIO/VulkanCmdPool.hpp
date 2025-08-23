@@ -20,8 +20,8 @@ class VulkanDevice; // Forward Declaration
 class VulkanCmdPool
 {
 public:
-    VulkanCmdPool(WeakPtr<VulkanDevice> pDevice);
-    void ResetPool(WeakPtr<VulkanDevice> pDevice);
+    VulkanCmdPool(VulkanDevice* device);
+    void ResetPool(VulkanDevice* device);
     VkCommandBuffer GetCurrentCommandBuffer();
     VkCommandBuffer GetNextCommandBuffer();
 

@@ -4,17 +4,18 @@
 namespace Aio
 {
 
-std::shared_ptr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInfo& createInfo)
+UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInfo& createInfo)
 {
     /* Create VkImage */
-    std::shared_ptr<VulkanImage> vulkanImagePtr = std::make_shared<VulkanImage>();
-    vulkanImagePtr->_count = 1;
-    vulkanImagePtr->_format = createInfo.format;
-    vulkanImagePtr->_height = createInfo.height;
-    vulkanImagePtr->_width = createInfo.width;
-    vulkanImagePtr->_pVulkanDevice = createInfo.pVulkanDevice;
+    UniquePtr<VulkanImage> vulkanImagePtr = std::make_unique<VulkanImage>();
+    auto ptr = vulkanImagePtr.get();
+    ptr->_count = 1;
+    ptr->_format = createInfo.format;
+    ptr->_height = createInfo.height;
+    ptr->_width = createInfo.width;
+    ptr->_pVulkanDevice = createInfo.pVulkanDevice;
 
-    auto device = vulkanImagePtr->_pVulkanDevice;
+    auto device = ptr->_pVulkanDevice;
 
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -43,7 +44,7 @@ std::shared_ptr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCre
         VK_ASSERT(vmaCreateImage(device->GetVmaAllocator(), &imageInfo, &imageAllocationInfo, &image, &imageAllocation, nullptr),
                                 VK_SUCCESS, "VulkanTexture: Failed to Create VkImage...");
 
-        vulkanImagePtr->_images.push_back(image);
+        ptr->_images.push_back(image);
         
          /* Create the VkImageViews */
         VkImageViewCreateInfo viewInfo{};
@@ -59,24 +60,24 @@ std::shared_ptr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCre
 
         VkImageView imageView;
         VK_ASSERT(vkCreateImageView(createInfo.pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
-        vulkanImagePtr->_imageViews.push_back(imageView);
+        ptr->_imageViews.push_back(imageView);
     };
     // Change the Image Layout, For Copying To..
-
-    return vulkanImagePtr;
     vulkanImagePtr->SetImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    return vulkanImagePtr;
 };
 
-std::shared_ptr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo)
+UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo)
 {
-    std::shared_ptr<VulkanImage> vulkanImagePtr = std::make_shared<VulkanImage>();
-    vulkanImagePtr->_height = ingestInfo.height;
-    vulkanImagePtr->_width = ingestInfo.width;
-    vulkanImagePtr->_format = ingestInfo.format;
-    vulkanImagePtr->_currentLayout = ingestInfo.layout;
-    vulkanImagePtr->_images = ingestInfo.images;
-    vulkanImagePtr->_imageViews = ingestInfo.imageViews;
-    vulkanImagePtr->_pVulkanDevice = ingestInfo.pVulkanDevice;
+    UniquePtr<VulkanImage> vulkanImagePtr = std::make_unique<VulkanImage>();
+    auto ptr = vulkanImagePtr.get();
+    ptr->_height = ingestInfo.height;
+    ptr->_width = ingestInfo.width;
+    ptr->_format = ingestInfo.format;
+    ptr->_currentLayout = ingestInfo.layout;
+    ptr->_images = ingestInfo.images;
+    ptr->_imageViews = ingestInfo.imageViews;
+    ptr->_pVulkanDevice = ingestInfo.pVulkanDevice;
 
     return vulkanImagePtr;
 };
@@ -87,7 +88,7 @@ void VulkanImage::SetImageLayout(VkImageLayout targetLayout)
     /* TODO: Test if this will work fine within RenderGraph...*/
     for (auto image : _images)
     {
-        VkCommandBuffer commandBuffer = VulkanCommand::beginSingleTimeCommandBuffer(_pVulkanDevice.get());
+        VkCommandBuffer commandBuffer = VulkanCommand::beginSingleTimeCommandBuffer(_pVulkanDevice);
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -132,7 +133,7 @@ void VulkanImage::SetImageLayout(VkImageLayout targetLayout)
                             0, nullptr,
                             0, nullptr,
                             1, &barrier);
-        VulkanCommand::endSingleTimeCommandBuffer(_pVulkanDevice.get(), commandBuffer);
+        VulkanCommand::endSingleTimeCommandBuffer(_pVulkanDevice, commandBuffer);
     };
     
     _currentLayout = targetLayout; 

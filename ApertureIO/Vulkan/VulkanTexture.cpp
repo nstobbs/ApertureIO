@@ -6,11 +6,11 @@
 namespace Aio
 {
 
-VulkanTexture::VulkanTexture(TextureCreateInfo* createInfo)
+VulkanTexture::VulkanTexture(const TextureCreateInfo& createInfo)
 {
-    _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
-    _pContext = dynamic_cast<VulkanContext*>(createInfo->context);
-    _filepath = createInfo->filePath;
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
+    _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
+    _filepath = createInfo.filePath;
 
     // Read the Source File
     readTextureSourceFile();
@@ -171,9 +171,9 @@ TextureHandle VulkanTexture::storeTextureHandle()
 };
 
 //TODO: this should just be part of base texture and not related to vulkan at all.
-TextureHandle* VulkanTexture::GetTextureHandle()
+TextureHandle VulkanTexture::GetTextureHandle()
 {
-    return &_handle;
+    return _handle;
 };
 
 void VulkanTexture::Bind(RenderContext& rContext)

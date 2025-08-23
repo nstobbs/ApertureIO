@@ -1,6 +1,7 @@
 // Aio::Common
 #include "ApertureIO/FileIO.hpp"
 #include "ApertureIO/Logger.hpp"
+#include "ApertureIO/Pointers.hpp"
 
 // Aio::Base
 #include "ApertureIO/Device.hpp"
@@ -17,8 +18,8 @@
 #include "ApertureIO/VulkanDevice.hpp"
 
 // Aio::RenderGraph
+#include "ApertureIO/RenderEngine.hpp"
 #include "ApertureIO/RenderGraph.hpp"
-#include "ApertureIO/BasicRenderPass.hpp"
 
 //TestApplication 
 #include "Window/WindowGLFWImpl.hpp"
@@ -38,56 +39,51 @@ int main()
 {   
     /* The Context handles all of the instance loading, extensions, validation layers and other stuff related to the
     selected graphics api */
-    Aio::Context* context = Aio::Context::CreateContext();
-    context->setRendererAPI(Aio::RendererAPI::eVulkan); // TODO current this isn't needed for this system rn
+    UniquePtr<Aio::Context> context = Aio::Context::CreateContext();
+    context.get()->setRendererAPI(Aio::RendererAPI::eVulkan); // TODO current this isn't needed for this system rn
 
     /* Window to Render to...*/
-    TestApplication::WindowGLFWImpl* window = new TestApplication::WindowGLFWImpl(context);
+    TestApplication::WindowGLFWImpl* window = new TestApplication::WindowGLFWImpl(context.get());
 
     auto extensions = window->GetRequiredInstanceExtensions();
-    dynamic_cast<Aio::VulkanContext*>(context)->SetRequiredExtensions(extensions.first, extensions.second);
+    dynamic_cast<Aio::VulkanContext*>(context.get())->SetRequiredExtensions(extensions.first, extensions.second);
     context->init();
 
     /* The Device handles all of the commands, memory, processing of the selected graphics api*/
-    Aio::Device* GPU = Aio::Device::CreateDevice(context);
+    UniquePtr<Aio::Device> GPU = Aio::Device::CreateDevice(context.get());
     /* We will need to have a window created before we 
     can start creating the the GPUDevice. So we can set the surface and 
     give the GPU selector the right extensions */
-    dynamic_cast<Aio::VulkanDevice*>(GPU)->SetVkSurfaceKHR(window->GetVkSurface()); // hack to set the vulkan surface and extensions for now.
+    dynamic_cast<Aio::VulkanDevice*>(GPU.get())->SetVkSurfaceKHR(window->GetVkSurface()); // hack to set the vulkan surface and extensions for now.
 
-    if (!GPU->init())
+    if (!GPU.get()->init())
     {
         std::cout << "failed to start Aio::Device :(\n";
         return EXIT_FAILURE;
     }
     /* The FrameBuffer is a render Target for any shaders to render to. This can be hook with an window for rendering
     to the screen directly. */
-    Aio::FrameBuffer* framebuffer = Aio::FrameBuffer::CreateFrameBuffer(GPU, context);
-    std::string name = "SwapChain_FrameBuffer1";
-    framebuffer->setName(name);
-    if (!framebuffer->init()) //TODO: Does a FrameBuffer need a Init Function?
-    {
-        std::cout << "failed to create Aio::FrameBuffer :(\n";
-        return EXIT_FAILURE;
-    }
-    window->SetActiveFrameBuffer(framebuffer);
-
-    /* RenderGraph...*/
-    Aio::RenderGraph renderGraph(GPU, context, framebuffer);
-
-    /* Build Graph */
-    Aio::BasicRenderPass basicPass(&renderGraph);
-    renderGraph.AppendRenderPass(&basicPass);
+    Aio::FrameBufferCreateInfo framebufferCreateInfo{};
+    framebufferCreateInfo.isSwapChain = true;
+    framebufferCreateInfo.name = "Main_SwapchainFrameBuffer";
+    framebufferCreateInfo.pContext = context.get();
+    framebufferCreateInfo.pDevice = GPU.get();
     
-    // Main Loop Stuff Happens Here!
-    Aio::Logger::LogInfo("Running!");
-    renderGraph.CompileGraph();
+    UniquePtr<Aio::FrameBuffer> framebuffer = Aio::FrameBuffer::CreateFrameBuffer(framebufferCreateInfo);
+    window->SetActiveFrameBuffer(framebuffer.get());
 
+    /* RenderEngine */
+    Aio::RenderEngine engine(GPU.get(), context.get(), framebuffer.get());
+    UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
+    auto basicPass = graph->CreateRenderPass("BasicRenderPass");
+    engine.LoadGraph("TestGraph", std::move(graph));
+    engine.SetActive("TestGraph");
+    
     while(!window->shouldClose())
     {
         /* Start*/
         glfwPollEvents();
-        renderGraph.RenderFrame();
+        engine.ExecuteFrame();
         /* End */
     };
 

@@ -3,6 +3,7 @@
 #include "ApertureIO/VulkanCommon.hpp"
 #include "ApertureIO/VulkanContext.hpp"
 #include "ApertureIO/VulkanCmdPool.hpp"
+#include "ApertureIO/VulkanSemaphorePool.hpp"
 
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Context.hpp"
@@ -16,7 +17,7 @@ class VulkanSemaphorePool;
 class VulkanDevice : public Device
 {
 public:
-    VulkanDevice(WeakPtr<Context> pContext);
+    VulkanDevice(Context* pContext);
     bool init() override;
 
     void SetVkSurfaceKHR(VkSurfaceKHR surface);
@@ -47,12 +48,13 @@ public:
     friend class VulkanFrameBuffer; // TODO: remove this
 
 private:
-    WeakPtr<VulkanContext> _pVulkanContext;
+    VulkanContext* _pVulkanContext;
 
     vkb::PhysicalDevice _physicalDevice;
     vkb::Device _device;
     VmaAllocator _allocator;
 
+    //TODO: This shouldn't be part of the VulkanDevice 
     VkSurfaceKHR _surface = {VK_NULL_HANDLE};
     char* _windowExtensions = {nullptr};
 
@@ -65,12 +67,12 @@ private:
     VkDescriptorSetLayout _bindlessLayout;
     
     /* CommandBuffers */
-    std::vector<VulkanCmdPool> _cmdPools;
+    std::vector<UniquePtr<VulkanCmdPool>> _cmdPools;
     VkCommandPool _globalCommandPool;
 
     /* Sync Objects*/
     std::vector<VkFence> _fences;
-    std::vector<VulkanSemaphorePool> _semaphorePools;
+    std::vector<UniquePtr<VulkanSemaphorePool>> _semaphorePools;
 
     /* Global Samplers For Texture Reading */
     //TODO: Create an SamplersManager

@@ -24,8 +24,8 @@ enum class BufferType
 
 struct BufferCreateInfo
 {
-    WeakPtr<Device> device;
-    WeakPtr<Context> context;
+    Device* device;
+    Context* context;
     BufferType type;
     BufferLayout layout;
     void* data;
@@ -35,11 +35,11 @@ struct BufferCreateInfo
 class Buffer
 {
 public:
-    static SharedPtr<Buffer> CreateBuffer(BufferCreateInfo& createInfo);
+    static UniquePtr<Buffer> CreateBuffer(BufferCreateInfo& createInfo);
 
     BufferLayout GetBufferLayout();
-    virtual BufferHandle& GetBufferHandle() = 0;
-    void SetBufferLayout(const BufferLayout& layout);
+    virtual BufferHandle GetBufferHandle() = 0;
+    void SetBufferLayout(BufferLayout layout);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;

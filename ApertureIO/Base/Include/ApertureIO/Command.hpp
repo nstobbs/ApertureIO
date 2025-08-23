@@ -6,8 +6,6 @@
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/RenderContext.hpp"
 
-// Can
-
 namespace Aio {
 
 class Device;
@@ -16,7 +14,7 @@ class RenderContext;
 class Command
 {
     public:
-        static SharedPtr<Command> CreateCommand(WeakPtr<Context> context, WeakPtr<Device> device);
+        static UniquePtr<Command> CreateCommand(Context* context, Device* device);
 
         virtual void BeginFrame(RenderContext& renderContext) = 0;
         virtual void EndFrame(RenderContext& renderContext) = 0;

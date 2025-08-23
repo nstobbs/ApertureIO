@@ -9,7 +9,7 @@ namespace Aio
 
 struct VulkanImageCreateInfo
 {
-    WeakPtr<VulkanDevice> pVulkanDevice;
+    VulkanDevice* pVulkanDevice;
     uint32_t height;
     uint32_t width;
     uint32_t count;
@@ -19,7 +19,7 @@ struct VulkanImageCreateInfo
 
 struct VulkanImageSwapChainInfo
 {
-    WeakPtr<VulkanDevice> pVulkanDevice;
+    VulkanDevice* pVulkanDevice;
     uint32_t height;
     uint32_t width;
     uint32_t count;
@@ -32,8 +32,8 @@ struct VulkanImageSwapChainInfo
 class VulkanImage
 {
 public:
-    static SharedPtr<VulkanImage> CreateVulkanImage(const VulkanImageCreateInfo& createInfo);
-    static SharedPtr<VulkanImage> CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo);
+    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageCreateInfo& createInfo);
+    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo);
 
     void SetImageLayout(VkImageLayout targetLayout);
 
@@ -43,6 +43,8 @@ public:
     VkImageLayout GetImageLayout();
 
 private:
+    VulkanDevice* _pVulkanDevice;
+
     uint32_t _height;
     uint32_t _width;
     uint32_t _count;
@@ -50,8 +52,6 @@ private:
     std::vector<VkImageView> _imageViews;
     VkFormat _format;
     VkImageLayout _currentLayout;
-    
-    WeakPtr<VulkanDevice> _pVulkanDevice;
 };
 
 };

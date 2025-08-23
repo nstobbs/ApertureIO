@@ -6,13 +6,12 @@
 namespace Aio 
 {
 
-Texture* Texture::CreateTexture(TextureCreateInfo* createInfo)
+UniquePtr<Texture> Texture::CreateTexture(const TextureCreateInfo& createInfo)
 {
-    switch(createInfo->context->getRendererAPI())
+    switch(createInfo.pContext->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            return new VulkanTexture(createInfo);
-            break;
+            return std::make_unique<VulkanTexture>(VulkanTexture(createInfo));
     }
 };
 
@@ -25,7 +24,7 @@ void Texture::readTextureSourceFile()
         Logger::LogError(msg);
         throw std::runtime_error("Exit...");
     }
-}
+};
 
 void Texture::freePixels()
 {

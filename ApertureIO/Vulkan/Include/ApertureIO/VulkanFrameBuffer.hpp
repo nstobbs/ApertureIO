@@ -46,8 +46,8 @@ private:
     VkFramebuffer CreateVkFramebuffer(std::vector<VkImageView> layerAttachments, uint32_t layerCount);
 
     /* Private Data */
-    WeakPtr<VulkanDevice> _pDevice;
-    WeakPtr<VulkanContext> _pContext;
+    VulkanDevice* _pDevice;
+    VulkanContext* _pContext;
 
     //TODO we should know the sizes at construction time.
     //So this should be an fixed size array instead? 
@@ -55,7 +55,7 @@ private:
     VkRenderPass _renderPass;
 
     // This data needs to be set before creating the renderPass
-    SharedPtr<VulkanImage> _pVulkanImage;
+    UniquePtr<VulkanImage> _pVulkanImage;
     VkExtent2D _extent;
 
     // if it is a swapchain store it.

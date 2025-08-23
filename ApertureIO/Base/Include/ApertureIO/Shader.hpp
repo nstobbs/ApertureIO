@@ -20,8 +20,8 @@ enum class ShaderType {
 
 struct ShaderCreateInfo
 {
-    WeakPtr<Device> pDevice;
-    WeakPtr<Context> pContext;
+    Device* pDevice;
+    Context* pContext;
     ShaderType type;
     std::string name;
     std::filesystem::path sourceFilepath;
@@ -37,7 +37,7 @@ struct ShaderCreateInfo
 class Shader
 {
 public:
-    static SharedPtr<Shader> CreateShader(const ShaderCreateInfo& createInfo);
+    static UniquePtr<Shader> CreateShader(const ShaderCreateInfo& createInfo);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
@@ -65,13 +65,13 @@ class ShaderLibrary
 {
 public:
     ShaderLibrary(std::string folderPath);
-    WeakPtr<Shader> GetShader(std::string& name);
-    void AddShader(WeakPtr<Shader> shader);
+    Shader* GetShader(std::string& name);
+    void AddShader(Shader* shader);
     void CreateShader(ShaderCreateInfo& createInfo);
     void DestroyShader(std::string& name);
     
 private:
-    std::unordered_map<std::string, SharedPtr<Shader>> _shaders;
+    std::unordered_map<std::string, Shader*> _shaders;
     ShaderFileManager _shaderFileManager;
 };
 

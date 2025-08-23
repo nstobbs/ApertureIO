@@ -19,13 +19,13 @@ struct TestUniformStruct
 class BasicRenderPass : public RenderPass
 {
 public:
-    BasicRenderPass(WeakPtr<RenderGraph> renderGraph); 
-    void InitialiseResources(WeakPtr<RenderGraph> renderGraph) override;
-    void PreExecutePass(WeakPtr<RenderGraph> renderGraph) override; 
-    void ExecutePass(WeakPtr<RenderGraph> renderGraph) override;
+    BasicRenderPass(); 
+    void AllocateResources(RenderEngine* renderEngine) override;
+    void BindResources(RenderEngine* renderEngine) override; 
+    void Execute(RenderEngine* renderEngine) override;
 
 private:
-    void updateUniformData(WeakPtr<RenderGraph> renderGraph);
+    void updateUniformData(RenderEngine* renderEngine);
     TestUniformStruct _uniformData;
     std::chrono::system_clock::time_point _startTime;
 };

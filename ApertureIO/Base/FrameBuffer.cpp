@@ -3,19 +3,13 @@
 
 namespace Aio {
 
-std::shared_ptr<FrameBuffer> FrameBuffer::CreateFrameBuffer(const FrameBufferCreateInfo& createInfo)
+UniquePtr<FrameBuffer> FrameBuffer::CreateFrameBuffer(const FrameBufferCreateInfo& createInfo)
 {
-    switch(createInfo.pDevice->getRendererAPI())
+    switch(createInfo.pContext->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            VulkanFrameBuffer* framebuffer = new VulkanFrameBuffer(createInfo);
-            return framebuffer;
+            return std::make_unique<VulkanFrameBuffer>(createInfo);
     }
-};
-
-void FrameBuffer::setName(std::string name)
-{
-    _name = name;
 };
 
 } // End Aio namespace

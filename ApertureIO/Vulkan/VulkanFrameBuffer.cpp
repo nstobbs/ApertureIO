@@ -11,8 +11,8 @@ VulkanFrameBuffer::VulkanFrameBuffer(const FrameBufferCreateInfo& createInfo)
 
     _name = createInfo.name;
     isSwapChainTarget = createInfo.isSwapChain;
-    _pDevice = std::dynamic_pointer_cast<VulkanDevice>(createInfo.pDevice);
-    _pContext = std::dynamic_pointer_cast<VulkanContext>(createInfo.pContext);
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
+    _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
 
     /* Create the SwapChain*/
     if (isSwapChainTarget)

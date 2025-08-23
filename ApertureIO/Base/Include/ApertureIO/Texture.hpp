@@ -19,15 +19,15 @@ namespace Aio
 
 struct TextureCreateInfo
 {   
-    WeakPtr<Device> pDevice;
-    WeakPtr<Context> pContext;
-    std::string& filePath;
+    Device* pDevice;
+    Context* pContext;
+    std::string filePath;
 };
 
 class Texture
 {
 public:
-    static SharedPtr<Texture> CreateTexture(const TextureCreateInfo& createInfo);
+    static UniquePtr<Texture> CreateTexture(const TextureCreateInfo& createInfo);
 
     virtual TextureHandle GetTextureHandle() = 0;
     virtual void Bind(RenderContext& rContext) = 0;
@@ -38,7 +38,7 @@ public:
     std::filesystem::path& GetSourceFilePath();
 
 protected:
-    WeakPtr<Device> _device;
+    Device* _device;
     std::string _filepath;
     TextureHandle _handle;
     
@@ -59,10 +59,10 @@ class TextureManager
 {
 public:
     void CreateTexture(const TextureCreateInfo& createInfo);
-    void AddTexture(SharedPtr<Texture> ptrTexture);
+    void AddTexture(Texture* ptrTexture);
 
 private:
     GenericFileManager<Texture> _textureFileManager;
-    std::vector<SharedPtr<Texture>> _textures;
+    std::vector<UniquePtr<Texture>> _textures;
 };
 };

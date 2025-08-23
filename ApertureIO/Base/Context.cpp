@@ -3,13 +3,13 @@
 
 namespace Aio {
 
-Context* Context::CreateContext()
+UniquePtr<Context> Context::CreateContext()
 {   
     RendererAPI API = RendererAPI::eVulkan; 
     switch(API)
     {
         case RendererAPI::eVulkan:
-            return new VulkanContext();
+            return std::make_unique<VulkanContext>(VulkanContext());
         case RendererAPI::eNone:
             std::runtime_error("RendererAPI was't selected during Context creation!");
     };
@@ -37,12 +37,7 @@ uint32_t Context::getMaxFramesInFlight()
 };
 
 /* Setting Function */
-void Context::setMaxFramesInFlight(uint32_t value)
-{
-    MAX_FRAMES_IN_FLIGHT = value;
-};
-
-void Context::setRendererAPI(RendererAPI API)
+void Context::setRendererAPI(const RendererAPI API)
 {
     _rendererAPI = API;
 };

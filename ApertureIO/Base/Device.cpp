@@ -3,14 +3,12 @@
 
 namespace Aio {
 
- Device* Device::CreateDevice(Context* context)
+UniquePtr<Device> Device::CreateDevice(Context* context)
  {
     switch(context->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            VulkanDevice* device = new VulkanDevice(context);
-            dynamic_cast<Device*>(device)->pCommand = Command::CreateCommand(context, dynamic_cast<Device*>(device));
-            return device;
+            return std::make_unique<VulkanDevice>(VulkanDevice(context));
     }
  };
 

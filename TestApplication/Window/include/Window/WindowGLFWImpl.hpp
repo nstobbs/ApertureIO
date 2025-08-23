@@ -20,21 +20,19 @@ namespace TestApplication {
 class WindowGLFWImpl : public Window
 {
 public:
-
-    WindowGLFWImpl(WeakPtr<Context> context);
-    ~WindowGLFWImpl();
+    WindowGLFWImpl(Aio::Context* context);
 
     std::pair<const char**, uint32_t> GetRequiredInstanceExtensions() override;
     VkSurfaceKHR GetVkSurface() override;
 
-    void SetActiveFrameBuffer(WeakPtr<Aio::FrameBuffer> framebuffer) override;
+    void SetActiveFrameBuffer(Aio::FrameBuffer* framebuffer) override;
 
     void triggerFrameBufferRebuild();
     bool shouldClose();
 
 private:
-    SharedPtr<GLFWwindow> _pWindow;
-    SharedPtr<Aio::Context> _pContext;
+    GLFWwindow* _ptrWindow;
+    Aio::Context* _pContext;
     VkSurfaceKHR _surface = {VK_NULL_HANDLE};
 };
 

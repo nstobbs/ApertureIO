@@ -24,10 +24,11 @@ struct HandlesPushConstant{
 
 class VulkanShader : public Shader
 {
-    public:
+public:
     VulkanShader(const ShaderCreateInfo& createInfo);
 
     ~VulkanShader();
+    VulkanShader& operator=(VulkanShader&& otherShader) noexcept;
 
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
@@ -42,7 +43,7 @@ class VulkanShader : public Shader
     VkPipeline GetPipeline();
     VkPipelineLayout GetPipelineLayout();
 
-    private:
+private:
     ShaderType _type;
 
     // TODO: Check if this is needed?
@@ -79,8 +80,8 @@ class VulkanShader : public Shader
     VkPipeline _pipeline;
     VkPipelineLayout _layout;
 
-    WeakPtr<VulkanDevice> _pDevice;
-    WeakPtr<VulkanContext> _pContext;
+    VulkanDevice* _pDevice;
+    VulkanContext* _pContext;
 
     VkPipeline createPipeline(RenderContext& renderContext);
     VkShaderModule createShaderModule(std::vector<uint32_t>& code);

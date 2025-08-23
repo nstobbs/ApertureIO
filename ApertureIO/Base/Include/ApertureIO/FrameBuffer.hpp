@@ -10,12 +10,15 @@
 
 namespace Aio {
 
+class Device;
+class RenderContext;
+
 struct FrameBufferCreateInfo
 {
     std::string name;
     bool isSwapChain;
-    WeakPtr<Device>  pDevice;
-    WeakPtr<Context> pContext;
+    Device*  pDevice;
+    Context* pContext;
 };
 
 //TODO Do you want to mix color and depth formats with data formating?
@@ -30,12 +33,13 @@ enum class FrameBufferPixelFormat
 class FrameBuffer
 {
 public:
-    static SharedPtr<FrameBuffer> CreateFrameBuffer(const FrameBufferCreateInfo& createInfo);
+    static UniquePtr<FrameBuffer> CreateFrameBuffer(const FrameBufferCreateInfo& createInfo);
 
     virtual void Bind(RenderContext& renderContext) = 0;
     virtual void Unbind() = 0;
 
     void CreateLayer(const std::string& name, FrameBufferPixelFormat format);
+
 protected:
     std::string _name;
     bool isSwapChainTarget = false;
@@ -43,7 +47,7 @@ protected:
     uint32_t _width;
     uint32_t _height;
 
-    std::unordered_map<const std::string, FrameBufferPixelFormat> _layers;
+    std::unordered_map<std::string, FrameBufferPixelFormat> _layers;
     uint32_t _layerCount = 0;
 };
 

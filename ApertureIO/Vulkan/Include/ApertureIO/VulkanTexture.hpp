@@ -26,8 +26,8 @@ public:
 private:
     TextureHandle storeTextureHandle(); //TODO: Maybe this store texture handles should be virtual in texture class and these becomes override funcs instead ?
 
-    WeakPtr<VulkanDevice> _pDevice;
-    WeakPtr<VulkanContext> _pContext;
+    VulkanDevice* _pDevice;
+    VulkanContext* _pContext;
     
     VkImage _image;
     VkImageView _imageView;

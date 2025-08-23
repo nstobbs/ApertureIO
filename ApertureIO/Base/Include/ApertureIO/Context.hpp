@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ApertureIO/Pointers.hpp"
 #include <iostream>
 
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -14,15 +15,14 @@ enum class RendererAPI {
 class Context
 {
 public:
-    static SharedPtr<Context> CreateContext();
-    void setRendererAPI(const RendererAPI& API); //TODO will need to hook this up better to creating an context when this has't been set
+    static UniquePtr<Context> CreateContext();
+    void setRendererAPI(const RendererAPI API); //TODO will need to hook this up better to creating an context when this has't been set
 
     RendererAPI getRendererAPI();
 
     uint32_t getMaxFramesInFlight();
     uint32_t getCurrentFrame();
     void nextFrame();
-    void setMaxFramesInFlight(uint32_t value);
 
     virtual void init() = 0;
 

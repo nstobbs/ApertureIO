@@ -7,15 +7,13 @@
 
 namespace Aio {
     
-Shader* Shader::CreateShader(ShaderCreateInfo& createInfo)
+UniquePtr<Shader> Shader::CreateShader(const ShaderCreateInfo& createInfo)
 {
     auto API =  createInfo.pContext->getRendererAPI();
     switch (API)
     {
         case RendererAPI::eVulkan:
-            Shader* shader = new VulkanShader(createInfo);
-            shader->_sourceFilepath = createInfo.sourceFilepath;
-            return shader;
+            return std::make_unique<VulkanShader>(createInfo);
     }
 };
 
@@ -33,6 +31,8 @@ std::string& Shader::GetName()
 //////////////////////////////////////////////
 /// ShaderLibrary - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
+
+//TODO: Come back and FIXME. UniquePtrs broke it 
 
 ShaderLibrary::ShaderLibrary(std::string folderPath)
 {
@@ -52,9 +52,10 @@ void ShaderLibrary::AddShader(Shader* shader)
 
 void ShaderLibrary::CreateShader(ShaderCreateInfo& createInfo)
 {
-    Shader* shader = Shader::CreateShader(createInfo);
-    _shaders.emplace(shader->GetName(), shader);
-    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader);
+    //TODO: Double check this function
+    auto shader = Shader::CreateShader(createInfo);
+    _shaders.emplace(shader.get()->GetName(), shader.get());
+    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader.get());
 };
 
 void ShaderLibrary::DestroyShader(std::string& name)

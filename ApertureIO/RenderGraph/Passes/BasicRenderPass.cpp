@@ -5,7 +5,7 @@
 namespace Aio
 {
 
-BasicRenderPass::BasicRenderPass(RenderGraph* renderGraph)
+BasicRenderPass::BasicRenderPass()
 {
     /* RenderPass Details */
     _name = "BasicRenderPass";
@@ -40,18 +40,22 @@ BasicRenderPass::BasicRenderPass(RenderGraph* renderGraph)
     textureBufferAccess.isInitialisingResource = true;
     _resourcesAccess.push_back(textureBufferAccess);
 
+    /* Ports */
+    Port imageOut(this);
+    _outPorts.emplace("image", imageOut);
+};
+
+void BasicRenderPass::AllocateResources(RenderEngine* renderEngine)
+{
     /* Create Shader */
     ShaderCreateInfo BasicShaderCreateInfo{};
     BasicShaderCreateInfo.type = ShaderType::Graphics;
-    BasicShaderCreateInfo.pContext = renderGraph->GetContextPtr();
-    BasicShaderCreateInfo.pDevice = renderGraph->GetDevicePtr();
-    BasicShaderCreateInfo.shaderName = "Basic Shader";
+    BasicShaderCreateInfo.pContext = renderEngine->GetContextPtr();
+    BasicShaderCreateInfo.pDevice = renderEngine->GetDevicePtr();
+    BasicShaderCreateInfo.name = "Basic Shader";
     BasicShaderCreateInfo.sourceFilepath = "./Shaders/Basic.glsl";
     _pShader = Shader::CreateShader(BasicShaderCreateInfo);
-};
 
-void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
-{
     /* Vertex Layout */
     BufferElement positionElement{};
     positionElement.count = 3;
@@ -97,16 +101,15 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
 
     /* Vertex CreateInfo */
     BufferCreateInfo vertexInfo{};
-    vertexInfo.context = renderGraph->GetContextPtr();
-    vertexInfo.device = renderGraph->GetDevicePtr();
+    vertexInfo.context = renderEngine->GetContextPtr();
+    vertexInfo.device = renderEngine->GetDevicePtr();
     vertexInfo.type = BufferType::Vertex;
     vertexInfo.layout = vertexLayout;
     vertexInfo.data = vertices.data();
     vertexInfo.count = static_cast<uint32_t>(vertices.size() / vertexLayout.GetElementCount());
 
     /* Create Vertex Buffer  */
-    Buffer* vertexBuffer = Buffer::CreateBuffer(&vertexInfo);
-    renderGraph->StoreBufferPtr("vertexBuffer", vertexBuffer);
+    renderEngine->StoreBufferPtr("vertexBuffer", Buffer::CreateBuffer(vertexInfo));
 
     BufferElement indexElement{};
     indexElement.count = 1;
@@ -129,15 +132,14 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
     /* Index CreateInfo */
     BufferCreateInfo indexInfo{};
     indexInfo.type = BufferType::Index;
-    indexInfo.context = renderGraph->GetContextPtr();;
-    indexInfo.device = renderGraph->GetDevicePtr();
+    indexInfo.context = renderEngine->GetContextPtr();;
+    indexInfo.device = renderEngine->GetDevicePtr();
     indexInfo.data = indices.data();
     indexInfo.layout = indexLayout;
     indexInfo.count = static_cast<uint32_t>(indices.size());
 
     /* Create Index Buffer  */
-    Buffer* indexBuffer = Buffer::CreateBuffer(&indexInfo);
-    renderGraph->StoreBufferPtr("indexBuffer", indexBuffer);
+    renderEngine->StoreBufferPtr("indexBuffer", Buffer::CreateBuffer(indexInfo));
 
     /* Uniform Layout*/
     BufferElement floatElement{};
@@ -151,54 +153,53 @@ void BasicRenderPass::InitialiseResources(RenderGraph* renderGraph)
     /* Uniform CreateInfo */
     BufferCreateInfo uniformInfo{};
     uniformInfo.type = BufferType::Uniform;
-    uniformInfo.context = renderGraph->GetContextPtr();
-    uniformInfo.device = renderGraph->GetDevicePtr();
+    uniformInfo.context = renderEngine->GetContextPtr();
+    uniformInfo.device = renderEngine->GetDevicePtr();
     uniformInfo.data = nullptr;
     uniformInfo.layout = uniformLayout;
     uniformInfo.count = 1;
 
     /* Create Uniform Buffer and Upload Data */
-    Buffer* uniformBuffer = Buffer::CreateBuffer(&uniformInfo);
     _uniformData.a = 1.0f;
-    uniformBuffer->UploadToDevice(&_uniformData);
-    renderGraph->StoreBufferPtr("uniformBuffer", uniformBuffer);
+    renderEngine->StoreBufferPtr("uniformBuffer", Buffer::CreateBuffer(uniformInfo));
+    renderEngine->GetBufferPtr("uniformBuffer")->UploadToDevice(&_uniformData);
     
     /* Texture CreateInfo */
     Aio::TextureCreateInfo basicTextureInfo{};
-    basicTextureInfo.context = renderGraph->GetContextPtr();
-    basicTextureInfo.device = renderGraph->GetDevicePtr();
+    basicTextureInfo.pContext = renderEngine->GetContextPtr();
+    basicTextureInfo.pDevice = renderEngine->GetDevicePtr();
     basicTextureInfo.filePath = "./Textures/1K_Test_PNG_Texture.png";
 
     /* Create Texture */
-    Texture* basicTexture = Texture::CreateTexture(&basicTextureInfo);
-    renderGraph->StoreTexturePtr("basicTexture", basicTexture);
+    renderEngine->StoreTexturePtr("basicTexture", Texture::CreateTexture(basicTextureInfo));
     
     _startTime = std::chrono::system_clock::now();
 };
 
-void BasicRenderPass::PreExecutePass(RenderGraph* renderGraph)
+void BasicRenderPass::BindResources(RenderEngine* renderEngine)
 {
-    renderGraph->GetTargetFrameBufferPtr()->Bind(_pRenderContext);
-    renderGraph->GetBufferPtr("vertexBuffer")->Bind(_pRenderContext);
-    renderGraph->GetBufferPtr("indexBuffer")->Bind(_pRenderContext);
-    renderGraph->GetBufferPtr("uniformBuffer")->Bind(_pRenderContext);
-    renderGraph->GetTexturePtr("basicTexture")->Bind(_pRenderContext);
+    renderEngine->GetTargetFrameBufferPtr()->Bind(_pRenderContext);
+    renderEngine->GetBufferPtr("vertexBuffer")->Bind(_pRenderContext);
+    renderEngine->GetBufferPtr("indexBuffer")->Bind(_pRenderContext);
+    renderEngine->GetBufferPtr("uniformBuffer")->Bind(_pRenderContext);
+    renderEngine->GetTexturePtr("basicTexture")->Bind(_pRenderContext);
     _pShader->Bind(_pRenderContext);
 };
 
-void BasicRenderPass::ExecutePass(RenderGraph* renderGraph)
+void BasicRenderPass::Execute(RenderEngine* renderEngine)
 {
-    renderGraph->GetDevicePtr()->pCommand->Draw(_pRenderContext);
-    updateUniformData(renderGraph);
+    
+    renderEngine->GetCommandPtr()->Draw(_pRenderContext);
+    updateUniformData(renderEngine);
 };
 
-void BasicRenderPass::updateUniformData(RenderGraph* renderGraph)
+void BasicRenderPass::updateUniformData(RenderEngine* renderEngine)
 {
     std::chrono::duration<float> time = std::chrono::system_clock::now() - _startTime;
     float factor = 0.5f;
     float result = 0.5f * (std::sin(2 * PI * factor * time.count()) + 1.0);
     _uniformData.a = result;
-    renderGraph->GetBufferPtr("uniformBuffer")->UploadToDevice(&_uniformData);
+    renderEngine->GetBufferPtr("uniformBuffer")->UploadToDevice(&_uniformData);
 };
 
 };

@@ -5,13 +5,13 @@
 
 namespace Aio {
 
-Buffer* Buffer::CreateBuffer(BufferCreateInfo* createInfo)
+UniquePtr<Buffer> Buffer::CreateBuffer(BufferCreateInfo& createInfo)
 {
-    auto API = createInfo->context->getRendererAPI();
+    auto API = createInfo.context->getRendererAPI();
     switch(API)
     {
         case RendererAPI::eVulkan:
-            return new VulkanBuffer(createInfo);
+            return std::make_unique<VulkanBuffer>(VulkanBuffer(createInfo));
     }
 };
 

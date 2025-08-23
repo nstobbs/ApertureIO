@@ -8,86 +8,18 @@
 namespace Aio
 {
 
-RenderGraph::RenderGraph(Device* pDevice, Context* pContext, FrameBuffer* pTargetSwapChain)
+void RenderGraph::AddRenderPass(RenderPass* renderPass)
 {
-    _pDevice = pDevice;
-    _pContext = pContext;
-    _pTargetSwapChain = pTargetSwapChain;
+    _renderPasses.push_back(UniquePtr<RenderPass>(renderPass));
 };
 
-void RenderGraph::AppendRenderPass(RenderPass* pass)
+RenderPass* RenderGraph::CreateRenderPass(const std::string& name)
 {
-    _renderPasses.push_back(pass);
+    _renderPasses.push_back(std::move(RenderPassFactory::CreateRenderPass(name)));
+    return _renderPasses.back().get();
 };
 
-void RenderGraph::StoreBufferPtr(std::string name, Buffer* pBuffer)
-{
-    if (_pBuffersMap.find(name) != _pBuffersMap.end())
-    {
-        if (_pBuffersMap.at(name) == nullptr)
-        {
-            _pBuffersMap[name] = pBuffer;
-        }
-    }
-    else
-    {
-        _pBuffersMap.emplace(name, pBuffer);
-    }
-};
-
-void RenderGraph::StoreTexturePtr(std::string name, Texture* pTexture)
-{
-    if (_pTexturesMap.find(name) != _pTexturesMap.end())
-    {
-        if (_pTexturesMap.at(name) == nullptr)
-        {
-            _pTexturesMap[name] = pTexture;
-        }
-    }
-    else
-    {
-        _pTexturesMap.emplace(name, pTexture);
-    }
-};
-
-Buffer* RenderGraph::GetBufferPtr(std::string name)
-{
-    auto buffer = _pBuffersMap.at(name);
-    if (!buffer)
-    {
-        auto msg = "Tried Accessing " + name + " but resource handle was a nullptr.";
-        Logger::LogError(msg);
-    }
-    return buffer;
-};
-
-Texture* RenderGraph::GetTexturePtr(std::string name)
-{
-    auto texture = _pTexturesMap.at(name);
-    if (!texture)
-    {
-        auto msg = "Tried Accessing " + name + " but texture handle was a nullptr.";
-        Logger::LogError(msg);
-    }
-    return texture;
-};
-
-Context* RenderGraph::GetContextPtr()
-{
-    return _pContext;
-};
-
-Device* RenderGraph::GetDevicePtr()
-{
-    return _pDevice;
-};
-
-FrameBuffer* RenderGraph::GetTargetFrameBufferPtr()
-{
-    return _pTargetSwapChain;
-}
-
-std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
+std::vector<RenderPass*> RenderGraph::sortGraph()
 {
     std::set<RenderPass*> visited;
     std::stack<RenderPass*> output;
@@ -98,25 +30,28 @@ std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
             visited.emplace(pRenderPass);
         };
 
-        for (auto pass : pRenderPass->GetNextsRenderPasses())
+        auto outPorts = pRenderPass->GetAllOutPorts();
+        for (auto port : outPorts)
         {
-            if (visited.find(pass) == visited.end())
+            auto passPtr = port->GetRenderPass();
+            if (visited.find(passPtr) == visited.end())
             {
-                self(self, pass);
+                self(self, passPtr);
             };
         };
 
         output.push(pRenderPass);
     };
 
-    for (auto pass : _renderPasses)
+    auto passCount = _renderPasses.size();
+    for (int i = 0; i < passCount; i++)
     {
-        if (visited.find(pass) == visited.end())
+        auto passPtr = _renderPasses[i].get();
+        if (visited.find(passPtr) == visited.end())
         {
-            travelGraph(travelGraph, pass);
-        }
+            travelGraph(travelGraph, passPtr);
+        };
     };
-
 
     std::vector<RenderPass*> result;
     while(!output.empty())
@@ -127,9 +62,9 @@ std::vector<RenderPass*> RenderGraph::sortGraphTaskOrder()
     return result;
 };
 
-void RenderGraph::CompileGraph()
+void RenderGraph::CompileGraph(RenderEngine* renderEngine)
 {
-    auto taskOrder = sortGraphTaskOrder();
+    auto taskOrder = sortGraph();
     std::set<RenderPass*> initPasses; /* All the passes that will be allocating resources to the RenderGraph */
     
     /* Compile Requested Resources Vector */
@@ -140,11 +75,11 @@ void RenderGraph::CompileGraph()
         {
             if (resource.type == ResourceType::Texture)
             {
-                StoreTexturePtr(resource.name, nullptr);
+                renderEngine->StoreTexturePtr(resource.name, nullptr);
             }
             else
             {
-                StoreBufferPtr(resource.name, nullptr);
+                renderEngine->StoreBufferPtr(resource.name, nullptr);
             }
 
             if (resource.isInitialisingResource)
@@ -155,25 +90,24 @@ void RenderGraph::CompileGraph()
 
         if (initPasses.find(pass) != initPasses.end())
         {
-            pass->InitialiseResources(this);
+            pass->AllocateResources(renderEngine);
         };
 
-        pass->PreExecutePass(this);
+        pass->BindResources(renderEngine);
     };
 };
 
-void RenderGraph::RenderFrame()
+void RenderGraph::ExecuteGraph(RenderEngine* renderEngine)
 {
-    auto taskOrder = sortGraphTaskOrder();
-    RenderContext tempContext;
-    _pTargetSwapChain->Bind(tempContext);
-
-    GetDevicePtr()->pCommand->BeginFrame(tempContext);
+    auto taskOrder = sortGraph();
+    RenderContext rCtx;
+    renderEngine->GetTargetFrameBufferPtr()->Bind(rCtx);
+    renderEngine->GetCommandPtr()->BeginFrame(rCtx);
     for (auto pass : taskOrder)
     {
-        pass->ExecutePass(this);
+        pass->Execute(renderEngine);
     };
-    GetDevicePtr()->pCommand->EndFrame(tempContext);
+    renderEngine->GetCommandPtr()->EndFrame(rCtx);
 };
 
 };
