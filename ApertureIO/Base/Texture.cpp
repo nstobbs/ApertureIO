@@ -11,7 +11,7 @@ UniquePtr<Texture> Texture::CreateTexture(const TextureCreateInfo& createInfo)
     switch(createInfo.pContext->getRendererAPI())
     {
         case RendererAPI::eVulkan:
-            return std::make_unique<VulkanTexture>(VulkanTexture(createInfo));
+            return std::make_unique<VulkanTexture>(createInfo);
     }
 };
 
