@@ -15,10 +15,9 @@ VulkanDevice::VulkanDevice(Context* context)
 
 bool VulkanDevice::init()
 {   
-    VkInstance instance = _pVulkanContext->GetVkInstance(); 
-
     // Picking the Physical Device
-    vkb::PhysicalDeviceSelector phyiscalDevicePicker(_pVulkanContext->_instance);
+    auto instance = _pVulkanContext->GetBootstrapInstance();
+    vkb::PhysicalDeviceSelector phyiscalDevicePicker(*instance);
     phyiscalDevicePicker.set_surface(_surface); // this doesnt need to be set if we want an headless option.
 
     /* Set the Required Extensions that I need */
@@ -69,7 +68,7 @@ bool VulkanDevice::init()
     VmaAllocatorCreateInfo allocatorCreateInfo{};
     allocatorCreateInfo.physicalDevice = _device.physical_device;
     allocatorCreateInfo.device = _device.device;
-    allocatorCreateInfo.instance = instance;
+    allocatorCreateInfo.instance = *_pVulkanContext->GetVkInstance();
     allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
     //allocatorCreateInfo.flags =  
     VmaVulkanFunctions vkFunctions;
@@ -127,15 +126,15 @@ bool VulkanDevice::init()
     /* Create an VulkanSemaphorePool for each Frame in Flight */
     for (int i = 0; i < inFlight; i++)
     {
-        auto syncPool = VulkanSemaphorePool(this);
-        _semaphorePools.push_back(syncPool);
+        auto syncPool = std::make_unique<VulkanSemaphorePool>(VulkanSemaphorePool(this));
+        _semaphorePools.push_back(std::move(syncPool));
     };
 
     /* Create an VulkanCmdPool for each Frame in Flight */
     for (int i = 0; i < inFlight; i++)
     {
-        auto cmdPool = VulkanCmdPool(this);
-        _cmdPools.push_back(cmdPool);
+        auto cmdPool = std::make_unique<VulkanCmdPool>(VulkanCmdPool(this));
+        _cmdPools.push_back(std::move(cmdPool));
     };
 
     /* Command Pool for Creating One Time Use Command Buffers*/
@@ -222,8 +221,8 @@ void VulkanDevice::createGlobalTextureSampler()
 
 void VulkanDevice::ResetPools(uint32_t currentFrame)
 {
-    _cmdPools[currentFrame].ResetPool(this);
-    _semaphorePools[currentFrame].ResetPool();
+    _cmdPools[currentFrame].get()->ResetPool(this);
+    _semaphorePools[currentFrame].get()->ResetPool();
 };
 
 /* Setter Functions*/
@@ -295,13 +294,13 @@ VkQueue VulkanDevice::GetGraphicVkQueue()
 
 VkSemaphore VulkanDevice::GetCurrentSemaphore(uint32_t currentFrame)
 {
-    return _semaphorePools[currentFrame].GetCurrentSemaphore();
+    return _semaphorePools[currentFrame].get()->GetCurrentSemaphore();
 };
 
 VkSemaphore VulkanDevice::GetNextSemaphore(uint32_t currentFrame)
 {
     
-    return _semaphorePools[currentFrame].GetNextSemaphore();
+    return _semaphorePools[currentFrame].get()->GetNextSemaphore();
 };
 
 VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)
@@ -311,12 +310,12 @@ VkFence VulkanDevice::GetInFlightFence(uint32_t currentFrame)
 
 VkCommandBuffer VulkanDevice::GetCurrentCommandBuffer(uint32_t currentFrame)
 {
-    return _cmdPools[currentFrame].GetCurrentCommandBuffer();
+    return _cmdPools[currentFrame].get()->GetCurrentCommandBuffer();
 };
 
 VkCommandBuffer VulkanDevice::GetNextCommandBuffer(uint32_t currentFrame)
 {
-    return _cmdPools[currentFrame].GetNextCommandBuffer();
+    return _cmdPools[currentFrame].get()->GetNextCommandBuffer();
 }
 
 VkCommandPool VulkanDevice::GetGlobalCommandPool()

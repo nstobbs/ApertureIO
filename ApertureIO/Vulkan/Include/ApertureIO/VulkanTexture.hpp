@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ApertureIO/Texture.hpp"
 #include "ApertureIO/VulkanCommon.hpp"
 #include "ApertureIO/VulkanDevice.hpp"
@@ -10,14 +12,15 @@ namespace Aio
 class VulkanTexture : public Texture
 {
 public:
-    VulkanTexture(TextureCreateInfo* createInfo);
+    VulkanTexture(const TextureCreateInfo& createInfo);
 
-    TextureHandle* GetTextureHandle() override;
+    TextureHandle GetTextureHandle() override;
     void Bind(RenderContext& rContext) override;
     void Unbind() override;
 
     void sourceFileModified() override;
 
+    //TODO: need some stuff of sub class for images. For shadred stuff like FrameBuffer and Textures. Just VulkanImage related.
     void setImageLayout(VkImageLayout targetLayout);
 
 private:

@@ -12,7 +12,6 @@
 
 namespace Aio {
 
-//TODO: Think of a better name for this.
 struct BufferBlock
 {
     VkBuffer vkBufferHandle;
@@ -22,8 +21,7 @@ struct BufferBlock
 class VulkanBuffer : public Buffer
 {
     public:
-    ~VulkanBuffer();
-    VulkanBuffer(BufferCreateInfo* createInfo);
+    VulkanBuffer(const BufferCreateInfo& createInfo);
     
     /* Might need to function to rebuild the buffer */
     void rebuildBuffer(); //destory and rebuild the buffer.
@@ -32,12 +30,12 @@ class VulkanBuffer : public Buffer
     void Unbind() override;
 
     void UploadToDevice(void* data) override;
-    BufferHandle* GetBufferHandle() override;
+    BufferHandle GetBufferHandle() override;
 
     VkBuffer GetBuffer();
 
     private:
-    BufferBlock createVkBuffer(size_t size, VkBufferUsageFlags usage); //TODO: not sure if using pairs are a great idea here.
+    BufferBlock createVkBuffer(size_t size, VkBufferUsageFlags usage);
 
     BufferHandle storeBufferHandle();
     BufferHandle _handle;

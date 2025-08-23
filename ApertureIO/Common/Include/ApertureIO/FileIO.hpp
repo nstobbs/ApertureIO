@@ -12,7 +12,6 @@ enum class SourceFileType
     VertexShader = 0,
     FragmentShader = 1,
     ComputeShader = 2
-    ,
 };
 
 class FileIO

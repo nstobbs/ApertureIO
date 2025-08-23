@@ -1,6 +1,9 @@
 add_library(RenderGraph STATIC
-                RenderGraph.cpp
+                Port.cpp
                 RenderPass.cpp
+                RenderPassFactory.cpp
+                RenderGraph.cpp
+                RenderEngine.cpp
 )
 
 target_include_directories(RenderGraph PUBLIC 
@@ -9,6 +12,7 @@ target_include_directories(RenderGraph PUBLIC
 
 target_link_libraries(RenderGraph
         Aio::Base
+        Aio::Passes
 )
 
 add_library(Aio::RenderGraph ALIAS RenderGraph)

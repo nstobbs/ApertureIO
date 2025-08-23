@@ -14,17 +14,17 @@ public:
     void init() override; // TODO replace void to bool so we can check that the init errored!
     
     /* Getter Functions */
-    VkInstance GetVkInstance(); //TODO Should be a pointer to the instance
+    VkInstance* GetVkInstance();
+    vkb::Instance* GetBootstrapInstance();
     shaderc::Compiler* GetShadercCompiler();
     
     void SetRequiredExtensions(const char** extensions, uint32_t count);
 
 private:
 
-    vkb::Instance _instance; // holds the vulkan instance
-    shaderc::Compiler* _compiler;
-
-    friend class VulkanDevice; //TODO: Find a way to remove this...
+    UniquePtr<vkb::Instance> _instance;
+    UniquePtr<shaderc::Compiler> _compiler;
+    /* Window Extension*/
     const char** _requiredExtensions;
     uint32_t _requiredExtensionsCount;
     

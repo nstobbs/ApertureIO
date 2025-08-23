@@ -38,11 +38,11 @@ void VulkanContext::init()
     }
 
     // volk loads all extension to start using them
-    _instance = builderResult.value();
-    volkLoadInstance(_instance);
+    _instance = std::make_unique<vkb::Instance>(builderResult.value());
+    volkLoadInstance(builderResult.value());
     
     // boot up the shader compiler
-    _compiler = new shaderc::Compiler();
+    _compiler = std::make_unique<shaderc::Compiler>(shaderc::Compiler());
     // TODO: create an teardown function for this class
 };
 
@@ -52,14 +52,19 @@ void VulkanContext::SetRequiredExtensions(const char** extensions, uint32_t coun
     _requiredExtensionsCount = count;
 }
 
-VkInstance VulkanContext::GetVkInstance()
+VkInstance* VulkanContext::GetVkInstance()
 {
-    return _instance.instance;
+    return &_instance.get()->instance;
+};
+
+vkb::Instance* VulkanContext::GetBootstrapInstance()
+{
+    return _instance.get();
 };
 
 shaderc::Compiler* VulkanContext::GetShadercCompiler()
 {
-    return _compiler;
+    return _compiler.get();
 };
 
 } // End Aio namespace

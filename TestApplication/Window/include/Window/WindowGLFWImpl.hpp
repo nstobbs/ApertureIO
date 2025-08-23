@@ -20,9 +20,7 @@ namespace TestApplication {
 class WindowGLFWImpl : public Window
 {
 public:
-
     WindowGLFWImpl(Aio::Context* context);
-    ~WindowGLFWImpl();
 
     std::pair<const char**, uint32_t> GetRequiredInstanceExtensions() override;
     VkSurfaceKHR GetVkSurface() override;
@@ -33,8 +31,8 @@ public:
     bool shouldClose();
 
 private:
-    GLFWwindow* _pWindow = {nullptr};
-    Aio::Context* _pContext = {nullptr};
+    GLFWwindow* _ptrWindow;
+    Aio::Context* _pContext;
     VkSurfaceKHR _surface = {VK_NULL_HANDLE};
 };
 

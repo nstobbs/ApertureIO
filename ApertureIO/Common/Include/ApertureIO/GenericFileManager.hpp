@@ -31,7 +31,7 @@ public:
     
     void AddFileToWatch(std::filesystem::path folderPath, T* object);
     void RemoveFileFromWatch(std::filesystem::path filePath);
-    void RemoveObjectFromWatch(T* object);
+    void RemoveObjectFromWatch(T*object);
 
 private:
     friend class GenericFileListener<T>;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "ApertureIO/Port.hpp"
+#include "ApertureIO/RenderEngine.hpp"
+
 #include "ApertureIO/RenderContext.hpp"
 #include "ApertureIO/Shader.hpp"
 #include "ApertureIO/Handles.hpp"
@@ -10,6 +13,7 @@
 
 namespace Aio
 {
+
 enum class RenderPassType
 {
     Graphics = 0,
@@ -41,27 +45,38 @@ struct ResourceAccess
     bool isInitialisingResource; 
 };
 
-class RenderGraph; // Forward Declarations 
+class RenderEngine;
+class Port;
 
 class RenderPass
 {
 public:
-    virtual void InitialiseResources(RenderGraph* renderGraph) = 0; /* Allocated Required Resources */
-    virtual void PreExecutePass(RenderGraph* renderGraph) = 0; /* Runs before the start of the MainRenderLoop. For Binding to RenderContext */
-    virtual void ExecutePass(RenderGraph* renderGraph) = 0; /* Sumbits the Pass for Rendering */
+    virtual void AllocateResources(RenderEngine*  renderEngine) = 0; /* Allocated Required Resources */
+    virtual void BindResources(RenderEngine* renderEngine) = 0; /* Bind Resources to the RenderContext */
+    virtual void Execute(RenderEngine* renderEngine) = 0; /* Sumbits the Pass for Rendering */
     
-    void AppendRenderPass(RenderPass* pRenderPass);
-    std::vector<RenderPass*> GetNextsRenderPasses();
     std::vector<ResourceAccess> GetResourcesAccess();
 
+    /* Connections */
+    Port* GetInPort(const std::string& name);
+    Port* GetOutPort(const std::string& name);
+    std::vector<Port*> GetAllInPorts();
+    std::vector<Port*> GetAllOutPorts();
+
+    std::string& GetName(); 
+
 protected:
+    /* RenderPass Info  */
     std::string _name;
     RenderPassType _type;
     std::vector<ResourceAccess> _resourcesAccess;
-    std::vector<RenderPass*> _nextsPasses;
+    
+    /* Connections */
+    std::unordered_map<std::string, Port> _inPorts;
+    std::unordered_map<std::string, Port> _outPorts;
 
-/* Rendering Objects */
-    Shader* _pShader = {nullptr};
+    /* Rendering Objects */
+    UniquePtr<Shader> _pShader;
     RenderContext _pRenderContext;
 };
 };

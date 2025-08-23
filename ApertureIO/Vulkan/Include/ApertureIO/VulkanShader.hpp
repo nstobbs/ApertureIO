@@ -16,6 +16,7 @@
 
 namespace Aio {
 
+//TODO: Don't know why this is in shader...?
 struct HandlesPushConstant{
     BufferHandle bufferHandles[16];
     TextureHandle textureHandles[16];
@@ -23,10 +24,11 @@ struct HandlesPushConstant{
 
 class VulkanShader : public Shader
 {
-    public:
-    VulkanShader(ShaderCreateInfo& createInfo);
+public:
+    VulkanShader(const ShaderCreateInfo& createInfo);
 
     ~VulkanShader();
+    VulkanShader& operator=(VulkanShader&& otherShader) noexcept;
 
     void Bind(RenderContext& renderContext) override;
     void Unbind() override;
@@ -41,7 +43,7 @@ class VulkanShader : public Shader
     VkPipeline GetPipeline();
     VkPipelineLayout GetPipelineLayout();
 
-    private:
+private:
     ShaderType _type;
 
     // TODO: Check if this is needed?

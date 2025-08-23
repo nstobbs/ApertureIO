@@ -7,16 +7,17 @@
 
 namespace Aio {
 
-VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
+VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
 {
     _type = createInfo.type;
-    _name = createInfo.shaderName;
+    _name = createInfo.name;
+    _sourceFilepath = createInfo.sourceFilepath;
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
     _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
     auto bindlessLayout = _pDevice->GetBindlessLayout();
     
     switch(_type)
-    {   
+    {
         /* Create a Pipeline Layout.*/
         case ShaderType::Graphics:
         {
@@ -72,8 +73,10 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             // DynamicStates
             _dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
             _dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
+            
             _dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            _dynamicStateInfo.pNext = nullptr;
+            _dynamicStateInfo.flags = 0;
             _dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(_dynamicStates.size());
             _dynamicStateInfo.pDynamicStates = _dynamicStates.data();
 
@@ -167,6 +170,77 @@ VulkanShader::VulkanShader(ShaderCreateInfo& createInfo)
             break;
         }   
     };
+};
+
+VulkanShader::~VulkanShader()
+{
+    Logger::LogWarn("VulkanShader Destructor was called.");
+    switch (_type)
+    {
+        case ShaderType::Graphics:
+        {
+            vkDestroyPipeline(_pDevice->GetVkDevice(), _pipeline, nullptr);
+            vkDestroyPipelineLayout(_pDevice->GetVkDevice(), _layout, nullptr);
+            vkDestroyShaderModule(_pDevice->GetVkDevice(), _fragModule, nullptr);
+            vkDestroyShaderModule(_pDevice->GetVkDevice(), _vertModule, nullptr);
+        };
+    }
+    
+};
+
+VulkanShader& VulkanShader::operator=(VulkanShader&& otherShader) noexcept
+{
+    Logger::LogWarn("VulkanShader Move Assignment was called.");
+    if (this != &otherShader)
+    {
+        _name = otherShader._name;
+        _type = otherShader._type;
+        _sourceFilepath = otherShader._sourceFilepath;
+        _pDevice = otherShader._pDevice;
+        _pContext = otherShader._pContext;
+
+        switch (otherShader._type)
+        {
+            case ShaderType::Graphics:
+            {
+                _viewport = otherShader._viewport;
+                _scissor = otherShader._scissor;
+                _vertModule = otherShader._vertModule;
+                _fragModule = otherShader._fragModule;
+                _dynamicStates = otherShader._dynamicStates;
+                _layout = otherShader._layout;
+
+                _shaderStages = otherShader._shaderStages;
+                _inputAssemblyInfo = otherShader._inputAssemblyInfo;
+                _dynamicStateInfo = otherShader._dynamicStateInfo;
+                _dynamicStateInfo.pDynamicStates = _dynamicStates.data();
+                _viewportStateInfo = otherShader._viewportStateInfo;
+                _viewportStateInfo.pViewports = &_viewport;
+                _viewportStateInfo.pScissors = &_scissor;
+                _rasterizerInfo = otherShader._rasterizerInfo;
+                _multiSamplingInfo = otherShader._multiSamplingInfo;
+                _colorBlendAttachmentInfo = otherShader._colorBlendAttachmentInfo;
+                _colorBlendingInfo = otherShader._colorBlendingInfo;
+                _colorBlendingInfo.pAttachments = &_colorBlendAttachmentInfo;
+                _depthStencilInfo = otherShader._depthStencilInfo;
+                _pipelineInfo = otherShader._pipelineInfo;
+                
+                _pipelineInfo.pStages = _shaderStages.data();
+                _pipelineInfo.pInputAssemblyState = &_inputAssemblyInfo;
+                _pipelineInfo.pViewportState = &_viewportStateInfo;
+                _pipelineInfo.pRasterizationState = &_rasterizerInfo;
+                _pipelineInfo.pMultisampleState = &_multiSamplingInfo;
+                _pipelineInfo.pDepthStencilState = &_depthStencilInfo;
+                _pipelineInfo.pColorBlendState = &_colorBlendingInfo;
+                _pipelineInfo.pDynamicState = &_dynamicStateInfo;
+                _pipelineInfo.layout = _layout;
+                
+                _previousHash = 0;
+            }
+        }
+    };
+
+    return *this;
 };
 
 VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
@@ -367,11 +441,6 @@ void VulkanShader::sourceFileModified()
             break;
         }
     };
-};
-
-VulkanShader::~VulkanShader()
-{
-
 };
 
 void VulkanShader::Bind(RenderContext& renderContext)

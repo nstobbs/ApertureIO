@@ -20,7 +20,7 @@ public:
     
     virtual void SetActiveFrameBuffer(Aio::FrameBuffer* framebuffer) = 0; 
 
-    protected:
+protected:
     Aio::VulkanFrameBuffer* _pFramebuffer;
 };
 

@@ -5,48 +5,62 @@
 
 namespace Aio {
 
-VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
+VulkanFrameBuffer::VulkanFrameBuffer(const FrameBufferCreateInfo& createInfo)
 {
     Logger::LogInfo("Created VulkanFrameBuffer");
-    // create with swap chain
-    isSwapChainTarget = true;
-    _pDevice = dynamic_cast<VulkanDevice*>(device);
-    _pContext = dynamic_cast<VulkanContext*>(context);
 
-    vkb::SwapchainBuilder swapchainBuilder { _pDevice->_device };
-    
-    /* Compute Shader Access */
-    //swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_STORAGE_BIT); // Write Access
-    //swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_SAMPLED_BIT); // Read Access
+    _name = createInfo.name;
+    isSwapChainTarget = createInfo.isSwapChain;
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
+    _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
 
-    swapchainBuilder.set_desired_min_image_count(_pContext->getMaxFramesInFlight());
-    auto swapchainResult = swapchainBuilder.build();
-    if (!swapchainResult)
+    /* Create the SwapChain*/
+    if (isSwapChainTarget)
     {
-        std::cout << swapchainResult.error().message() << "\n";
-    }
+        vkb::SwapchainBuilder swapchainBuilder { _pDevice->_device };
+    
+        /* Compute Shader Access */
+        //swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_STORAGE_BIT); // Write Access
+        swapchainBuilder.add_image_usage_flags(VK_IMAGE_USAGE_SAMPLED_BIT); // Read Access
 
-    vkb::Swapchain swapchain = swapchainResult.value();
+        swapchainBuilder.set_desired_min_image_count(_pContext->getMaxFramesInFlight());
+        auto swapchainResult = swapchainBuilder.build();
+        if (!swapchainResult)
+        {
+            std::cout << swapchainResult.error().message() << "\n";
+        }
 
-    _images = swapchain.get_images().value();
-    _imageViews = swapchain.get_image_views().value();
-    _swapchain = swapchain.swapchain;
-    _extent = swapchain.extent;
+        vkb::Swapchain swapchain = swapchainResult.value();
 
-    _width = _extent.width;
-    _height = _extent.height;
+        _swapchain = swapchain.swapchain;
+        _extent = swapchain.extent;
 
-    // framebuffers for swapchains must have the swapchain format at index 0.
-    _formats.push_back(swapchain.image_format);
-    std::string name = "Colour_Output";
-    _layers.insert(std::make_pair(name, FrameBufferPixelFormat::COLOR_RGBA_8888));
-    _layerCount++;
-    /* Image Layout when using as a swapchain.
-    the image layout in arrays will be 
-    (as if framesInFlight was 2)
-    {layer1}  * n {layer2} {layer2} {layer3} {layer3}  
-    else we are using image layout as 
-    {layer1} {layer2} {layer3} ...*/
+        _width = _extent.width;
+        _height = _extent.height;
+
+        VulkanImageSwapChainInfo swapChainInfo{};
+        swapChainInfo.images = swapchain.get_images().value();
+        swapChainInfo.imageViews = swapchain.get_image_views().value();
+        swapChainInfo.width = _width;
+        swapChainInfo.height = _height;
+        swapChainInfo.format = swapchain.image_format;
+        swapChainInfo.count = swapChainInfo.images.size();
+        swapChainInfo.pVulkanDevice = _pDevice;
+
+        _pVulkanImage = VulkanImage::CreateVulkanImage(swapChainInfo);
+
+        // framebuffers for swapchains must have the swapchain format at index 0.
+        std::string name = "SwapChain_Output_Layer";
+        _layers.insert(std::make_pair(name, FrameBufferPixelFormat::COLOR_RGBA_8888));
+        _layerCount++;
+        /* Image Layout when using as a swapchain.
+        the image layout in arrays will be 
+        (as if framesInFlight was 2)
+        {layer1}  * n {layer2} {layer2} {layer3} {layer3}  
+        else we are using image layout as 
+        {layer1} {layer2} {layer3} ...*/
+    };
+    
 
     /* Create the RenderPass */
     _renderPass = CreateVkRenderPass();
@@ -55,18 +69,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(Device* device, Context* context)
     _framebuffers = CreateVkFramebuffers();
 };
 
-
-VulkanFrameBuffer::VulkanFrameBuffer(Device* device)
-{
-    // create without swap chain
-    _pDevice = dynamic_cast<VulkanDevice*>(device);
-};
-
-/* Do I even Need this?*/
-bool VulkanFrameBuffer::init()
-{
-    return true;
-};
 
 VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 {
@@ -91,7 +93,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
         switch(layer.second)
         {   
             case FrameBufferPixelFormat::COLOR_RGBA_8888:
-                layerInfo.format = _formats[layerCount];
+                layerInfo.format = _pVulkanImage->GetFormat();
                 layerInfo.samples = VK_SAMPLE_COUNT_1_BIT;
                 
                 layerInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -152,6 +154,7 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 
     return renderPass;
 };
+
 // TODO: Come back and see if you can make these loops better 
 std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
 {
@@ -167,7 +170,7 @@ std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
             for (int layer = 0; layer < static_cast<int>(_layerCount); layer++)
             {
                 auto index = i + layer;
-                layerAttachments.push_back(_imageViews[index]);
+                layerAttachments.push_back(_pVulkanImage->GetImageView(index));
             };
 
             auto framebuffer = CreateVkFramebuffer(layerAttachments, _layerCount);
@@ -180,7 +183,7 @@ std::vector<VkFramebuffer> VulkanFrameBuffer::CreateVkFramebuffers()
         std::vector<VkImageView> layerAttachments;
         for (uint32_t layer = 0; layer < _layerCount; layer++)
         {
-            layerAttachments.push_back(_imageViews[layer]);
+            layerAttachments.push_back(_pVulkanImage->GetImageView(layer));
         };
 
         auto framebuffer = CreateVkFramebuffer(layerAttachments, _layerCount);

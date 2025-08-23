@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ApertureIO/Logger.hpp"
+
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/Command.hpp"
@@ -8,26 +10,22 @@
 #include "ApertureIO/Shader.hpp"
 #include "ApertureIO/Texture.hpp"
 
-#include "ApertureIO/Logger.hpp"
-
-#include <functional>
 #include <atomic>
-#include <mutex>
-#include <condition_variable>
 #include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <mutex>
 #include <thread>
 #include <vector>
 
 namespace Aio {
-    class Buffer;
-    class Shader;
-    class FrameBuffer;
-    class Texture;
-}
 
 /* singleton object that store the currently Bound objects
 to be used for rendering the current object. */
-namespace Aio {
+
+class Device;
+class Buffer;
+class FrameBuffer;
 
 class RenderContext
 {
@@ -52,7 +50,6 @@ public:
     FrameBuffer* _TargetFrameBuffer;
 
 private:
-
     std::mutex mtx;
     std::condition_variable cv;
     std::atomic<bool> _isReloading = {false};

@@ -3,27 +3,28 @@
 
 namespace Aio {
 
-VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
+VulkanBuffer::VulkanBuffer(const BufferCreateInfo& createInfo)
 {
-    _pDevice = dynamic_cast<VulkanDevice*>(createInfo->device);
-    size_t size = static_cast<uint32_t>(createInfo->layout.GetStride() * createInfo->count);
+    _pDevice = dynamic_cast<VulkanDevice*>(createInfo.device);
+    auto layout = createInfo.layout;
+    size_t size = static_cast<uint32_t>((layout.GetStride() * createInfo.count));
     _size = static_cast<uint32_t>(size);
-    _count = createInfo->count;
-    _type = createInfo->type;
+    _count = createInfo.count;
+    _type = createInfo.type;
 
-   if (createInfo->type == BufferType::Vertex || createInfo->type == BufferType::Index) // TODO: Should be switch case instead of an if statement
+   if (_type == BufferType::Vertex || _type == BufferType::Index) // TODO: Should be switch case instead of an if statement
    {    
         auto buffer = createVkBuffer(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
         /* If it's a Vertex or Index then the data pointer is copied from the CPU */
         auto allocator = _pDevice->GetVmaAllocator();
-        VK_ASSERT(vmaCopyMemoryToAllocation(allocator, createInfo->data, buffer.vmaAllocationHandle, 0, size), VK_SUCCESS, "Copy From Host to Buffer");
+        VK_ASSERT(vmaCopyMemoryToAllocation(allocator, createInfo.data, buffer.vmaAllocationHandle, 0, size), VK_SUCCESS, "Copy From Host to Buffer");
         /* Create A Device Only Buffer and Copy theSlow Buffer Over*/
         VkBufferCreateInfo extraBufferInfo{};
         extraBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         extraBufferInfo.size = size;
 
-        if (createInfo->type == BufferType::Vertex)
+        if (_type == BufferType::Vertex)
         {
             extraBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -51,7 +52,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
        // free the uneeded buffer
        vmaDestroyBuffer(allocator, buffer.vkBufferHandle, buffer.vmaAllocationHandle);
    }
-   else if (createInfo->type == BufferType::Uniform) 
+   else if (_type == BufferType::Uniform) 
    {    
         auto buffer = createVkBuffer(size,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -71,7 +72,7 @@ VulkanBuffer::VulkanBuffer(BufferCreateInfo* createInfo)
         throw std::runtime_error("");
    }
 
-   dynamic_cast<Buffer*>(this)->SetBufferLayout(createInfo->layout);
+   dynamic_cast<Buffer*>(this)->SetBufferLayout(createInfo.layout);
 };
 
 void VulkanBuffer::UploadToDevice(void* data)
@@ -131,9 +132,9 @@ BufferBlock VulkanBuffer::createVkBuffer(size_t size, VkBufferUsageFlags usage)
     return result;
 };
 
-BufferHandle* VulkanBuffer::GetBufferHandle()
+BufferHandle VulkanBuffer::GetBufferHandle()
 {
-    return &_handle;
+    return _handle;
 };
 
 
@@ -156,11 +157,6 @@ void VulkanBuffer::Bind(RenderContext& renderContext)
 void VulkanBuffer::Unbind()
 {
 
-};
-
-VulkanBuffer::~VulkanBuffer()
-{
-    vmaDestroyBuffer(_pDevice->GetVmaAllocator(), _buffer, _allocation);
 };
 
 VkBuffer VulkanBuffer::GetBuffer()
