@@ -3,6 +3,7 @@ find_package(glm REQUIRED)
 find_package(shaderc REQUIRED)
 find_package(efsw REQUIRED)
 find_package(Boost REQUIRED)
+find_package(assimp REQUIRED)
 
 add_subdirectory(Common)
 add_subdirectory(Base)

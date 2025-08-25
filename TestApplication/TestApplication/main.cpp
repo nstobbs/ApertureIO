@@ -20,6 +20,7 @@
 // Aio::RenderGraph
 #include "ApertureIO/RenderEngine.hpp"
 #include "ApertureIO/RenderGraph.hpp"
+#include "ApertureIO/ReadAssimp.hpp"
 
 //TestApplication 
 #include "Window/WindowGLFWImpl.hpp"
@@ -75,9 +76,11 @@ int main()
     /* RenderEngine */
     Aio::RenderEngine engine(GPU.get(), context.get(), framebuffer.get());
     UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
-    auto basicPass = graph->CreateRenderPass("BasicRenderPass");
-    engine.LoadGraph("TestGraph", std::move(graph));
-    engine.SetActive("TestGraph");
+    auto readModelPass = graph->CreateRenderPass("ReadAssimp");
+    dynamic_cast<Aio::ReadAssimp*>(readModelPass)->ReadFile("./Models/viking_room.obj", "./Textures/viking_room.png");
+    
+    engine.LoadGraph("ReadModel", std::move(graph));
+    engine.SetActive("ReadModel");
     
     while(!window->shouldClose())
     {

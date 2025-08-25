@@ -31,13 +31,13 @@ struct BufferElement
 
 class BufferLayout
 {
-    public:
+public:
     void AddBufferElement(BufferElement element);
     uint32_t GetElementCount();
     size_t GetStride();
     BufferElement GetBufferElementAt(uint32_t index);
 
-    private:
+private:
     std::vector<BufferElement> _elements;
     uint32_t _stride; // the distance between vertices 
 
