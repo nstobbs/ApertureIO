@@ -1,5 +1,7 @@
 #include <ApertureIO/ReadAssimp.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace Aio
 {
 
@@ -53,10 +55,8 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
     const aiScene* scene = _importer.ReadFile(_modelFilePath,
                                             aiProcess_CalcTangentSpace      |
                                             aiProcess_Triangulate           |
-                                            aiProcess_JoinIdenticalVertices |
                                             aiProcess_SortByPType           |
-                                            aiProcess_MakeLeftHanded        |
-                                            aiProcess_FlipWindingOrder);
+                                            aiProcess_MakeLeftHanded);
     
     if (scene == nullptr)
     {
@@ -165,13 +165,15 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
     matrixElement.count = 4 * 4;
     matrixElement.type = BufferElementType::Float;
     matrixElement.normalized = false;
-    _cameraUniformLayout.AddBufferElement(matrixElement); /* Model */
     _cameraUniformLayout.AddBufferElement(matrixElement); /* View */
     _cameraUniformLayout.AddBufferElement(matrixElement); /* Projection */
 
-    _camera.model = glm::mat4(1.0f);
-    _camera.view = glm::mat4(1.0f);
-    _camera.projection = glm::mat4(1.0f);
+    _camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, -2.0f),
+                               glm::vec3(0.0f, 0.0f, 0.0f),
+                               glm::vec3(0.0f, -1.0f, 0.0f));
+
+    _camera.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+    _camera.projection[1][1] *= -1.0f;
 };
 
 std::vector<aiNode*> ReadAssimp::findNodesContainingMeshes(aiNode* node)

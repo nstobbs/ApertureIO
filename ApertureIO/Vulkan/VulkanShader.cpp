@@ -100,7 +100,7 @@ VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
             _rasterizerInfo.depthClampEnable = VK_FALSE;
             _rasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
             _rasterizerInfo.lineWidth = 1.0f;
-            _rasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+            _rasterizerInfo.cullMode = VK_CULL_MODE_NONE;
             _rasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             _rasterizerInfo.depthBiasEnable = VK_FALSE;
             _rasterizerInfo.depthBiasConstantFactor = 0.0f;
