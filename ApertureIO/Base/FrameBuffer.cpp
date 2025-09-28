@@ -12,5 +12,32 @@ UniquePtr<FrameBuffer> FrameBuffer::CreateFrameBuffer(const FrameBufferCreateInf
     }
 };
 
+FrameBufferPixelFormat FrameBuffer::GetLayerPixelFormat(const std::string& name)
+{
+    return _layersMap.at(name);
+};
+
+void FrameBuffer::CreateLayer(const std::string& name, FrameBufferPixelFormat format)
+{
+    _layerCount++;
+    _layersMap.emplace(name, format);
+    _layerOrder.push_back(name);
+};
+
+std::vector<std::string> FrameBuffer::GetLayerNames()
+{
+    return _layerOrder;
+};
+
+uint32_t FrameBuffer::GetWidth()
+{
+    return _width;
+};
+
+uint32_t FrameBuffer::GetHeight()
+{
+    return _height;
+};
+
 } // End Aio namespace
 

@@ -55,7 +55,6 @@ VulkanBuffer::VulkanBuffer(const BufferCreateInfo& createInfo)
    else if (_type == BufferType::Uniform) 
    {    
         auto buffer = createVkBuffer(size,  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
         /* When using UniformBuffers the data pointer is used for mapping .*/
         _buffer = buffer.vkBufferHandle;
         _allocation = buffer.vmaAllocationHandle;
@@ -80,11 +79,9 @@ void VulkanBuffer::UploadToDevice(void* data)
     memcpy(_pData, data, static_cast<size_t>(_size));
 };
 
-// TODO: Make this useable for Uniform Buffers and Storage Buffers
 BufferHandle VulkanBuffer::storeBufferHandle()
 {
     BufferHandle handle = _pDevice->CreateUniformBufferHandle();
-    
     // Create the Write Descriptor Set.
     VkDescriptorBufferInfo bufferInfo{};
     bufferInfo.buffer = _buffer;

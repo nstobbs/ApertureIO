@@ -18,6 +18,7 @@ UniquePtr<Texture> Texture::CreateTexture(const TextureCreateInfo& createInfo)
 void Texture::readTextureSourceFile()
 {
     _pixels = stbi_load(_filepath.c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+    _channels = 4; /* Because we are using STBI_rgb_alpha. We always have 4 channels*/
     if (!_pixels)
     {
         auto msg = "Aio::Texture Failed to read Texture Source File: " +  _filepath;

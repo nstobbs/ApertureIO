@@ -22,26 +22,27 @@ class VulkanFrameBuffer : public FrameBuffer
 public:
     VulkanFrameBuffer(const FrameBufferCreateInfo& createInfo);
 
-    void Bind(RenderContext& renderContext) override;
+    void Bind(RenderContext& renderContext, bool isTarget) override;
     void Unbind() override;
 
     VkSwapchainKHR GetSwapChain();
     VkRenderPass GetRenderPass();
     VkExtent2D GetExtent();
     VkFramebuffer GetIndexFramebuffer(uint32_t imageIndex);
+    VulkanImage* GetLayerVulkanImage(const std::string& name);
 
     void Rebuild();
 
     bool CheckRebuildInProgress();
 
 private:
-
-    friend class VulkanShader; // TODO: Try and remove this friend class at some point
     /* Private Functions */
     VkRenderPass CreateVkRenderPass();
-
     std::vector<VkFramebuffer> CreateVkFramebuffers();
     std::vector<VkFramebuffer> RebuildVkFramebuffers();
+    void createVulkanImages();
+    void buildRenderableObjects(); /* TODO: think of a better name than this! */
+    void createStorageImageHandles();
 
     VkFramebuffer CreateVkFramebuffer(std::vector<VkImageView> layerAttachments, uint32_t layerCount);
 
@@ -49,17 +50,18 @@ private:
     VulkanDevice* _pDevice;
     VulkanContext* _pContext;
 
-    //TODO we should know the sizes at construction time.
-    //So this should be an fixed size array instead? 
-    std::vector<VkFramebuffer> _framebuffers;
-    VkRenderPass _renderPass;
-
     // This data needs to be set before creating the renderPass
-    UniquePtr<VulkanImage> _pVulkanImage;
+    std::unordered_map<std::string, UniquePtr<VulkanImage>> _vulkanImagesMap;
+    
     VkExtent2D _extent;
 
-    // if it is a swapchain store it.
+    // Swapchain Objects
+    vkb::Swapchain _bootstrapSwapchain;
     VkSwapchainKHR _swapchain;
+
+    std::vector<VkFramebuffer> _framebuffers;
+    VkRenderPass _renderPass;
+    size_t _hash;
     
     bool _requestedRebuild = {false};
 }; 

@@ -1,6 +1,8 @@
 add_library(Passes STATIC
                 BasicRenderPass.cpp
                 ReadAssimp.cpp
+                PhongLighting.cpp
+                AsciiImage.cpp
 )
 
 target_include_directories(Passes PUBLIC 

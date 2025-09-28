@@ -1,4 +1,5 @@
 #include "ApertureIO/VulkanCommon.hpp"
+#include "ApertureIO/Logger.hpp"
 
 std::string VkResultToString(VkResult result) 
 {
@@ -51,6 +52,6 @@ void VK_ASSERT(VkResult result, VkResult expect, std::string message)
     {
         auto msg = std::string("{VK_ASSERT} Expected: ") + VkResultToString(expect) 
                                 + std::string(" But Got: ") + VkResultToString(result) + std::string(" Message: ") + message;
-        throw std::runtime_error(msg.c_str());
+        Aio::Logger::LogError(msg);
     }
 };

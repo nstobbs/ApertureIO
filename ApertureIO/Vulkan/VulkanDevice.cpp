@@ -37,22 +37,32 @@ bool VulkanDevice::init()
     _physicalDevice = pickerResult.value();
 
     // Enable Device Features 
-    VkPhysicalDeviceVulkan12Features features{};
-    features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    features.runtimeDescriptorArray = VK_TRUE;
+    VkPhysicalDeviceVulkan12Features features_vulkan2{};
+    VkPhysicalDeviceVulkan13Features features_vulkan3{};
+    features_vulkan2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features_vulkan3.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+
+    /* Bindless Descriptor Sets Device Features */
+    features_vulkan2.runtimeDescriptorArray = VK_TRUE;
 
     //features.descriptorBindingVariableDescriptorCount = VK_TRUE; // TODO: dont I really need this??
-    features.descriptorBindingPartiallyBound = VK_TRUE;
-    features.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
-    features.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
-    features.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    features_vulkan2.descriptorBindingPartiallyBound = VK_TRUE;
+    features_vulkan2.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
+    features_vulkan2.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
+    features_vulkan2.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    features_vulkan2.descriptorBindingStorageImageUpdateAfterBind = VK_TRUE;
 
-    features.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
-    features.shaderUniformBufferArrayNonUniformIndexing = VK_TRUE;
+    features_vulkan2.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+    features_vulkan2.shaderUniformBufferArrayNonUniformIndexing = VK_TRUE;
+
+    /* Timeline Semaphores Features */
+    features_vulkan2.timelineSemaphore = VK_TRUE;
+    features_vulkan3.synchronization2 = VK_TRUE;
 
     // Createing the Logical Device
     vkb::DeviceBuilder builder{_physicalDevice};
-    builder.add_pNext(&features);
+    builder.add_pNext(&features_vulkan2);
+    builder.add_pNext(&features_vulkan3);
     auto builderResult = builder.build();
 
     if(!builderResult)
@@ -97,6 +107,11 @@ bool VulkanDevice::init()
     uniformBufferPoolInfo.descriptorCount = maxLimit;
     poolInfos.push_back(uniformBufferPoolInfo);
 
+    VkDescriptorPoolSize storageImagePoolInfo{};
+    storageImagePoolInfo.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    storageImagePoolInfo.descriptorCount = maxLimit;
+    poolInfos.push_back(storageImagePoolInfo);
+
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolInfos.size());
@@ -130,6 +145,12 @@ bool VulkanDevice::init()
         _semaphorePools.push_back(std::move(syncPool));
     };
 
+    /* Create VulkanTimelines for syncing tasks per Frame in Flight */
+    for (int i = 0; i < inFlight; i++)
+    {
+        _timelines.push_back(std::move(std::make_unique<VulkanTimeline>(this)));
+    };
+
     /* Create an VulkanCmdPool for each Frame in Flight */
     for (int i = 0; i < inFlight; i++)
     {
@@ -150,15 +171,16 @@ bool VulkanDevice::init()
 /* From https://dev.to/gasim/implementing-bindless-design-in-vulkan-34no */
 void VulkanDevice::createAndAllocateBindlessResources()
 {
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings{};
-    std::array<VkDescriptorBindingFlags, 3> flags{};
-    std::array<VkDescriptorType, 3> types{
+    std::array<VkDescriptorSetLayoutBinding, 4> bindings{};
+    std::array<VkDescriptorBindingFlags, 4> flags{};
+    std::array<VkDescriptorType, 4> types{
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
     };
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         bindings.at(i).binding = i;
         bindings.at(i).descriptorType = types.at(i);
@@ -172,12 +194,12 @@ void VulkanDevice::createAndAllocateBindlessResources()
     VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
     bindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
     bindingFlags.pBindingFlags = flags.data();
-    bindingFlags.bindingCount = 3;
+    bindingFlags.bindingCount = 4;
     bindingFlags.pNext = nullptr;
 
     VkDescriptorSetLayoutCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    createInfo.bindingCount = 3;
+    createInfo.bindingCount = 4;
     createInfo.pBindings = bindings.data();
     createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
     createInfo.pNext = &bindingFlags;
@@ -321,6 +343,11 @@ VkCommandBuffer VulkanDevice::GetNextCommandBuffer(uint32_t currentFrame)
 VkCommandPool VulkanDevice::GetGlobalCommandPool()
 {
     return _globalCommandPool;
+};
+
+VulkanTimeline* VulkanDevice::GetTimeline(uint32_t currentFrame)
+{
+    return _timelines.at(currentFrame).get();
 };
 
 

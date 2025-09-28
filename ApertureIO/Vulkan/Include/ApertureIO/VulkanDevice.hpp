@@ -13,6 +13,7 @@ namespace Aio {
 
 class VulkanContext;
 class VulkanSemaphorePool;
+class VulkanTimeline;
 
 class VulkanDevice : public Device
 {
@@ -35,6 +36,7 @@ public:
     VkQueue GetComputeVkQueue();
     VkQueue GetGraphicVkQueue();
     VkCommandPool GetGlobalCommandPool();
+    VulkanTimeline* GetTimeline(uint32_t currentFrame);
 
     VkSemaphore GetCurrentSemaphore(uint32_t currentFrame);
     VkSemaphore GetNextSemaphore(uint32_t currentFrame);
@@ -73,6 +75,7 @@ private:
     /* Sync Objects*/
     std::vector<VkFence> _fences;
     std::vector<UniquePtr<VulkanSemaphorePool>> _semaphorePools;
+    std::vector<UniquePtr<VulkanTimeline>> _timelines;
 
     /* Global Samplers For Texture Reading */
     //TODO: Create an SamplersManager

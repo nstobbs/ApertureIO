@@ -36,4 +36,11 @@ TextureHandle Device::CreateTextureHandle()
     return handle;
 };
 
+TextureHandle Device::CreateStorageImageHandle()
+{
+    TextureHandle handle = _storageImageHandles.size();
+    _storageImageHandles.push_back(handle);
+    return handle;
+};
+
 } // End Aio namespace

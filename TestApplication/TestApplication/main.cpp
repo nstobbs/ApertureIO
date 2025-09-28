@@ -76,8 +76,15 @@ int main()
     /* RenderEngine */
     Aio::RenderEngine engine(GPU.get(), context.get(), framebuffer.get());
     UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
-    auto readModelPass = graph->CreateRenderPass("ReadAssimp");
-    dynamic_cast<Aio::ReadAssimp*>(readModelPass)->ReadFile("./Models/viking_room.obj", "./Textures/viking_room.png");
+
+    /* Build Graph */
+    auto read = graph->CreateRenderPass("ReadAssimp");
+    auto lights = graph->CreateRenderPass("PhongLighting");
+    auto asciiArt = graph->CreateRenderPass("AsciiImage");
+    read->GetOutPort("image")->Connect(lights->GetInPort("image"));
+    lights->GetOutPort("image")->Connect(asciiArt->GetInPort("image"));
+
+    dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/viking_room.obj", "./Textures/viking_room.png");
     
     engine.LoadGraph("ReadModel", std::move(graph));
     engine.SetActive("ReadModel");

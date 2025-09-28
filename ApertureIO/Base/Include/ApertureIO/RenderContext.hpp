@@ -45,6 +45,7 @@ public:
     std::vector<Buffer*> _UniformBuffers;
     std::vector<Buffer*> _StorageBuffers;
     std::vector<Texture*> _Textures;
+    std::vector<FrameBuffer*> _FrameBuffers;
 
     Shader* _Shader;
     FrameBuffer* _TargetFrameBuffer;

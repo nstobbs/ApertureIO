@@ -17,10 +17,10 @@ class Command
         static UniquePtr<Command> CreateCommand(Context* context, Device* device);
 
         virtual void BeginFrame(RenderContext& renderContext) = 0;
-        virtual void EndFrame(RenderContext& renderContext) = 0;
+        virtual void EndFrame(RenderContext& copyFrameBuffer, RenderContext& renderContext) = 0; /* TODO: seems like bad design if i have to pass back the RenderPass */
         virtual void Draw(RenderContext& renderContext) = 0;
+        virtual void DispatchCompute(RenderContext& renderContext, uint32_t X, uint32_t Y, uint32_t Z) = 0;
         //virtual void DrawInstance(RenderContext& renderContext) = 0;
-        //virtual void DispatchCompute(RenderContext& renderContext) = 0;
         //virtual void Clear(RenderContext& renderContext) = 0; /* Clears All of the FrameBuffers in the renderContext */ 
 };
 

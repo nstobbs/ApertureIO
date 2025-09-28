@@ -19,9 +19,12 @@ public:
     BufferHandle CreateUniformBufferHandle();
     BufferHandle CreateStorageBufferHandle();
     TextureHandle CreateTextureHandle();
+    TextureHandle CreateStorageImageHandle();
+
 private:
     std::vector<BufferHandle> _uniformBufferHandles;
     std::vector<BufferHandle> _storageBufferHandles;
-    std::vector<TextureHandle> _textureHandles; 
+    std::vector<TextureHandle> _textureHandles;
+    std::vector<TextureHandle> _storageImageHandles;
 };
 }; // End Aio namespace

@@ -32,7 +32,7 @@ void GenericFileListener<T>::handleFileAction(efsw::WatchID watchid, const std::
 template <typename T>
 GenericFileManager<T>::GenericFileManager()
 {
-    _pWatcher =  new efsw::FileWatcher;
+    _pWatcher =  new efsw::FileWatcher();
     _pListener = new GenericFileListener<T>(this);
     _pWatcher->watch();
 };
@@ -40,10 +40,10 @@ GenericFileManager<T>::GenericFileManager()
 template <typename T>
 GenericFileManager<T>::GenericFileManager(std::string folderPath)
 {
-    _pWatcher =  new efsw::FileWatcher;
+    _pWatcher =  new efsw::FileWatcher();
     _pListener = new GenericFileListener<T>(this);
     
-    efsw::WatchID folderID = _pWatcher->addWatch(folderPath, _pListener, true);
+    efsw::WatchID folderID = _pWatcher->addWatch(folderPath, _pListener);
     auto logMsg = "GenericFileManager: Watching Dir: " + folderPath;
     Logger::LogInfo(logMsg);
     _watchingFolders.emplace(folderPath, folderID);

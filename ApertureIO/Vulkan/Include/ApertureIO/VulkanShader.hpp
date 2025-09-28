@@ -13,13 +13,14 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 namespace Aio {
 
 //TODO: Don't know why this is in shader...?
+//If the device has less than 256B for PC then RIP!
 struct HandlesPushConstant{
-    BufferHandle bufferHandles[16];
-    TextureHandle textureHandles[16];
+    uint32_t handles[64] = {std::numeric_limits<uint32_t>::max()};
 };
 
 class VulkanShader : public Shader
@@ -44,14 +45,12 @@ public:
     VkPipelineLayout GetPipelineLayout();
 
 private:
-    ShaderType _type;
-
     // TODO: Check if this is needed?
     // Uniform Buffer Stuff
     BufferLayout _uniformBufferLayout;
     VulkanBuffer* _uniformBuffer;
 
-    // Shader Components
+    /* Graphic Shader Resources */
     VkViewport _viewport;
     VkRect2D _scissor;
     VkShaderModule _vertModule;
@@ -64,19 +63,22 @@ private:
     if the renderContext has a different hash meaning that the bound
     objects have changed.*/
 
-    /* TODO: */
-    std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
-
     VkPipelineInputAssemblyStateCreateInfo _inputAssemblyInfo{};
     VkPipelineDynamicStateCreateInfo _dynamicStateInfo{};
     VkPipelineViewportStateCreateInfo _viewportStateInfo{};
     VkPipelineRasterizationStateCreateInfo _rasterizerInfo{};
     VkPipelineMultisampleStateCreateInfo _multiSamplingInfo{};
-    VkPipelineColorBlendAttachmentState _colorBlendAttachmentInfo{};
+    //VkPipelineColorBlendAttachmentState _colorBlendAttachmentInfo{};
     VkPipelineColorBlendStateCreateInfo _colorBlendingInfo{};
     VkPipelineDepthStencilStateCreateInfo _depthStencilInfo{};
-    VkGraphicsPipelineCreateInfo _pipelineInfo{};
+    VkGraphicsPipelineCreateInfo _pipelineGraphicsInfo{}; 
 
+    /* Compute Shader Resources */
+    VkShaderModule _compModule;
+    VkComputePipelineCreateInfo _pipelineComputeInfo{};
+
+    /* General Shader Resources */
+    std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
     VkPipeline _pipeline;
     VkPipelineLayout _layout;
 

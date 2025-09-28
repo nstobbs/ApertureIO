@@ -22,8 +22,10 @@ public:
     VulkanCommand(Context* context, Device* device);
     
     void BeginFrame(RenderContext& renderContext) override;
-    void EndFrame(RenderContext& renderContext) override;
+    void EndFrame(RenderContext& copyFrameBuffer, RenderContext& renderContext) override;
     void Draw(RenderContext& renderContext) override;
+    void DispatchCompute(RenderContext& renderContext, uint32_t X, uint32_t Y, uint32_t Z) override;
+    void CopyFrameBufferToPresent(RenderContext& from, RenderContext& to, std::string fromLayer);
 
     //void DrawInstance(RenderContext& renderContext) override;
     //void DispatchCompute(RenderContext& renderContext) override;
@@ -34,11 +36,17 @@ public:
     static void CopyBufferToImage(VulkanDevice* pDevice, VkBuffer srcBuffer, VkImage dstImage, uint32_t width, uint32_t height);
     static VkCommandBuffer beginSingleTimeCommandBuffer(VulkanDevice* pDevice);
     static void endSingleTimeCommandBuffer(VulkanDevice* pDevice, VkCommandBuffer commandBuffer);
+    static void submitCommandBuffer(VulkanDevice* pDevice, VulkanTimeline* timeline, VkCommandBuffer commandBuffer);
 
 private:
+
+    HandlesPushConstant generatePushConstant(VulkanTimeline* timeline ,RenderContext& renderContext);
+    void bindCommonToCommandBuffer(VkCommandBuffer command, VulkanShader* shader, HandlesPushConstant handles);
     
     uint32_t _imageIndex;
     Context* _pContext;
     VulkanDevice* _pDevice;
+
+    uint64_t debugCounter = {0};
 };
 } // End of Aio Namespace

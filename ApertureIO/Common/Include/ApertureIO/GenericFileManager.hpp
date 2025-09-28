@@ -55,6 +55,6 @@ private:
 };
 
 typedef GenericFileManager<Shader> ShaderFileManager;
-//typedef GenericFileManager<Texture> TextureFileManager;
+typedef GenericFileManager<Texture> TextureFileManager;
 
 };

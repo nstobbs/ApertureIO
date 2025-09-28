@@ -27,41 +27,43 @@ std::string& Shader::GetName()
     return _name;
 };
 
+ShaderType Shader::GetShaderType()
+{
+    return _type;
+};
+
 
 //////////////////////////////////////////////
 /// ShaderLibrary - Hot-Reloading Shaders ///
 /////////////////////////////////////////////
 
-//TODO: Come back and FIXME. UniquePtrs broke it 
-
-ShaderLibrary::ShaderLibrary(std::string folderPath)
+ShaderLibrary::ShaderLibrary(const std::string folderPath)
 {
     _shaderFileManager = ShaderFileManager(folderPath);
 };
 
-Shader* ShaderLibrary::GetShader(std::string& name)
+Shader* ShaderLibrary::GetShader(const std::string& name)
 {
-    return _shaders.at(name);
+    return _shaders.at(name).get();
 };
 
-void ShaderLibrary::AddShader(Shader* shader)
-{
-    _shaders.emplace(shader->GetName(), shader);
-    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader);
+void ShaderLibrary::AddShader(UniquePtr<Shader> shader)
+{   
+    auto pShader = shader.get();
+    _shaderFileManager.AddFileToWatch(pShader->GetSourceFilePath(), pShader);
+    _shaders.emplace(pShader->GetName(), std::move(shader));
 };
 
-void ShaderLibrary::CreateShader(ShaderCreateInfo& createInfo)
+void ShaderLibrary::CreateShader(const ShaderCreateInfo& createInfo)
 {
-    //TODO: Double check this function
-    auto shader = Shader::CreateShader(createInfo);
-    _shaders.emplace(shader.get()->GetName(), shader.get());
-    _shaderFileManager.AddFileToWatch(shader->GetSourceFilePath(), shader.get());
+    auto name = createInfo.name;
+    _shaders.emplace(name, std::move(Shader::CreateShader(createInfo)));
+    _shaderFileManager.AddFileToWatch(_shaders.at(name).get()->GetSourceFilePath(), _shaders.at(name).get());
 };
 
-void ShaderLibrary::DestroyShader(std::string& name)
+void ShaderLibrary::DestroyShader(const std::string& name)
 {
-    Shader* shader = _shaders.at(name);
+    auto shader = _shaders.at(name).get();
     _shaderFileManager.RemoveObjectFromWatch(shader);
 };
-
 };

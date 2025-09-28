@@ -50,7 +50,6 @@ std::string FileIO::SplitOutShader(std::string& sourceCode, SourceFileType shade
             {
 
                 currentType = SourceFileType::ComputeShader;
-
             };
         } else {
             if (currentType != SourceFileType::NoneShader)

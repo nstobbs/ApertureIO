@@ -9,37 +9,38 @@ namespace Aio {
 
 VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
 {
+    /* General Shader Details */
     _type = createInfo.type;
     _name = createInfo.name;
     _sourceFilepath = createInfo.sourceFilepath;
     _pDevice = dynamic_cast<VulkanDevice*>(createInfo.pDevice);
     _pContext = dynamic_cast<VulkanContext*>(createInfo.pContext);
     auto bindlessLayout = _pDevice->GetBindlessLayout();
-    
+
+    /* Push Constant For Buffer Handles */
+    VkPushConstantRange pushConstantHandlesInfo{};
+    pushConstantHandlesInfo.stageFlags = VK_SHADER_STAGE_ALL;
+    pushConstantHandlesInfo.offset = 0;
+    pushConstantHandlesInfo.size = sizeof(HandlesPushConstant);
+
+    /* Pipeline Layout */
+    VkPipelineLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutInfo.setLayoutCount = 1;
+    layoutInfo.pSetLayouts = &bindlessLayout;
+    layoutInfo.pushConstantRangeCount = 1;
+    layoutInfo.pPushConstantRanges = &pushConstantHandlesInfo;
+    VK_ASSERT(vkCreatePipelineLayout(_pDevice->GetVkDevice(), &layoutInfo, nullptr, &_layout), VK_SUCCESS, "Create Pipeline Layout Pipeline");
+
+    auto sourceCode = FileIO::ReadSourceFile(createInfo.sourceFilepath.string());
+
     switch(_type)
     {
-        /* Create a Pipeline Layout.*/
         case ShaderType::Graphics:
         {
             Logger::LogInfo("Creating Graphics Pipeline Layout.");
 
-            // Push Constant For Buffer Handles
-            VkPushConstantRange pushConstantHandlesInfo{};
-            pushConstantHandlesInfo.stageFlags = VK_SHADER_STAGE_ALL;
-            pushConstantHandlesInfo.offset = 0;
-            pushConstantHandlesInfo.size = sizeof(HandlesPushConstant);
-
-            VkPipelineLayoutCreateInfo layoutInfo{};
-            layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            layoutInfo.setLayoutCount = 1;
-            layoutInfo.pSetLayouts = &bindlessLayout;
-            layoutInfo.pushConstantRangeCount = 1;
-            layoutInfo.pPushConstantRanges = &pushConstantHandlesInfo;
-            VK_ASSERT(vkCreatePipelineLayout(_pDevice->GetVkDevice(), &layoutInfo, nullptr, &_layout), VK_SUCCESS, "Create Graphics Pipeline");
-
-            /* Create the Pipeline */
             /* Read Shader Source Code */
-            auto sourceCode = FileIO::ReadSourceFile(createInfo.sourceFilepath.string());
             auto vertSource = FileIO::SplitOutShader(sourceCode, SourceFileType::VertexShader);
             auto fragSource = FileIO::SplitOutShader(sourceCode, SourceFileType::FragmentShader);
 
@@ -100,8 +101,8 @@ VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
             _rasterizerInfo.depthClampEnable = VK_FALSE;
             _rasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
             _rasterizerInfo.lineWidth = 1.0f;
-            _rasterizerInfo.cullMode = VK_CULL_MODE_NONE;
-            _rasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            _rasterizerInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+            _rasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
             _rasterizerInfo.depthBiasEnable = VK_FALSE;
             _rasterizerInfo.depthBiasConstantFactor = 0.0f;
             _rasterizerInfo.depthBiasClamp = 0.0f;
@@ -111,26 +112,6 @@ VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
             _multiSamplingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             _multiSamplingInfo.sampleShadingEnable = VK_FALSE;
             _multiSamplingInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-            // colour attachment
-            _colorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT;
-            _colorBlendAttachmentInfo.blendEnable = VK_FALSE;
-            _colorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            _colorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            _colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
-            _colorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            _colorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-            _colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
-
-            _colorBlendingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-            _colorBlendingInfo.logicOpEnable = VK_FALSE;
-            _colorBlendingInfo.logicOp = VK_LOGIC_OP_COPY;
-            _colorBlendingInfo.attachmentCount = 1;
-            _colorBlendingInfo.pAttachments = &_colorBlendAttachmentInfo;
-            _colorBlendingInfo.blendConstants[0] = 0.0f;
-            _colorBlendingInfo.blendConstants[1] = 0.0f;
-            _colorBlendingInfo.blendConstants[2] = 0.0f;
-            _colorBlendingInfo.blendConstants[3] = 0.0f;
 
             // depth testing
             _depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -145,28 +126,41 @@ VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
             _depthStencilInfo.back = {};
 
             // pipeline 
-            _pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-            _pipelineInfo.stageCount = 2;
+            _pipelineGraphicsInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            _pipelineGraphicsInfo.stageCount = 2;
 
-            _pipelineInfo.pStages = _shaderStages.data();
-            _pipelineInfo.pInputAssemblyState = &_inputAssemblyInfo;
-            _pipelineInfo.pViewportState = &_viewportStateInfo;
-            _pipelineInfo.pRasterizationState = &_rasterizerInfo;
-            _pipelineInfo.pMultisampleState = &_multiSamplingInfo;
-            _pipelineInfo.pDepthStencilState = &_depthStencilInfo;
-            _pipelineInfo.pColorBlendState = &_colorBlendingInfo;
-            _pipelineInfo.pDynamicState = &_dynamicStateInfo;
+            _pipelineGraphicsInfo.pStages = _shaderStages.data();
+            _pipelineGraphicsInfo.pInputAssemblyState = &_inputAssemblyInfo;
+            _pipelineGraphicsInfo.pViewportState = &_viewportStateInfo;
+            _pipelineGraphicsInfo.pRasterizationState = &_rasterizerInfo;
+            _pipelineGraphicsInfo.pMultisampleState = &_multiSamplingInfo;
+            _pipelineGraphicsInfo.pDepthStencilState = &_depthStencilInfo;
+            _pipelineGraphicsInfo.pColorBlendState = &_colorBlendingInfo;
+            _pipelineGraphicsInfo.pDynamicState = &_dynamicStateInfo;
 
-            _pipelineInfo.layout = _layout;
+            _pipelineGraphicsInfo.layout = _layout;
 
-            _pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-            _pipelineInfo.basePipelineIndex = -1;
+            _pipelineGraphicsInfo.basePipelineHandle = VK_NULL_HANDLE;
+            _pipelineGraphicsInfo.basePipelineIndex = -1;
             break;
         }
             
         case ShaderType::Compute:
         {
             Logger::LogInfo("Creating Compute Pipeline Layout.");
+
+            /* Read & Compile Shader */
+            auto computeSource = FileIO::SplitOutShader(sourceCode, SourceFileType::ComputeShader);
+            auto computeCompiledCode = compileShaderSource(computeSource, SourceFileType::ComputeShader);
+            _compModule = createShaderModule(computeCompiledCode);
+
+            VkPipelineShaderStageCreateInfo computeCreateInfo{};
+            computeCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            computeCreateInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+            computeCreateInfo.module = _compModule;
+            computeCreateInfo.pName = "main";
+
+            _shaderStages.push_back(computeCreateInfo);
             break;
         }   
     };
@@ -219,21 +213,21 @@ VulkanShader& VulkanShader::operator=(VulkanShader&& otherShader) noexcept
                 _viewportStateInfo.pScissors = &_scissor;
                 _rasterizerInfo = otherShader._rasterizerInfo;
                 _multiSamplingInfo = otherShader._multiSamplingInfo;
-                _colorBlendAttachmentInfo = otherShader._colorBlendAttachmentInfo;
+                //_colorBlendAttachmentInfo = otherShader._colorBlendAttachmentInfo;
                 _colorBlendingInfo = otherShader._colorBlendingInfo;
-                _colorBlendingInfo.pAttachments = &_colorBlendAttachmentInfo;
+                //_colorBlendingInfo.pAttachments = &_colorBlendAttachmentInfo;
                 _depthStencilInfo = otherShader._depthStencilInfo;
-                _pipelineInfo = otherShader._pipelineInfo;
+                _pipelineGraphicsInfo = otherShader._pipelineGraphicsInfo;
                 
-                _pipelineInfo.pStages = _shaderStages.data();
-                _pipelineInfo.pInputAssemblyState = &_inputAssemblyInfo;
-                _pipelineInfo.pViewportState = &_viewportStateInfo;
-                _pipelineInfo.pRasterizationState = &_rasterizerInfo;
-                _pipelineInfo.pMultisampleState = &_multiSamplingInfo;
-                _pipelineInfo.pDepthStencilState = &_depthStencilInfo;
-                _pipelineInfo.pColorBlendState = &_colorBlendingInfo;
-                _pipelineInfo.pDynamicState = &_dynamicStateInfo;
-                _pipelineInfo.layout = _layout;
+                _pipelineGraphicsInfo.pStages = _shaderStages.data();
+                _pipelineGraphicsInfo.pInputAssemblyState = &_inputAssemblyInfo;
+                _pipelineGraphicsInfo.pViewportState = &_viewportStateInfo;
+                _pipelineGraphicsInfo.pRasterizationState = &_rasterizerInfo;
+                _pipelineGraphicsInfo.pMultisampleState = &_multiSamplingInfo;
+                _pipelineGraphicsInfo.pDepthStencilState = &_depthStencilInfo;
+                _pipelineGraphicsInfo.pColorBlendState = &_colorBlendingInfo;
+                _pipelineGraphicsInfo.pDynamicState = &_dynamicStateInfo;
+                _pipelineGraphicsInfo.layout = _layout;
                 
                 _previousHash = 0;
             }
@@ -258,113 +252,160 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
     VkPipeline..
     */
     size_t hash = renderContext.GetHash();
-    if (hash != _previousHash)
+    if ( hash != _previousHash )
     {
         _previousHash = hash;
-        Logger::LogWarn("RenderContext Hash is Different. Creating Pipeline.");
-        // Vertex Input
-        //TODO: Generate the Vertex Layout from the BufferLayout
-        BufferLayout vertexBufferLayout = renderContext._VertexBuffer->GetBufferLayout();
-        VkVertexInputBindingDescription bindingDescription{};
-        bindingDescription.binding = 0;
-        bindingDescription.stride = vertexBufferLayout.GetStride();
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        //TODO: this needs to calculate where each element is offsets wise
-        // TODO: this should be here as it't not really related to the shader.
-        // But more about the buffer layout itself
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-        uint32_t offset = 0;
-
-        for (int i = 0; i < vertexBufferLayout.GetElementCount(); i++)
+        switch (_type)
         {
-            BufferElement element = vertexBufferLayout.GetBufferElementAt(i);
-            VkVertexInputAttributeDescription description{};
-            description.binding = 0;
-            description.location = i;
-            switch(element.type)
+            case ShaderType::Graphics:
             {
-                case BufferElementType::Float:
-                    if (element.count == 1)
-                    {   
-                        description.format = VK_FORMAT_R32_SFLOAT;
-                        description.offset = offset;
+                Logger::LogWarn("RenderContext Hash is Different. Creating Graphics Pipeline.");
+                // Vertex Input
+                //TODO: Generate the Vertex Layout from the BufferLayout
+                BufferLayout vertexBufferLayout = renderContext._VertexBuffer->GetBufferLayout();
+                VkVertexInputBindingDescription bindingDescription{};
+                bindingDescription.binding = 0;
+                bindingDescription.stride = vertexBufferLayout.GetStride();
+                bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-                    } else if (element.count == 2)
+                //TODO: this needs to calculate where each element is offsets wise
+                // TODO: this should be here as it't not really related to the shader.
+                // But more about the buffer layout itself
+                std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+                uint32_t offset = 0;
+
+                for (int i = 0; i < vertexBufferLayout.GetElementCount(); i++)
+                {
+                    BufferElement element = vertexBufferLayout.GetBufferElementAt(i);
+                    VkVertexInputAttributeDescription description{};
+                    description.binding = 0;
+                    description.location = i;
+                    switch(element.type)
                     {
+                        case BufferElementType::Float:
+                            if (element.count == 1)
+                            {   
+                                description.format = VK_FORMAT_R32_SFLOAT;
+                                description.offset = offset;
 
-                        description.format = VK_FORMAT_R32G32_SFLOAT;
-                        description.offset = offset;
+                            } else if (element.count == 2)
+                            {
 
-                    } else if (element.count == 3)
-                    {
-                        
-                        description.format = VK_FORMAT_R32G32B32_SFLOAT;
-                        description.offset = offset;
+                                description.format = VK_FORMAT_R32G32_SFLOAT;
+                                description.offset = offset;
 
-                    } else if (element.count == 4)
-                    {
-                        description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-                        description.offset = offset;
+                            } else if (element.count == 3)
+                            {
+                                
+                                description.format = VK_FORMAT_R32G32B32_SFLOAT;
+                                description.offset = offset;
+
+                            } else if (element.count == 4)
+                            {
+                                description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                                description.offset = offset;
+                            }
+
+                            offset = offset + (sizeof(float) * element.count);
+                            break;
+
+                        case BufferElementType::Int:
+                            if (element.count == 1)
+                            {   
+                                description.format = VK_FORMAT_R32_SINT;
+                                description.offset = offset;
+
+                            } else if (element.count == 2)
+                            {
+
+                                description.format = VK_FORMAT_R32G32_SINT;
+                                description.offset = offset;
+
+                            } else if (element.count == 3)
+                            {
+                                
+                                description.format = VK_FORMAT_R32G32B32_SINT;
+                                description.offset = offset;
+
+                            } else if (element.count == 4)
+                            {
+                                description.format = VK_FORMAT_R32G32B32A32_SINT;
+                                description.offset = offset;
+                            }
+
+                            offset = offset + (sizeof(int) * element.count);
+                            break;
+
+                        case BufferElementType::Bool:
+                            break;
                     }
 
-                    offset = offset + (sizeof(float) * element.count);
-                    break;
+                    attributeDescriptions.push_back(description);
+                };
+                
+                VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+                vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                vertexInputInfo.vertexBindingDescriptionCount = 1;
+                vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+                vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+                vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-                case BufferElementType::Int:
-                    if (element.count == 1)
-                    {   
-                        description.format = VK_FORMAT_R32_SINT;
-                        description.offset = offset;
+                _pipelineGraphicsInfo.pVertexInputState = &vertexInputInfo;
 
-                    } else if (element.count == 2)
-                    {
+                /* Target FrameBuffer*/
+                FrameBuffer* framebuffer = renderContext._TargetFrameBuffer;
+                _pipelineGraphicsInfo.renderPass = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->GetRenderPass();
 
-                        description.format = VK_FORMAT_R32G32_SINT;
-                        description.offset = offset;
+                auto targetExtent = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->GetExtent();
+                _viewport.height = targetExtent.height;
+                _viewport.width = targetExtent.width;
+                _scissor.extent = targetExtent;
 
-                    } else if (element.count == 3)
-                    {
-                        
-                        description.format = VK_FORMAT_R32G32B32_SINT;
-                        description.offset = offset;
+                // colour attachment
+                VkPipelineColorBlendAttachmentState colorAttachmentInfo{};
+                std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentInfos;
 
-                    } else if (element.count == 4)
-                    {
-                        description.format = VK_FORMAT_R32G32B32A32_SINT;
-                        description.offset = offset;
-                    }
+                colorAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT;
+                colorAttachmentInfo.blendEnable = VK_FALSE;
+                colorAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                colorAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                colorAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+                colorAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                colorAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                colorAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
 
-                    offset = offset + (sizeof(int) * element.count);
-                    break;
+                colorAttachmentInfos.push_back(colorAttachmentInfo);
+                colorAttachmentInfos.push_back(colorAttachmentInfo);
+                
+                _colorBlendingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+                _colorBlendingInfo.logicOpEnable = VK_FALSE;
+                _colorBlendingInfo.logicOp = VK_LOGIC_OP_COPY;
+                _colorBlendingInfo.attachmentCount = static_cast<uint32_t>(colorAttachmentInfos.size());
+                _colorBlendingInfo.pAttachments = colorAttachmentInfos.data();
+                _colorBlendingInfo.blendConstants[0] = 0.0f;
+                _colorBlendingInfo.blendConstants[1] = 0.0f;
+                _colorBlendingInfo.blendConstants[2] = 0.0f;
+                _colorBlendingInfo.blendConstants[3] = 0.0f;
 
-                case BufferElementType::Bool:
-                    break;
+                VkPipeline pipeline;
+                auto result = vkCreateGraphicsPipelines(_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &_pipelineGraphicsInfo, nullptr, &pipeline);
+                VK_ASSERT(result, VK_SUCCESS, "Failed: vkCreateGraphicsPipelines.");
+                return pipeline;
             }
 
-            attributeDescriptions.push_back(description);
+            case ShaderType::Compute:
+            {
+                Logger::LogWarn("RenderContext Hash is Different. Creating Compute Pipeline.");
+                _pipelineComputeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+                _pipelineComputeInfo.layout = _layout;
+                _pipelineComputeInfo.stage = _shaderStages[0];
+                
+                VkPipeline pipeline;
+                auto result = vkCreateComputePipelines(_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &_pipelineComputeInfo, nullptr, &pipeline);
+                VK_ASSERT(result, VK_SUCCESS, "Failed: vkCreateComputePipelines.");
+                return pipeline;
+            }
         };
-        
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexBindingDescriptionCount = 1;
-        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-        _pipelineInfo.pVertexInputState = &vertexInputInfo;
-
-        //TODO: colour attachment
-        FrameBuffer* framebuffer = renderContext._TargetFrameBuffer;
-        _pipelineInfo.renderPass = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_renderPass;
-        _viewport.height = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_extent.height;
-        _viewport.width = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_extent.width;
-        _scissor.extent = dynamic_cast<VulkanFrameBuffer*>(framebuffer)->_extent;
-
-        VkPipeline pipeline;
-        auto result = vkCreateGraphicsPipelines(_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &_pipelineInfo, nullptr, &pipeline);
-        VK_ASSERT(result, VK_SUCCESS, "Create Graphics Pipeline");
-        return pipeline;
     }
 
     return VK_NULL_HANDLE;

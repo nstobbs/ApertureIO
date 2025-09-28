@@ -33,11 +33,15 @@ std::vector<RenderPass*> RenderGraph::sortGraph()
         auto outPorts = pRenderPass->GetAllOutPorts();
         for (auto port : outPorts)
         {
-            auto passPtr = port->GetRenderPass();
-            if (visited.find(passPtr) == visited.end())
+            auto connectedPorts = port->GetConnectedPorts();
+            for (auto inPort : connectedPorts)
             {
-                self(self, passPtr);
-            };
+                auto renderPass = inPort->GetRenderPass();
+                if (visited.find(renderPass) == visited.end())
+                {
+                    self(self, renderPass);
+                };
+            }
         };
 
         output.push(pRenderPass);
@@ -68,32 +72,36 @@ void RenderGraph::CompileGraph(RenderEngine* renderEngine)
     std::set<RenderPass*> initPasses; /* All the passes that will be allocating resources to the RenderGraph */
     
     /* Compile Requested Resources Vector */
-    for(auto pass : taskOrder)
+    for(auto renderPass : taskOrder)
     {
-        auto requestedResources = pass->GetResourcesAccess();
+        auto requestedResources = renderPass->GetResourcesAccess();
         for (auto resource : requestedResources)
         {
             if (resource.type == ResourceType::Texture)
             {
                 renderEngine->StoreTexturePtr(resource.name, nullptr);
             }
-            else
+            else if (resource.type == ResourceType::Uniform || resource.type == ResourceType::Vertex || resource.type == ResourceType::Index)
             {
                 renderEngine->StoreBufferPtr(resource.name, nullptr);
+            }
+            else if (resource.type == ResourceType::FrameBuffer)
+            {
+                renderEngine->StoreFrameBufferPtr(resource.name, nullptr);
             }
 
             if (resource.isInitialisingResource)
             {
-                initPasses.emplace(pass);
+                initPasses.emplace(renderPass);
             };
         };
 
-        if (initPasses.find(pass) != initPasses.end())
+        if (initPasses.find(renderPass) != initPasses.end())
         {
-            pass->AllocateResources(renderEngine);
+            renderPass->AllocateResources(renderEngine);
         };
 
-        pass->BindResources(renderEngine);
+        renderPass->BindResources(renderEngine);
     };
 };
 
@@ -101,13 +109,20 @@ void RenderGraph::ExecuteGraph(RenderEngine* renderEngine)
 {
     auto taskOrder = sortGraph();
     RenderContext rCtx;
-    renderEngine->GetTargetFrameBufferPtr()->Bind(rCtx);
+
+    renderEngine->GetTargetFrameBufferPtr()->Bind(rCtx, true);
     renderEngine->GetCommandPtr()->BeginFrame(rCtx);
-    for (auto pass : taskOrder)
+    RenderPass* lastRenderPass = nullptr;
+
+    for (auto renderPass : taskOrder)
     {
-        pass->Execute(renderEngine);
+        renderPass->Execute(renderEngine);
+        lastRenderPass = renderPass;
     };
-    renderEngine->GetCommandPtr()->EndFrame(rCtx);
+
+    /* TODO: EndFrame needs the last RenderPass to copy that last target framebuffer to copy
+    it over to the swapchain image before presenting the frame */
+    renderEngine->GetCommandPtr()->EndFrame(lastRenderPass->GetRenderContext() ,rCtx);
 };
 
 };

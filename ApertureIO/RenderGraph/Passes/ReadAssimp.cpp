@@ -1,6 +1,6 @@
 #include <ApertureIO/ReadAssimp.hpp>
-
 #include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
 
 namespace Aio
 {
@@ -40,6 +40,13 @@ ReadAssimp::ReadAssimp()
     textureBufferAccess.isInitialisingResource = true;
     _resourcesAccess.push_back(textureBufferAccess);
 
+    ResourceAccess gBufferAccess{};
+    gBufferAccess.name = "gBuffer";
+    gBufferAccess.type = ResourceType::FrameBuffer;
+    gBufferAccess.access = AccessType::Write;
+    gBufferAccess.isInitialisingResource = true;
+    _resourcesAccess.push_back(gBufferAccess);
+
     /* Ports */
     Port imageOut(this);
     Port geoOut(this);
@@ -56,7 +63,7 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
                                             aiProcess_CalcTangentSpace      |
                                             aiProcess_Triangulate           |
                                             aiProcess_SortByPType           |
-                                            aiProcess_MakeLeftHanded);
+                                            aiProcess_FlipUVs);
     
     if (scene == nullptr)
     {
@@ -142,8 +149,8 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
                     {
                         if (mesh->HasTextureCoords(j))
                         {
-                            auto uv = mesh->mTextureCoords[j];
-                            _vertexArray.push_back(glm::vec3(uv->x,uv->y, uv->z));
+                            auto uv = mesh->mTextureCoords[j][i];
+                            _vertexArray.push_back(glm::vec3(uv.x, uv.y, uv.z));
                         };
                     };
                 };
@@ -165,12 +172,14 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
     matrixElement.count = 4 * 4;
     matrixElement.type = BufferElementType::Float;
     matrixElement.normalized = false;
+    _cameraUniformLayout.AddBufferElement(matrixElement); /* Model */
     _cameraUniformLayout.AddBufferElement(matrixElement); /* View */
     _cameraUniformLayout.AddBufferElement(matrixElement); /* Projection */
 
-    _camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, -2.0f),
+    _camera.model = glm::mat4(1.0f);
+    _camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
                                glm::vec3(0.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, -1.0f, 0.0f));
+                               glm::vec3(0.0f, 0.0f, 1.0f));
 
     _camera.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
     _camera.projection[1][1] *= -1.0f;
@@ -190,7 +199,7 @@ std::vector<aiNode*> ReadAssimp::findNodesContainingMeshes(aiNode* node)
         {
             for (int i = 0; i < node->mNumChildren; i++)
             {
-                return self(self, node->mChildren[i]);
+                self(self, node->mChildren[i]);
             };
         };
 
@@ -207,6 +216,11 @@ std::vector<aiNode*> ReadAssimp::findNodesContainingMeshes(aiNode* node)
     return output;
 };
 
+void ReadAssimp::rotateModel()
+{
+    _camera.model = glm::rotate(_camera.model, glm::radians(0.01f), glm::vec3(0.0f, 0.0f, 1.0f));
+};
+
 void ReadAssimp::UpdateCamera(RenderEngine* renderEngine, Camera cam)
 {
     _camera = cam;
@@ -221,7 +235,8 @@ void ReadAssimp::AllocateResources(RenderEngine*  renderEngine)
     shaderInfo.pDevice = renderEngine->GetDevicePtr();
     shaderInfo.type = ShaderType::Graphics;
     shaderInfo.sourceFilepath = "./Shaders/ReadAssimp.glsl";
-    _pShader = Shader::CreateShader(shaderInfo);
+    renderEngine->GetShaderLibraryPtr()->CreateShader(shaderInfo);
+    _pShader = renderEngine->GetShaderLibraryPtr()->GetShader("ReadAssimp");
 
     BufferCreateInfo vertexInfo{};
     vertexInfo.context = renderEngine->GetContextPtr();
@@ -258,21 +273,34 @@ void ReadAssimp::AllocateResources(RenderEngine*  renderEngine)
     inputTextureInfo.pDevice = renderEngine->GetDevicePtr();
     inputTextureInfo.filePath = _textureFilePath;
     renderEngine->StoreTexturePtr("ReadAssimp_inputTexture", Texture::CreateTexture(inputTextureInfo));
+
+    FrameBufferCreateInfo gBufferInfo{};
+    gBufferInfo.name = "gBuffer";
+    gBufferInfo.pContext = renderEngine->GetContextPtr();
+    gBufferInfo.pDevice = renderEngine->GetDevicePtr();
+    gBufferInfo.isSwapChain = false;
+    gBufferInfo.height = renderEngine->GetTargetFrameBufferPtr()->GetHeight();
+    gBufferInfo.width = renderEngine->GetTargetFrameBufferPtr()->GetWidth();
+    renderEngine->StoreFrameBufferPtr("gBuffer", FrameBuffer::CreateFrameBuffer(gBufferInfo));
+    renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("gColor", FrameBufferPixelFormat::COLOR_RGBA_8888);
+    renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("gNormal", FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat);
 };
 
 void ReadAssimp::BindResources(RenderEngine* renderEngine)
 {
-    renderEngine->GetTargetFrameBufferPtr()->Bind(_pRenderContext);
+    renderEngine->GetFrameBufferPtr("gBuffer")->Bind(_pRenderContext, true);
     renderEngine->GetBufferPtr("ReadAssimp_vertexBuffer")->Bind(_pRenderContext);
     renderEngine->GetBufferPtr("ReadAssimp_indexBuffer")->Bind(_pRenderContext);
     renderEngine->GetBufferPtr("ReadAssimp_cameraBuffer")->Bind(_pRenderContext);
     renderEngine->GetTexturePtr("ReadAssimp_inputTexture")->Bind(_pRenderContext);
-    _pShader->Bind(_pRenderContext);
+    renderEngine->GetShaderLibraryPtr()->GetShader("ReadAssimp")->Bind(_pRenderContext);
 };
 
 void ReadAssimp::Execute(RenderEngine* renderEngine)
 {
     renderEngine->GetCommandPtr()->Draw(_pRenderContext);
+    rotateModel();
+    UpdateCamera(renderEngine, _camera); //TODO: this is dumb function, check args
 };
 
 };

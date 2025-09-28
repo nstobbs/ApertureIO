@@ -16,9 +16,10 @@ namespace Aio
 
 enum class RenderPassType
 {
-    Graphics = 0,
-    Compute = 1,
-    Transfer = 2
+    None = -1,
+    Graphics = 1,
+    Compute = 2,
+    Transfer = 3
 };
 
 enum class ResourceType
@@ -29,6 +30,7 @@ enum class ResourceType
     Uniform = 2,
     Storage = 3,
     Texture = 4,
+    FrameBuffer = 5
 };
 
 enum class AccessType {
@@ -56,6 +58,7 @@ public:
     virtual void Execute(RenderEngine* renderEngine) = 0; /* Sumbits the Pass for Rendering */
     
     std::vector<ResourceAccess> GetResourcesAccess();
+    RenderContext& GetRenderContext();
 
     /* Connections */
     Port* GetInPort(const std::string& name);
@@ -63,7 +66,7 @@ public:
     std::vector<Port*> GetAllInPorts();
     std::vector<Port*> GetAllOutPorts();
 
-    std::string& GetName(); 
+    std::string& GetName();
 
 protected:
     /* RenderPass Info  */
@@ -76,7 +79,7 @@ protected:
     std::unordered_map<std::string, Port> _outPorts;
 
     /* Rendering Objects */
-    UniquePtr<Shader> _pShader;
+    Shader* _pShader;
     RenderContext _pRenderContext;
 };
 };

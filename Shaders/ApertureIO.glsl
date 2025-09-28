@@ -13,6 +13,7 @@
 #define BindlessUniformBinding 0
 #define BindlessStorageBinding 1
 #define BindlessTextureBinding 2
+#define BindlessStorageImageBinding 3
 
 #define GetLayoutVariableName(Name) u##Name##Register
 
@@ -23,8 +24,17 @@
         GetLayoutVariableName(Name)[]
 
 // Set Storage Buffers Layout
-//TODO: Sort out later when I need compute
+#define SetStorageLayout(Name, Struct) \
+    layout(set = BindlessDescriptorSet, binding = BindlessStorageBinding) \
+        buffer Name Struct \
+        GetLayoutVariableName(Name)[]
 
+#define SetWriteOnlyStorageImageLayout(Name) \
+    layout(set = BindlessDescriptorSet, binding = BindlessStorageImageBinding, rgba8) uniform writeonly image2D GetLayoutVariableName(Name)[];
+
+#define SetReadOnlyStorageImageLayout(Name) \
+    layout(set = BindlessDescriptorSet, binding = BindlessStorageImageBinding, rgba8) uniform readonly image2D GetLayoutVariableName(Name)[];
+        
 // Set Textures Layout
 layout (set = BindlessDescriptorSet, binding = BindlessTextureBinding) uniform sampler2D uGlobalTextures[];
 
@@ -32,4 +42,10 @@ layout (set = BindlessDescriptorSet, binding = BindlessTextureBinding) uniform s
 #define GetResource(Name, Index) \
     GetLayoutVariableName(Name)[Index]
 
-// TODO: Add Stuff for the PushConstants
+// Set PushConstants
+// Order Of Handles is bases of the Order placed within Each Group.
+// At the time of binding to a renderContext.
+// Group Order = Uniforms -> Storages -> Textures -> FrameBuffers
+// The Target FrameBuffer will the the Last Handles in the Array.
+layout(push_constant) uniform  PushConstants { uint handles[64]; } uRenderPassHandles;
+

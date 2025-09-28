@@ -15,7 +15,8 @@ namespace Aio {
 
 enum class ShaderType {
     Graphics = 0,
-    Compute = 1
+    Compute = 1,
+    None = 3
 };
 
 struct ShaderCreateInfo
@@ -46,11 +47,13 @@ public:
     
     std::filesystem::path& GetSourceFilePath();
     std::string& GetName();
+    ShaderType GetShaderType();
 
     virtual void SetVec4(std::string name, glm::vec4 value) = 0;
     virtual void SetFloat(std::string name, float value) = 0;
 
 protected:
+    ShaderType _type = {ShaderType::None};
     std::string _name;
     std::filesystem::path _sourceFilepath;
     std::vector<std::string> _uniformBufferNames;
@@ -64,14 +67,14 @@ protected:
 class ShaderLibrary
 {
 public:
-    ShaderLibrary(std::string folderPath);
-    Shader* GetShader(std::string& name);
-    void AddShader(Shader* shader);
-    void CreateShader(ShaderCreateInfo& createInfo);
-    void DestroyShader(std::string& name);
+    ShaderLibrary(const std::string folderPath);
+    Shader* GetShader(const std::string& name);
+    void AddShader(UniquePtr<Shader> shader);
+    void CreateShader(const ShaderCreateInfo& createInfo);
+    void DestroyShader(const std::string& name);
     
 private:
-    std::unordered_map<std::string, Shader*> _shaders;
+    std::unordered_map<std::string, UniquePtr<Shader>> _shaders;
     ShaderFileManager _shaderFileManager;
 };
 

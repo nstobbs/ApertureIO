@@ -14,6 +14,7 @@ namespace Aio
 
 struct Camera
 {
+    glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
 };
@@ -28,6 +29,7 @@ public:
     
     void ReadFile(const std::string& modelFilePath, const std::string& textureFilePath);
     void UpdateCamera(RenderEngine* RenderEngine, Camera cam);
+    void rotateModel();
 
 private:
     std::vector<aiNode*> findNodesContainingMeshes(aiNode* node);

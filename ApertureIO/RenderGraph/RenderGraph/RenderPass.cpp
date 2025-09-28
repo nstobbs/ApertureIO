@@ -8,6 +8,11 @@ std::vector<ResourceAccess> RenderPass::GetResourcesAccess()
     return _resourcesAccess;
 };
 
+RenderContext& RenderPass::GetRenderContext()
+{
+    return _pRenderContext;
+};
+
 Port* RenderPass::GetInPort(const std::string& name)
 {
     return &_inPorts.at(name);

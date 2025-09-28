@@ -13,6 +13,7 @@ target_include_directories(RenderGraph PUBLIC
 target_link_libraries(RenderGraph
         Aio::Base
         Aio::Passes
+        Aio::Common
 )
 
 add_library(Aio::RenderGraph ALIAS RenderGraph)

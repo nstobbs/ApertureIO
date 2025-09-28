@@ -52,9 +52,10 @@ void BasicRenderPass::AllocateResources(RenderEngine* renderEngine)
     BasicShaderCreateInfo.type = ShaderType::Graphics;
     BasicShaderCreateInfo.pContext = renderEngine->GetContextPtr();
     BasicShaderCreateInfo.pDevice = renderEngine->GetDevicePtr();
-    BasicShaderCreateInfo.name = "Basic Shader";
+    BasicShaderCreateInfo.name = "BasicShader";
     BasicShaderCreateInfo.sourceFilepath = "./Shaders/Basic.glsl";
-    _pShader = Shader::CreateShader(BasicShaderCreateInfo);
+    renderEngine->GetShaderLibraryPtr()->CreateShader(BasicShaderCreateInfo);
+    _pShader = renderEngine->GetShaderLibraryPtr()->GetShader("BasicShader");
 
     /* Vertex Layout */
     BufferElement positionElement{};
@@ -178,7 +179,7 @@ void BasicRenderPass::AllocateResources(RenderEngine* renderEngine)
 
 void BasicRenderPass::BindResources(RenderEngine* renderEngine)
 {
-    renderEngine->GetTargetFrameBufferPtr()->Bind(_pRenderContext);
+    renderEngine->GetTargetFrameBufferPtr()->Bind(_pRenderContext, true);
     renderEngine->GetBufferPtr("vertexBuffer")->Bind(_pRenderContext);
     renderEngine->GetBufferPtr("indexBuffer")->Bind(_pRenderContext);
     renderEngine->GetBufferPtr("uniformBuffer")->Bind(_pRenderContext);

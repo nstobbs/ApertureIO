@@ -1,21 +1,22 @@
 #include "ApertureIO/VulkanImage.hpp"
 #include "ApertureIO/VulkanCommand.hpp"
 
+const bool DEBUG_IMAGE_LAYOUT = false;
+
 namespace Aio
 {
 
 UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInfo& createInfo)
 {
     /* Create VkImage */
-    UniquePtr<VulkanImage> vulkanImagePtr = std::make_unique<VulkanImage>();
-    auto ptr = vulkanImagePtr.get();
-    ptr->_count = 1;
-    ptr->_format = createInfo.format;
-    ptr->_height = createInfo.height;
-    ptr->_width = createInfo.width;
-    ptr->_pVulkanDevice = createInfo.pVulkanDevice;
+    UniquePtr<VulkanImage> imagePtr = std::make_unique<VulkanImage>();
+    imagePtr->_count = createInfo.count;
+    imagePtr->_format = createInfo.format;
+    imagePtr->_height = createInfo.height;
+    imagePtr->_width = createInfo.width;
+    imagePtr->_pVulkanDevice = createInfo.pVulkanDevice;
 
-    auto device = ptr->_pVulkanDevice;
+    auto device = imagePtr->_pVulkanDevice;
 
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -27,7 +28,11 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     imageInfo.arrayLayers = 1;
     imageInfo.format = createInfo.format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                               VK_IMAGE_USAGE_SAMPLED_BIT |
+                               VK_IMAGE_USAGE_STORAGE_BIT |
+                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                               VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.flags = 0;
@@ -43,8 +48,9 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
         VK_ASSERT(vmaCreateImage(device->GetVmaAllocator(), &imageInfo, &imageAllocationInfo, &image, &imageAllocation, nullptr),
                                 VK_SUCCESS, "VulkanTexture: Failed to Create VkImage...");
-
-        ptr->_images.push_back(image);
+        
+        imagePtr->_images.push_back(image);
+        imagePtr->_currentLayouts.push_back(VK_IMAGE_LAYOUT_UNDEFINED);
         
          /* Create the VkImageViews */
         VkImageViewCreateInfo viewInfo{};
@@ -60,83 +66,216 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
         VkImageView imageView;
         VK_ASSERT(vkCreateImageView(createInfo.pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
-        ptr->_imageViews.push_back(imageView);
+        imagePtr->_imageViews.push_back(imageView);
+
+        /* Create Storage Image Handles For Compute Shaders */
+        imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_GENERAL, false);
+        imagePtr->_handles.push_back(imagePtr->createStorageHandle(i, image, imageView));
+        imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
     };
-    // Change the Image Layout, For Copying To..
-    vulkanImagePtr->SetImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    return vulkanImagePtr;
+
+    return imagePtr;
 };
 
 UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo)
 {
-    UniquePtr<VulkanImage> vulkanImagePtr = std::make_unique<VulkanImage>();
-    auto ptr = vulkanImagePtr.get();
-    ptr->_height = ingestInfo.height;
-    ptr->_width = ingestInfo.width;
-    ptr->_format = ingestInfo.format;
-    ptr->_currentLayout = ingestInfo.layout;
-    ptr->_images = ingestInfo.images;
-    ptr->_imageViews = ingestInfo.imageViews;
-    ptr->_pVulkanDevice = ingestInfo.pVulkanDevice;
+    UniquePtr<VulkanImage> imagePtr = std::make_unique<VulkanImage>();
+    imagePtr->_height = ingestInfo.height;
+    imagePtr->_width = ingestInfo.width;
+    imagePtr->_format = ingestInfo.format;
+    imagePtr->_currentLayouts.assign(ingestInfo.count, ingestInfo.layout);
+    imagePtr->_images = ingestInfo.images;
+    imagePtr->_imageViews = ingestInfo.imageViews;
+    imagePtr->_pVulkanDevice = ingestInfo.pVulkanDevice;
 
-    return vulkanImagePtr;
+    return imagePtr;
 };
 
-
-void VulkanImage::SetImageLayout(VkImageLayout targetLayout)
+TextureHandle VulkanImage::createStorageHandle(uint32_t index, VkImage image, VkImageView view)
 {
-    /* TODO: Test if this will work fine within RenderGraph...*/
-    for (auto image : _images)
+    TextureHandle handle = _pVulkanDevice->CreateStorageBufferHandle();
+    
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = _currentLayouts.at(index);
+    imageInfo.imageView = view;
+    imageInfo.sampler = _pVulkanDevice->GetGlobalVkSampler();
+
+    VkWriteDescriptorSet writeInfo{};
+    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo.dstSet = _pVulkanDevice->GetBindlessDescriptorSet();
+    writeInfo.dstBinding = 3; // UniformBuffers at 0; StorageBuffers at 1; Textures at 2;
+    writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    writeInfo.descriptorCount = 1;
+    writeInfo.dstArrayElement = handle;
+    writeInfo.pImageInfo = &imageInfo;
+    
+    vkUpdateDescriptorSets(_pVulkanDevice->GetVkDevice(), 1, &writeInfo, 0, nullptr);
+    return handle;
+};
+
+void VulkanImage::SetImageLayout(uint32_t index, VkImageLayout targetLayout, bool inRenderingState)
+{
+    VkCommandBuffer commandBuffer;
+    VkSemaphore currentTask;
+    VkSemaphore thisTask;
+    VulkanTimeline* timeline;
+
+    bool skip = false;
+    
+    VkImageLayout currentLayout = _currentLayouts.at(index);
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = currentLayout;
+    barrier.newLayout = targetLayout;
+    barrier.image = _images.at(index);
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    /* TODO: Really need to sort out this function. Can't be relaying on a massive IF ELSE
+    block to know how to move to next image layout. Instead we can use the TimelineState to hold the last known
+    state of the pipeline and use that to set the correct source and destination stage of the pipeline. */
+    if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED && targetLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
     {
-        VkCommandBuffer commandBuffer = VulkanCommand::beginSingleTimeCommandBuffer(_pVulkanDevice);
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-        VkImageMemoryBarrier barrier{};
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout = _currentLayout;
-        barrier.newLayout = targetLayout;
-        barrier.image = image;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && targetLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = 1;
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED && targetLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-        VkPipelineStageFlags sourceStage;
-        VkPipelineStageFlags destinationStage;
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED && targetLayout == VK_IMAGE_LAYOUT_GENERAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
 
-        if (_currentLayout == VK_IMAGE_LAYOUT_UNDEFINED && targetLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_GENERAL && targetLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && targetLayout == VK_IMAGE_LAYOUT_GENERAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT ;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_GENERAL && targetLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_GENERAL && targetLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && targetLayout == VK_IMAGE_LAYOUT_GENERAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == targetLayout)
+    {   
+        if (DEBUG_IMAGE_LAYOUT)
+            Logger::LogWarn("SetImageLayout was called but wasn't needed...");
+        skip = true;
+    }
+    else
+    {  
+        Logger::LogError("VulkanImage: Selected TargetLayout isn't Supported.");
+        throw std::runtime_error("Exit...");
+    }
+
+    if (!skip)
+    {
+        if(inRenderingState)
         {
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            /* Needs to waiting on other jobs to finished before
+            switching the image layout ..*/
+            commandBuffer = _pVulkanDevice->GetCurrentCommandBuffer(index);
+            timeline = _pVulkanDevice->GetTimeline(index);
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (_currentLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && targetLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.flags = 0;
+            beginInfo.pInheritanceInfo = nullptr;
+            VK_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo), VK_SUCCESS, "Begin Command Buffer - VulkanImage::SetImageLayout");
         }
         else
-        {  
-            Logger::LogError("VulkanTexture: Selected TargetLayout isn't Supported.");
-            throw std::runtime_error("Exit...");
-        }
+        {
+            /* The image is currently not be using in any task and can freely
+            switch to different image layouts */
+            commandBuffer = VulkanCommand::beginSingleTimeCommandBuffer(_pVulkanDevice);
+        };
 
+        /* Change Image Layout Command */
         vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage,
-                            0,
-                            0, nullptr,
-                            0, nullptr,
-                            1, &barrier);
-        VulkanCommand::endSingleTimeCommandBuffer(_pVulkanDevice, commandBuffer);
+                        0,
+                        0, nullptr,
+                        0, nullptr,
+                        1, &barrier);
+
+        if (inRenderingState)
+        {
+            VK_ASSERT(vkEndCommandBuffer(commandBuffer), VK_SUCCESS, "End Command Buffer - VulkanImage::SetImageLayout");
+
+            /* Sumbit with Timeline */
+            VulkanCommand::submitCommandBuffer(_pVulkanDevice, timeline, commandBuffer);
+
+            /* Index to Next Command Buffer */
+            _pVulkanDevice->GetNextCommandBuffer(index);
+        }
+        else
+        {
+            VulkanCommand::endSingleTimeCommandBuffer(_pVulkanDevice, commandBuffer);
+        }
     };
-    
-    _currentLayout = targetLayout; 
+    _currentLayouts[index] = targetLayout;
+};
+
+TextureHandle VulkanImage::GetStorageImageHandle(uint32_t index)
+{
+    return _handles.at(index);
 };
 
 VkImage VulkanImage::GetImage(uint32_t index)
@@ -153,9 +292,9 @@ VkFormat VulkanImage::GetFormat()
     return _format;
 };
 
-VkImageLayout VulkanImage::GetImageLayout()
+VkImageLayout VulkanImage::GetImageLayout(uint32_t index)
 {
-    return _currentLayout;
+    return _currentLayouts.at(index);
 };
 
 };
