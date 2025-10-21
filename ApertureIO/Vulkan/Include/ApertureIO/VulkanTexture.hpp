@@ -4,7 +4,7 @@
 #include "ApertureIO/VulkanCommon.hpp"
 #include "ApertureIO/VulkanDevice.hpp"
 #include "ApertureIO/VulkanContext.hpp"
-
+#include "ApertureIO/VulkanImage.hpp"
 
 namespace Aio
 {
@@ -29,10 +29,8 @@ private:
     VulkanDevice* _pDevice;
     VulkanContext* _pContext;
     
-    VkImage _image;
-    VkImageView _imageView;
-    VkImageLayout _currentLayout;
-    VkFormat _format;
+
+    UniquePtr<VulkanImage> _image;
 };
 
 };

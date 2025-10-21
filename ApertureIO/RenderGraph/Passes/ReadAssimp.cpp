@@ -1,5 +1,4 @@
 #include <ApertureIO/ReadAssimp.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 
 namespace Aio
@@ -26,12 +25,12 @@ ReadAssimp::ReadAssimp()
     indexBufferAccess.isInitialisingResource = true;
     _resourcesAccess.push_back(indexBufferAccess);
 
-    ResourceAccess uniformBufferAccess{};
-    uniformBufferAccess.name = "ReadAssimp_cameraBuffer";
-    uniformBufferAccess.type = ResourceType::Uniform;
-    uniformBufferAccess.access = AccessType::Both;
-    uniformBufferAccess.isInitialisingResource = true;
-    _resourcesAccess.push_back(uniformBufferAccess);
+    ResourceAccess transformBufferAccess{
+        .name = {"ReadAssimp_transformsBuffer"},
+        .type = ResourceType::Uniform,
+        .access = AccessType::Both,
+        .isInitialisingResource = true};
+    _resourcesAccess.push_back(transformBufferAccess);
     
     ResourceAccess textureBufferAccess{};
     textureBufferAccess.name = "ReadAssimp_inputTexture";
@@ -48,10 +47,12 @@ ReadAssimp::ReadAssimp()
     _resourcesAccess.push_back(gBufferAccess);
 
     /* Ports */
-    Port imageOut(this);
-    Port geoOut(this);
+    Port cameraIn(this);
 
-    _outPorts.emplace("image", imageOut);
+    Port geoOut(this); 
+
+    _inPorts.emplace("camera", cameraIn);
+
     _outPorts.emplace("geo", geoOut);
 };
 
@@ -72,7 +73,7 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
     }
 
     /* We want to look at every node. If the node has meshes than we will store it in a vector.
-    Once we Checked the whole array. Then Load ans store of all the vertex data. */
+    Once we Checked the whole array. Then Load and store of all the vertex data. */
     std::vector<aiNode*> meshNodes = findNodesContainingMeshes(scene->mRootNode);
 
     struct VertexDetails
@@ -159,8 +160,36 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
             };
 
             _globalBufferIndices = _globalBufferIndices + vertexCount;
+
+            /* Get Model Transforms */
+            aiMatrix4x4 aiTransforms = node->mTransformation;
+            glm::mat4 glmTransform;
+            glmTransform[0][0] = aiTransforms.a1;
+            glmTransform[0][1] = aiTransforms.a2;
+            glmTransform[0][2] = aiTransforms.a3;
+            glmTransform[0][3] = aiTransforms.a4;
+
+            glmTransform[1][0] = aiTransforms.b1;
+            glmTransform[1][1] = aiTransforms.b2;
+            glmTransform[1][2] = aiTransforms.b3;
+            glmTransform[1][3] = aiTransforms.b4;
+
+            glmTransform[2][0] = aiTransforms.c1;
+            glmTransform[2][1] = aiTransforms.c2;
+            glmTransform[2][2] = aiTransforms.c3;
+            glmTransform[2][3] = aiTransforms.c4;
+
+            glmTransform[3][0] = aiTransforms.d1;
+            glmTransform[3][1] = aiTransforms.d2;
+            glmTransform[3][2] = aiTransforms.d3;
+            glmTransform[3][3] = aiTransforms.d4;
+
+            _transformArray.data[i] = glmTransform;
+            _meshCount++;
         };
     };
+
+    _transformArray.meshCount = _meshCount;
 
     BufferElement indexElement{};
     indexElement.count = 1;
@@ -169,20 +198,11 @@ void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& t
     _indexLayout.AddBufferElement(indexElement);
 
     BufferElement matrixElement;
-    matrixElement.count = 4 * 4;
+    matrixElement.count = (4 * 4) * MAX_MESH_COUNT;
     matrixElement.type = BufferElementType::Float;
     matrixElement.normalized = false;
-    _cameraUniformLayout.AddBufferElement(matrixElement); /* Model */
-    _cameraUniformLayout.AddBufferElement(matrixElement); /* View */
-    _cameraUniformLayout.AddBufferElement(matrixElement); /* Projection */
-
-    _camera.model = glm::mat4(1.0f);
-    _camera.view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
-                               glm::vec3(0.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 0.0f, 1.0f));
-
-    _camera.projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-    _camera.projection[1][1] *= -1.0f;
+    _transformLayout.AddBufferElement(matrixElement); /* Model */
+    _transformLayout.AddBufferElement(indexElement); /* Mesh Count */
 };
 
 std::vector<aiNode*> ReadAssimp::findNodesContainingMeshes(aiNode* node)
@@ -216,17 +236,6 @@ std::vector<aiNode*> ReadAssimp::findNodesContainingMeshes(aiNode* node)
     return output;
 };
 
-void ReadAssimp::rotateModel()
-{
-    _camera.model = glm::rotate(_camera.model, glm::radians(0.01f), glm::vec3(0.0f, 0.0f, 1.0f));
-};
-
-void ReadAssimp::UpdateCamera(RenderEngine* renderEngine, Camera cam)
-{
-    _camera = cam;
-    renderEngine->GetBufferPtr("ReadAssimp_cameraBuffer")->UploadToDevice(&_camera);
-};
-
 void ReadAssimp::AllocateResources(RenderEngine*  renderEngine)
 {
     ShaderCreateInfo shaderInfo{};
@@ -258,15 +267,15 @@ void ReadAssimp::AllocateResources(RenderEngine*  renderEngine)
     renderEngine->StoreBufferPtr("ReadAssimp_indexBuffer", Buffer::CreateBuffer(indexInfo));
     _indexArray.clear();
 
-    BufferCreateInfo cameraUniformInfo{};
-    cameraUniformInfo.context = renderEngine->GetContextPtr();
-    cameraUniformInfo.device = renderEngine->GetDevicePtr();
-    cameraUniformInfo.count = 1;
-    cameraUniformInfo.type = BufferType::Uniform;
-    cameraUniformInfo.layout = _cameraUniformLayout;
-    cameraUniformInfo.data = nullptr;
-    renderEngine->StoreBufferPtr("ReadAssimp_cameraBuffer", Buffer::CreateBuffer(cameraUniformInfo));
-    renderEngine->GetBufferPtr("ReadAssimp_cameraBuffer")->UploadToDevice(&_camera);
+    BufferCreateInfo transformsUniformInfo{};
+    transformsUniformInfo.context = renderEngine->GetContextPtr();
+    transformsUniformInfo.device = renderEngine->GetDevicePtr();
+    transformsUniformInfo.count = 1;
+    transformsUniformInfo.type = BufferType::Uniform;
+    transformsUniformInfo.layout = _transformLayout;
+    transformsUniformInfo.data = nullptr;
+    renderEngine->StoreBufferPtr("ReadAssimp_transformsBuffer", Buffer::CreateBuffer(transformsUniformInfo));
+    renderEngine->GetBufferPtr("ReadAssimp_transformsBuffer")->UploadToDevice(&_transformArray);
 
     TextureCreateInfo inputTextureInfo{};
     inputTextureInfo.pContext = renderEngine->GetContextPtr();
@@ -283,15 +292,30 @@ void ReadAssimp::AllocateResources(RenderEngine*  renderEngine)
     gBufferInfo.width = renderEngine->GetTargetFrameBufferPtr()->GetWidth();
     renderEngine->StoreFrameBufferPtr("gBuffer", FrameBuffer::CreateFrameBuffer(gBufferInfo));
     renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("gColor", FrameBufferPixelFormat::COLOR_RGBA_8888);
+    renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("gPosition", FrameBufferPixelFormat::COLOR_RGBA_8888);
     renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("gNormal", FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat);
+    renderEngine->GetFrameBufferPtr("gBuffer")->CreateLayer("depthStencil", FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8);
+
+    /* Passing the gBuffer into the Port */
+    _outPorts.at("geo").SetOutgoingResource(ResourceType::FrameBuffer, "gBuffer");
 };
 
 void ReadAssimp::BindResources(RenderEngine* renderEngine)
 {
+    auto connectedPorts = _inPorts.at("camera").GetConnectedPorts();
+    for (auto port : connectedPorts)
+    {
+        if (port->GetIncomingResourceType() == ResourceType::Uniform)
+        {
+            auto cameraBufferName = port->GetIncomingResourceName();
+            renderEngine->GetBufferPtr(cameraBufferName)->Bind(_pRenderContext);
+        };
+    };
+
     renderEngine->GetFrameBufferPtr("gBuffer")->Bind(_pRenderContext, true);
     renderEngine->GetBufferPtr("ReadAssimp_vertexBuffer")->Bind(_pRenderContext);
     renderEngine->GetBufferPtr("ReadAssimp_indexBuffer")->Bind(_pRenderContext);
-    renderEngine->GetBufferPtr("ReadAssimp_cameraBuffer")->Bind(_pRenderContext);
+    renderEngine->GetBufferPtr("ReadAssimp_transformsBuffer")->Bind(_pRenderContext);
     renderEngine->GetTexturePtr("ReadAssimp_inputTexture")->Bind(_pRenderContext);
     renderEngine->GetShaderLibraryPtr()->GetShader("ReadAssimp")->Bind(_pRenderContext);
 };
@@ -299,8 +323,6 @@ void ReadAssimp::BindResources(RenderEngine* renderEngine)
 void ReadAssimp::Execute(RenderEngine* renderEngine)
 {
     renderEngine->GetCommandPtr()->Draw(_pRenderContext);
-    rotateModel();
-    UpdateCamera(renderEngine, _camera); //TODO: this is dumb function, check args
 };
 
 };

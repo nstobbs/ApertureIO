@@ -26,12 +26,13 @@ struct FrameBufferCreateInfo
 };
 
 //TODO Do you want to mix color and depth formats with data formating?
+//TODO: Do we want to rename this enum?
 enum class FrameBufferPixelFormat
 {
     NONE_PIXEL_FORMAT = 0,
     COLOR_RGBA_8888 = 1,
-    COLOR_RGBA_16161616_sFloat = 2, /* For gNormals */
-    DEPTH_D32_S8 = 3,
+    COLOR_RGBA_16161616_sFloat = 2,
+    DEPTH_STENCIL_D32_S8 = 3,
 };
 
 class FrameBuffer
@@ -48,6 +49,7 @@ public:
 
     uint32_t GetWidth();
     uint32_t GetHeight();
+    uint32_t GetLayerCount();
 
 protected:
     std::string _name;

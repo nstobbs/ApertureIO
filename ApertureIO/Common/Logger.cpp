@@ -1,10 +1,24 @@
 #include "ApertureIO/Logger.hpp"
 
+#include <ctime>
+
 namespace Aio {
 
+std::string Logger::GetCurrentTime()
+{
+    std::time_t timestamp = std::time(NULL);
+    struct tm datetime = *localtime(&timestamp);
+    char timeChar[50];
+    strftime(timeChar, 50, "%H:%M:%S", &datetime);
+    std::string currentTime(timeChar);
+
+    currentTime = "{" + currentTime +"} ";
+    return currentTime;
+};
+
 void Logger::LogError(std::string text)
-{ 
-    std::cout << "[Aio::Logger] ";
+{
+    std::cout << GetCurrentTime();
     setPrintColour(31);
     std::cout << "Error: ";
     resetPrintColour();
@@ -14,7 +28,7 @@ void Logger::LogError(std::string text)
 
 void Logger::LogWarn(std::string text)
 {
-    std::cout << "[Aio::Logger] ";
+    std::cout << GetCurrentTime();
     setPrintColour(33);
     std::cout << "Warning: ";
     resetPrintColour();
@@ -23,7 +37,7 @@ void Logger::LogWarn(std::string text)
 
 void Logger::LogInfo(std::string text)
 {
-    std::cout << "[Aio::Logger] ";
+    std::cout << GetCurrentTime();
     setPrintColour(32);
     std::cout << "Info: ";
     resetPrintColour();

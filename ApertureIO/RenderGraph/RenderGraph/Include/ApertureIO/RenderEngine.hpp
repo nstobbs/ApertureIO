@@ -6,7 +6,7 @@
 
 /* The RenderEngine is that main system for rendering these Graphs.
 When LoadGraph is called, RenderEngine will begin allocating needed
-resources and prepping the graph for execution. Once the  
+resources and prepping the graph for execution.
 
 RenderPass = A Tasks
 Port = Connections to other RenderPasses

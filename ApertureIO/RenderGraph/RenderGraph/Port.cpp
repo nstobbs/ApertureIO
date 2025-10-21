@@ -1,4 +1,5 @@
 #include "ApertureIO/Port.hpp"
+#include "ApertureIO/RenderPass.hpp"
 
 namespace Aio
 {
@@ -6,6 +7,7 @@ namespace Aio
 Port::Port(RenderPass* renderPass)
 {
     _pass = renderPass;
+    _resourceType = ResourceType::eNone;
 };
 
 void Port::Connect(Port* otherPort)
@@ -48,5 +50,22 @@ std::vector<Port*>& Port::GetConnectedPorts()
 {
     return _PortConnections; 
 }
+
+/* Transferable Resource */
+std::string Port::GetIncomingResourceName()
+{
+    return _resourceName;
+};
+
+ResourceType Port::GetIncomingResourceType()
+{
+    return _resourceType;
+};
+
+void Port::SetOutgoingResource(ResourceType type, std::string name)
+{
+    _resourceType = type;
+    _resourceName = name;
+};
 
 };

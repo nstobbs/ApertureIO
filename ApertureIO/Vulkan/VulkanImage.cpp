@@ -18,6 +18,15 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
     auto device = imagePtr->_pVulkanDevice;
 
+    /* Checks Format is Valid */
+    std::vector<VkFormat> requestedFormats;
+    requestedFormats.push_back(createInfo.format);
+    if (findFirstSupportedFormat(device->GetVkPhysicalDevice(), requestedFormats) == VK_FORMAT_UNDEFINED)
+    {
+        auto error = "Couldn't Find a Supported Format for Requested Image\n";
+        Logger::LogError(error);
+    };
+
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -28,11 +37,37 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     imageInfo.arrayLayers = 1;
     imageInfo.format = createInfo.format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+
+    /* TODO: Need to add better logic for knowing if this is going be used as a FrameBuffer
+    Layer, Depth Layer or just a Texture Image. For now any images */
+
+    if (imagePtr->GetFormat() == toVkFormat(imagePtr->_pVulkanDevice, FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8))
+    {
+        /* Depth Stencil Layer */
+        imagePtr->_forDepthStencil = true;
+        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+                               VK_IMAGE_USAGE_SAMPLED_BIT |
+                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                               VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    }
+    else if (imagePtr->_count == 1)
+    {
+        /* Texture From Disk */
+        imagePtr->_forTextureReading = true;
+        imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                          VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+    else
+    {
+        /* Colour Layer */
+        imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                                VK_IMAGE_USAGE_SAMPLED_BIT |
                                VK_IMAGE_USAGE_STORAGE_BIT |
                                VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                                VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    }
+
+    
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.flags = 0;
@@ -40,7 +75,6 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     VmaAllocationCreateInfo imageAllocationInfo{};
     imageAllocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
 
-    //TODO: This should be in a loop in range of count
     for (int i = 0; i < createInfo.count; i++)
     {
         VmaAllocation imageAllocation; //TODO: store this on the class......
@@ -48,6 +82,14 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
         VK_ASSERT(vmaCreateImage(device->GetVmaAllocator(), &imageInfo, &imageAllocationInfo, &image, &imageAllocation, nullptr),
                                 VK_SUCCESS, "VulkanTexture: Failed to Create VkImage...");
+
+        if (imagePtr->_forTextureReading)
+        {
+            /* TODO: Copy Texture File to Image
+            Create a new VkImage
+            Copy Temp VkImage to VkImage
+            Destroy Temp VkImage */
+        };
         
         imagePtr->_images.push_back(image);
         imagePtr->_currentLayouts.push_back(VK_IMAGE_LAYOUT_UNDEFINED);
@@ -58,7 +100,8 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
         viewInfo.image = image;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = createInfo.format;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.aspectMask = (!imagePtr->_forDepthStencil) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT
+                                                                                                         | VK_IMAGE_ASPECT_STENCIL_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -68,10 +111,16 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
         VK_ASSERT(vkCreateImageView(createInfo.pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
         imagePtr->_imageViews.push_back(imageView);
 
-        /* Create Storage Image Handles For Compute Shaders */
-        imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_GENERAL, false);
-        imagePtr->_handles.push_back(imagePtr->createStorageHandle(i, image, imageView));
-        imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+        if (imagePtr->_forDepthStencil)
+        {
+            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+            imagePtr->_textureHandles.push_back(imagePtr->createTextureHandle(i, image, imageView));
+        } else {
+            /* Create Storage Image Handles For Compute Shaders */
+            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_GENERAL, false);
+            imagePtr->_storageHandles.push_back(imagePtr->createStorageHandle(i, image, imageView));
+            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+        };
     };
 
     return imagePtr;
@@ -91,6 +140,47 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageSwapChain
     return imagePtr;
 };
 
+VkFormat VulkanImage::toVkFormat(VulkanDevice* device, FrameBufferPixelFormat format)
+{
+    switch (format)
+    {
+        case FrameBufferPixelFormat::COLOR_RGBA_8888:
+            return VK_FORMAT_R8G8B8A8_UNORM;
+            
+        case FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat:
+            return VK_FORMAT_R16G16B16A16_SFLOAT;
+
+        case FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8:
+            std::vector<VkFormat> depthStencilFormats;
+            depthStencilFormats.push_back(VK_FORMAT_D32_SFLOAT_S8_UINT);
+            depthStencilFormats.push_back(VK_FORMAT_D24_UNORM_S8_UINT);
+            depthStencilFormats.push_back(VK_FORMAT_D16_UNORM_S8_UINT);
+            return findFirstSupportedFormat(device->GetVkPhysicalDevice(), depthStencilFormats);
+    };
+};
+
+TextureHandle VulkanImage::createTextureHandle(uint32_t index, VkImage image, VkImageView view)
+{
+    TextureHandle handle = _pVulkanDevice->CreateTextureHandle();
+
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = _currentLayouts.at(index);
+    imageInfo.imageView = _imageViews.at(index);
+    imageInfo.sampler = _pVulkanDevice->GetGlobalVkSampler();
+
+    VkWriteDescriptorSet writeInfo{};
+    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo.dstSet = _pVulkanDevice->GetBindlessDescriptorSet();
+    writeInfo.dstBinding = TEXTURE_BINDING_POINT;
+    writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeInfo.descriptorCount = 1;
+    writeInfo.dstArrayElement = handle;
+    writeInfo.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(_pVulkanDevice->GetVkDevice(), 1, &writeInfo, 0, nullptr);
+    return handle;
+};  
+
 TextureHandle VulkanImage::createStorageHandle(uint32_t index, VkImage image, VkImageView view)
 {
     TextureHandle handle = _pVulkanDevice->CreateStorageBufferHandle();
@@ -103,7 +193,7 @@ TextureHandle VulkanImage::createStorageHandle(uint32_t index, VkImage image, Vk
     VkWriteDescriptorSet writeInfo{};
     writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeInfo.dstSet = _pVulkanDevice->GetBindlessDescriptorSet();
-    writeInfo.dstBinding = 3; // UniformBuffers at 0; StorageBuffers at 1; Textures at 2;
+    writeInfo.dstBinding = STORAGE_IMAGE_BINDING_POINT;
     writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     writeInfo.descriptorCount = 1;
     writeInfo.dstArrayElement = handle;
@@ -131,7 +221,15 @@ void VulkanImage::SetImageLayout(uint32_t index, VkImageLayout targetLayout, boo
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    VkImageAspectFlags flags;
+    if (_forDepthStencil)
+    {
+        flags = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    } else {
+        flags = VK_IMAGE_ASPECT_COLOR_BIT;
+    };
+
+    barrier.subresourceRange.aspectMask = flags;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
@@ -214,6 +312,30 @@ void VulkanImage::SetImageLayout(uint32_t index, VkImageLayout targetLayout, boo
         sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
         destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
+    else if (currentLayout == VK_IMAGE_LAYOUT_UNDEFINED && targetLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_GENERAL && targetLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
+    else if (currentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && targetLayout == VK_IMAGE_LAYOUT_GENERAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    }
     else if (currentLayout == targetLayout)
     {   
         if (DEBUG_IMAGE_LAYOUT)
@@ -271,6 +393,24 @@ void VulkanImage::SetImageLayout(uint32_t index, VkImageLayout targetLayout, boo
         }
     };
     _currentLayouts[index] = targetLayout;
+};
+
+VkFormat VulkanImage::findFirstSupportedFormat(VkPhysicalDevice device, std::vector<VkFormat> &requestedFormats)
+{
+    for (auto format : requestedFormats)
+    {
+        VkFormatProperties2 properties{.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2};
+        vkGetPhysicalDeviceFormatProperties2(device, format, &properties);
+        auto bufferFlags = properties.formatProperties.bufferFeatures;
+        auto linearFlags = properties.formatProperties.linearTilingFeatures;
+        auto optimalFlags = properties.formatProperties.optimalTilingFeatures;
+        if (bufferFlags != 0 || linearFlags != 0 || optimalFlags != 0)
+        {
+            return format;
+        };
+    };
+
+    return VK_FORMAT_UNDEFINED;
 };
 
 TextureHandle VulkanImage::GetStorageImageHandle(uint32_t index)

@@ -3,6 +3,8 @@
 namespace Aio
 {
 
+const std::string ACTIVE_ASCII_PACK = "Pack2";
+
 AsciiImage::AsciiImage()
 {
     /* RenderPass Info */
@@ -31,15 +33,17 @@ AsciiImage::AsciiImage()
     asciiImageAccess.isInitialisingResource = true;
     _resourcesAccess.push_back(asciiImageOutAccess);
 
-    /* TODO: Need to start using Ports to pass across 
-    RenderPasses */
-    // FIXME: Remove hard coded image access! 
-    ResourceAccess imageInAccess{};
-    imageInAccess.name = "imageOut";
-    imageInAccess.type = ResourceType::FrameBuffer;
-    imageInAccess.access = AccessType::Read;
-    imageInAccess.isInitialisingResource = false;
-
+    /* 
+    if (_inPorts.at("image").GetIncomingResourceType() == ResourceType::FrameBuffer)
+    {
+        ResourceAccess imageInAccess{};
+        imageInAccess.name = _inPorts.at("image").GetIncomingResourceName();
+        imageInAccess.type = ResourceType::FrameBuffer;
+        imageInAccess.access = AccessType::Read;
+        imageInAccess.isInitialisingResource = false;
+        _resourcesAccess.push_back(imageInAccess);
+    } */
+    
     /* Ports */
     Port imageIn(this);
     Port imageOut(this);
@@ -99,16 +103,10 @@ void AsciiImage::AllocateResources(RenderEngine*  renderEngine)
         asciiImageTextureInfo.pContext = renderEngine->GetContextPtr();
         asciiImageTextureInfo.pDevice = renderEngine->GetDevicePtr();
         std::string filename = "Map_" + std::to_string(i) + ".png";
-        asciiImageTextureInfo.filePath = "./Textures/AsciiImageTextures/" + filename;
+        asciiImageTextureInfo.filePath = "./Textures/AsciiImageTextures/" + ACTIVE_ASCII_PACK + "/" + filename;
         renderEngine->StoreTexturePtr(filename, Texture::CreateTexture(asciiImageTextureInfo));
     };
 
-    //TextureCreateInfo asciiImageTextureInfo{};
-    //asciiImageTextureInfo.pContext = renderEngine->GetContextPtr();
-    //asciiImageTextureInfo.pDevice = renderEngine->GetDevicePtr();
-    //asciiImageTextureInfo.filePath = "./Textures/AsciiImage_CC9MS8.png"; // CC=CharCount=9 MP=MapSize=8
-    //renderEngine->StoreTexturePtr("asciiImageTexture", Texture::CreateTexture(asciiImageTextureInfo));
-    
     FrameBufferCreateInfo asciiImageOutInfo{};
     asciiImageOutInfo.name = "asciiImageOut";
     asciiImageOutInfo.pContext = renderEngine->GetContextPtr();
@@ -118,6 +116,7 @@ void AsciiImage::AllocateResources(RenderEngine*  renderEngine)
     asciiImageOutInfo.width = renderEngine->GetTargetFrameBufferPtr()->GetWidth();
     renderEngine->StoreFrameBufferPtr("asciiImageOut", FrameBuffer::CreateFrameBuffer(asciiImageOutInfo));
     renderEngine->GetFrameBufferPtr("asciiImageOut")->CreateLayer("rgba", FrameBufferPixelFormat::COLOR_RGBA_8888);
+    _outPorts.at("image").SetOutgoingResource(ResourceType::FrameBuffer, "asciiImageOut");
 
     updateUniformBuffer(renderEngine);
 };  
@@ -125,9 +124,19 @@ void AsciiImage::AllocateResources(RenderEngine*  renderEngine)
 void AsciiImage::BindResources(RenderEngine* renderEngine)
 {
     renderEngine->GetFrameBufferPtr("asciiImageOut")->Bind(_pRenderContext, true);
-    renderEngine->GetFrameBufferPtr("imageOut")->Bind(_pRenderContext, false);
+
+     /* Get Upstream Image via Image Port */
+    auto connectedPorts = _inPorts.at("image").GetConnectedPorts();
+    for (auto port : connectedPorts)
+    {
+        if (port->GetIncomingResourceType() == ResourceType::FrameBuffer)
+        {
+            auto resourceName = port->GetIncomingResourceName();
+            renderEngine->GetFrameBufferPtr(resourceName)->Bind(_pRenderContext, false);
+        };
+    };
+
     renderEngine->GetBufferPtr("asciiImageSettings")->Bind(_pRenderContext);
-    //renderEngine->GetTexturePtr("asciiImageTexture")->Bind(_pRenderContext);
     int numberOfChar = 9;
     for (int i = 0; i < numberOfChar; i++)
     {

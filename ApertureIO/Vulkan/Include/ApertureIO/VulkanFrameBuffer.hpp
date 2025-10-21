@@ -30,6 +30,7 @@ public:
     VkExtent2D GetExtent();
     VkFramebuffer GetIndexFramebuffer(uint32_t imageIndex);
     VulkanImage* GetLayerVulkanImage(const std::string& name);
+    std::vector<VkClearValue> GetClearValue();
 
     void Rebuild();
 
@@ -51,6 +52,7 @@ private:
     VulkanContext* _pContext;
 
     // This data needs to be set before creating the renderPass
+    /* Layers : VulkanImage */
     std::unordered_map<std::string, UniquePtr<VulkanImage>> _vulkanImagesMap;
     
     VkExtent2D _extent;

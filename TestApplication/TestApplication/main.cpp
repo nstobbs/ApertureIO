@@ -20,7 +20,10 @@
 // Aio::RenderGraph
 #include "ApertureIO/RenderEngine.hpp"
 #include "ApertureIO/RenderGraph.hpp"
+
+// Aio::Passes
 #include "ApertureIO/ReadAssimp.hpp"
+#include "ApertureIO/CameraManager.hpp"
 
 //TestApplication 
 #include "Window/WindowGLFWImpl.hpp"
@@ -57,11 +60,12 @@ int main()
     give the GPU selector the right extensions */
     dynamic_cast<Aio::VulkanDevice*>(GPU.get())->SetVkSurfaceKHR(window->GetVkSurface()); // hack to set the vulkan surface and extensions for now.
 
-    if (!GPU.get()->init())
+    if (!GPU->init())
     {
         std::cout << "failed to start Aio::Device :(\n";
         return EXIT_FAILURE;
     }
+
     /* The FrameBuffer is a render Target for any shaders to render to. This can be hook with an window for rendering
     to the screen directly. */
     Aio::FrameBufferCreateInfo framebufferCreateInfo{};
@@ -78,13 +82,29 @@ int main()
     UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
 
     /* Build Graph */
-    auto read = graph->CreateRenderPass("ReadAssimp");
-    auto lights = graph->CreateRenderPass("PhongLighting");
-    auto asciiArt = graph->CreateRenderPass("AsciiImage");
-    read->GetOutPort("image")->Connect(lights->GetInPort("image"));
-    lights->GetOutPort("image")->Connect(asciiArt->GetInPort("image"));
+    auto cameras = graph->CreateRenderPass("CameraManager");
+    //auto read = graph->CreateRenderPass("ReadAssimp");
 
-    dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/viking_room.obj", "./Textures/viking_room.png");
+    auto grid = graph->CreateRenderPass("ViewportGrid");
+
+    //auto lights = graph->CreateRenderPass("PhongLighting");
+    //auto asciiArt = graph->CreateRenderPass("AsciiImage");
+
+    cameras->GetOutPort("camera")->Connect(grid->GetInPort("camera"));
+
+    //cameras->GetOutPort("camera")->Connect(read->GetInPort("camera")); 
+    //read->GetOutPort("geo")->Connect(lights->GetInPort("geo")); 
+    //cameras->GetOutPort("camera")->Connect(lights->GetInPort("camera")); 
+    //lights->GetOutPort("image")->Connect(asciiArt->GetInPort("image"));
+
+    /* Render Camera */
+    UniquePtr<Aio::Camera> mainCam = std::make_unique<Aio::Camera>();
+    float aspectRatio = float(framebuffer->GetWidth()) / float(framebuffer->GetHeight()); 
+    mainCam->SetAspectRatio(aspectRatio);
+
+    dynamic_cast<Aio::CameraManager*>(cameras)->AddCamera("mainCam", std::move(mainCam));
+    dynamic_cast<Aio::CameraManager*>(cameras)->SetActiveCamera("mainCam");
+    //dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/sponza.obj", "./Textures/1K_Test_PNG_Texture.png");
     
     engine.LoadGraph("ReadModel", std::move(graph));
     engine.SetActive("ReadModel");

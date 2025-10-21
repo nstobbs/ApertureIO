@@ -11,6 +11,7 @@ class Logger
     static void LogError(std::string text);
     static void LogWarn(std::string text);
     static void LogInfo(std::string text);
+    static std::string GetCurrentTime();
 
     private:
     static void setPrintColour(int colour);

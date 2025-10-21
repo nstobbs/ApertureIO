@@ -39,9 +39,10 @@ public:
 
 private:
     std::vector<BufferElement> _elements;
-    uint32_t _stride; // the distance between vertices 
+    uint32_t _stride;
 
     size_t calculateStride();
+    size_t calculateStride_std140();
 };
 
 };
