@@ -1,12 +1,13 @@
 #pragma once
 
-#include "ApertureIO/RenderPass.hpp"
 #include <vector>
+#include <string>
 
 namespace Aio
 {
 
 class RenderPass;
+enum class ResourceType;
 
 class Port
 {
@@ -18,11 +19,20 @@ public:
 
     RenderPass* GetRenderPass();
 
+    /* Transferable Resource */
+    std::string GetIncomingResourceName();
+    ResourceType GetIncomingResourceType();
+    void SetOutgoingResource(ResourceType type, std::string name);
+
     std::vector<Port*>& GetConnectedPorts();
     
 private:
     std::vector<Port*> _PortConnections;
     RenderPass* _pass;
+
+    /* Transferable Data*/
+    ResourceType _resourceType;
+    std::string _resourceName;
 };
 
 };

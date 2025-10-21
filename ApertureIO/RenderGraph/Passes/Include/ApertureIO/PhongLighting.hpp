@@ -5,23 +5,26 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-const uint32_t MAX_LIGHTS = 1024;
+const uint32_t MAX_LIGHTS = 128;
 
 namespace Aio
 {
 
 struct PointLight
 {
-    glm::vec3 position;
-    glm::vec3 color;
+    glm::vec4 position;
+    glm::vec4 color;
     float intensity;
+    float _pad1; float _pad2; float _pad3;
 };
 
 struct LightsMetadata
 {
-    uint32_t width;
-    uint32_t height;
     uint32_t numOfLights;
+    float specular;
+    float diffuse;
+    float ambient;
+    float shininess;
 };
 
 class PhongLighting : public RenderPass

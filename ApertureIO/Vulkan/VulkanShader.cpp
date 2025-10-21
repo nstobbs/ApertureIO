@@ -101,7 +101,7 @@ VulkanShader::VulkanShader(const ShaderCreateInfo& createInfo)
             _rasterizerInfo.depthClampEnable = VK_FALSE;
             _rasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
             _rasterizerInfo.lineWidth = 1.0f;
-            _rasterizerInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+            _rasterizerInfo.cullMode = VK_CULL_MODE_NONE;  //VK_CULL_MODE_FRONT_BIT
             _rasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
             _rasterizerInfo.depthBiasEnable = VK_FALSE;
             _rasterizerInfo.depthBiasConstantFactor = 0.0f;
@@ -361,6 +361,7 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                 _viewport.width = targetExtent.width;
                 _scissor.extent = targetExtent;
 
+                // TODO: Improve Setting Up the Color Attachments For Each Layer
                 // colour attachment
                 VkPipelineColorBlendAttachmentState colorAttachmentInfo{};
                 std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentInfos;
@@ -373,10 +374,16 @@ VkPipeline VulkanShader::createPipeline(RenderContext& renderContext)
                 colorAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
                 colorAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
                 colorAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
-
-                colorAttachmentInfos.push_back(colorAttachmentInfo);
-                colorAttachmentInfos.push_back(colorAttachmentInfo);
                 
+                auto allLayers = framebuffer->GetLayerNames();
+                for (auto layerName : allLayers)
+                {
+                    if (framebuffer->GetLayerPixelFormat(layerName) != FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8)
+                    {
+                        colorAttachmentInfos.push_back(colorAttachmentInfo);
+                    };
+                };
+
                 _colorBlendingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
                 _colorBlendingInfo.logicOpEnable = VK_FALSE;
                 _colorBlendingInfo.logicOp = VK_LOGIC_OP_COPY;

@@ -9,14 +9,15 @@
 
 #include <vector>
 
+const uint32_t MAX_MESH_COUNT = 32;
+
 namespace Aio
 {
 
-struct Camera
+struct Transforms
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
+    glm::mat4 data[MAX_MESH_COUNT] = {glm::mat4(1.0f)};
+    uint32_t meshCount = {0};
 };
 
 class ReadAssimp : public RenderPass
@@ -28,8 +29,7 @@ public:
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
     
     void ReadFile(const std::string& modelFilePath, const std::string& textureFilePath);
-    void UpdateCamera(RenderEngine* RenderEngine, Camera cam);
-    void rotateModel();
+    void rotateModel(RenderEngine* renderEngine);
 
 private:
     std::vector<aiNode*> findNodesContainingMeshes(aiNode* node);
@@ -37,16 +37,17 @@ private:
     std::string _modelFilePath;
     std::string _textureFilePath;
     Assimp::Importer _importer;
+    uint32_t _meshCount = {0};
 
     uint32_t _globalBufferIndices = {0};
 
     BufferLayout _vertexLayout;
     BufferLayout _indexLayout;
-    BufferLayout _cameraUniformLayout;
+    BufferLayout _transformLayout;
 
     std::vector<glm::vec3> _vertexArray;
     std::vector<uint32_t> _indexArray;
-    Camera _camera;
+    Transforms _transformArray;
 };
 
 };

@@ -31,6 +31,35 @@ size_t BufferLayout::calculateStride()
                 break;
         }
     };
+    
+    return stride;
+};
+
+size_t BufferLayout::calculateStride_std140()
+{
+    size_t stride = 0;
+    for (auto element : _elements)
+    {
+        switch (element.type)
+        {
+            case BufferElementType::Float:
+                if (element.count == 3)
+                {
+                    stride += sizeof(float) * 4;
+                }
+                else
+                {
+                    stride += sizeof(float) * element.count;
+                }
+                break;
+            case BufferElementType::Int:
+                stride += sizeof(uint32_t) * element.count;
+                break;
+            case BufferElementType::Bool:
+                stride += sizeof(bool) * element.count;
+                break;
+        }
+    }
 
     return stride;
 };

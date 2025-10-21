@@ -180,7 +180,7 @@ void VulkanDevice::createAndAllocateBindlessResources()
         VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
     };
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; i++)
     {
         bindings.at(i).binding = i;
         bindings.at(i).descriptorType = types.at(i);
@@ -188,7 +188,6 @@ void VulkanDevice::createAndAllocateBindlessResources()
         bindings.at(i).stageFlags = VK_SHADER_STAGE_ALL;
         flags.at(i) = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
                       VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
-                      //VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT;
     }
 
     VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
@@ -257,6 +256,11 @@ void VulkanDevice::SetVkSurfaceKHR(VkSurfaceKHR surface)
 VkDevice VulkanDevice::GetVkDevice()
 {
     return _device.device;
+};
+
+VkPhysicalDevice VulkanDevice::GetVkPhysicalDevice()
+{
+    return _device.physical_device.physical_device;
 };
 
 vkb::Device VulkanDevice::GetVkBootStrapDevice()

@@ -287,7 +287,7 @@ void VulkanCommand::Draw(RenderContext& renderContext)
             case FrameBufferPixelFormat::COLOR_RGBA_8888:
                 imagePtr->SetImageLayout(currentFrame, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
                 break;
-            case FrameBufferPixelFormat::DEPTH_D32_S8:
+            case FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8:
                 imagePtr->SetImageLayout(currentFrame, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true);
                 break;
         };
@@ -312,10 +312,7 @@ void VulkanCommand::Draw(RenderContext& renderContext)
     renderPassInfo.renderArea.offset = {0,0};
     renderPassInfo.renderArea.extent = target->GetExtent();
 
-    //TODO: Clear Command Should be handled in Clear() or By the FrameBuffer it self.. maybe
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    clearValues[1].depthStencil = {1.0f, 0};
+    auto clearValues = target->GetClearValue();
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
@@ -457,19 +454,23 @@ HandlesPushConstant VulkanCommand::generatePushConstant(VulkanTimeline* timeline
 
     for(auto frameBuffer : renderContext._FrameBuffers)
     {
-        auto layers = frameBuffer->GetLayerNames();
+        auto allLayers = frameBuffer->GetLayerNames();
         auto vulkanFrameBuffer = dynamic_cast<VulkanFrameBuffer*>(frameBuffer);
 
-        for (auto layer : layers)
+        for (auto layerName : allLayers)
         {
-            auto imagePtr = vulkanFrameBuffer->GetLayerVulkanImage(layer);
-            handlesToPush.handles[handlesCount] = static_cast<uint32_t>(imagePtr->GetStorageImageHandle(currentFrame));
-            if (oneTimePrint)
+            // FIXME: DepthStencil can only be used inside of the Graphic Stage
+            if (frameBuffer->GetLayerPixelFormat(layerName) != FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8)
             {
-                auto info = "FrameBuffer Layer: " + layer + " at Handle Index: " + std::to_string(handlesCount);
-                Logger::LogInfo(info);
-            };
-            handlesCount++;
+                auto imagePtr = vulkanFrameBuffer->GetLayerVulkanImage(layerName);
+                handlesToPush.handles[handlesCount] = static_cast<uint32_t>(imagePtr->GetStorageImageHandle(currentFrame));
+                if (oneTimePrint)
+                {
+                    auto info = "FrameBuffer Layer: " + layerName + " at Handle Index: " + std::to_string(handlesCount);
+                    Logger::LogInfo(info);
+                };
+                handlesCount++;
+            }
         };
     };
 
@@ -498,7 +499,7 @@ HandlesPushConstant VulkanCommand::generatePushConstant(VulkanTimeline* timeline
 void VulkanCommand::bindCommonToCommandBuffer(VkCommandBuffer command, VulkanShader* shader, HandlesPushConstant handles)
 {
     VkDescriptorSet set = _pDevice->GetBindlessDescriptorSet();
-    auto bindPoint = (shader->GetShaderType() == ShaderType::Graphics) ?  VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
+    auto bindPoint = (shader->GetShaderType() == ShaderType::Graphics) ? VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
     auto pipelineLayout = shader->GetPipelineLayout();
     vkCmdBindDescriptorSets(command, bindPoint, pipelineLayout, 0, 1, &set, 0, nullptr);
     vkCmdPushConstants(command, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(HandlesPushConstant), &handles);

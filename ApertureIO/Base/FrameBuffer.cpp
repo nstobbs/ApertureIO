@@ -39,5 +39,10 @@ uint32_t FrameBuffer::GetHeight()
     return _height;
 };
 
+uint32_t FrameBuffer::GetLayerCount()
+{
+    return _layerCount;
+};
+
 } // End Aio namespace
 

@@ -70,7 +70,9 @@ void VulkanFrameBuffer::createVulkanImages()
 {
     for (auto layer : _layersMap)
     {
-        if (layer.first != "Viewer")
+        auto layerName = layer.first;
+        auto layerFormat = layer.second;
+        if (layerName != "Viewer")
         {
             VulkanImageCreateInfo createInfo{};
             createInfo.pVulkanDevice = _pDevice;
@@ -78,21 +80,8 @@ void VulkanFrameBuffer::createVulkanImages()
             createInfo.width = _width;
             createInfo.height = _height;
             createInfo.count = _pContext->getMaxFramesInFlight();
-
-            // TODO: this should be a function that returns the VK_FORMAT
-            switch (layer.second)
-            {
-                case FrameBufferPixelFormat::COLOR_RGBA_8888:
-                    createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-                    break;
-                case FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat:
-                    createInfo.format = VK_FORMAT_R16G16B16A16_SFLOAT;
-                    break;
-                case FrameBufferPixelFormat::DEPTH_D32_S8:
-                    //FIXME
-                    break;
-            };
-            _vulkanImagesMap.emplace(layer.first, std::move(VulkanImage::CreateVulkanImage(createInfo)));
+            createInfo.format = VulkanImage::toVkFormat(_pDevice, layerFormat);
+            _vulkanImagesMap.emplace(layerName, std::move(VulkanImage::CreateVulkanImage(createInfo)));
         };
     };
 };
@@ -106,11 +95,12 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
     within one command buffer. 
     */
 
-    std::vector<VkAttachmentDescription> colorDescriptions;
+    std::vector<VkAttachmentDescription> descriptions;
     VkAttachmentReference* depthReferences = nullptr;
     std::vector<VkAttachmentReference> references;
     
     uint32_t layerID = 0;
+    uint32_t depthStencilCount = 0;
     for (auto layerName : _layerOrder)
     {   
         FrameBufferPixelFormat pixelFormat = _layersMap.at(layerName);
@@ -133,14 +123,14 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
                 attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-                colorDescriptions.push_back(attachmentDescription);
+                descriptions.push_back(attachmentDescription);
 
                 attachmentReference.attachment = layerID;
                 attachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                layerID++;
                 break;
             
             case FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat:
-                /* For Use with GBuffer for Normals */
                 attachmentDescription.format = VK_FORMAT_R16G16B16A16_SFLOAT;
                 attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
 
@@ -153,14 +143,15 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
                 attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-                colorDescriptions.push_back(attachmentDescription);
+                descriptions.push_back(attachmentDescription);
                 
                 attachmentReference.attachment = layerID;
                 attachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                layerID++;
                 break;
             
-            case FrameBufferPixelFormat::DEPTH_D32_S8:
-                attachmentDescription. format = VK_FORMAT_D32_SFLOAT; // TODO: Create an Function to Return the Current Depth Format for this Device
+            case FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8:
+                attachmentDescription. format = VulkanImage::toVkFormat(_pDevice, FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8);
                 attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
                 
                 attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -169,21 +160,24 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
                 attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
                 attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-                attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-                attachmentReference.attachment = 1;
+                attachmentReference.attachment = layerID;
                 attachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                descriptions.push_back(attachmentDescription);
+
                 depthReferences = &attachmentReference;
+                depthStencilCount++;
+                layerID++;
                 break;
         }
         references.push_back(attachmentReference);
-        layerID++;
     }
 
     VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; //TODO double check what this means...
-    subpass.colorAttachmentCount = layerID;
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = layerID - depthStencilCount;
     subpass.pColorAttachments = references.data();
     subpass.pDepthStencilAttachment = depthReferences;
 
@@ -197,8 +191,8 @@ VkRenderPass VulkanFrameBuffer::CreateVkRenderPass()
 
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(colorDescriptions.size());
-    renderPassInfo.pAttachments = colorDescriptions.data();
+    renderPassInfo.attachmentCount = static_cast<uint32_t>(descriptions.size());
+    renderPassInfo.pAttachments = descriptions.data();
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
@@ -250,6 +244,24 @@ VkFramebuffer VulkanFrameBuffer::CreateVkFramebuffer(std::vector<VkImageView> at
     auto msg = "VulkanFrameBuffer: " + _name + " Created a VkFrameBuffer.";
     Logger::LogInfo(msg);
     return framebuffer;
+};
+
+std::vector<VkClearValue> VulkanFrameBuffer::GetClearValue()
+{
+    std::vector<VkClearValue> clears;
+    for (auto layerName : GetLayerNames())
+    {
+        VkClearValue clear{};
+        if (GetLayerPixelFormat(layerName) != FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8)
+        {
+            clear.color = {0.0f, 0.0f, 0.0f, 0.0f};
+        } else {
+            clear.depthStencil = {1.0f, 0};
+        }
+
+        clears.push_back(clear);
+    };
+    return clears;
 };
 
 VulkanImage* VulkanFrameBuffer::GetLayerVulkanImage(const std::string& name)

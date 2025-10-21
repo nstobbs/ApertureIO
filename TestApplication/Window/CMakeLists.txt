@@ -1,5 +1,6 @@
 add_library(Window STATIC
     WindowGLFWImpl.cpp
+    #WindowQtImpl.cpp
 )
 
 target_include_directories(Window PUBLIC 
@@ -7,6 +8,8 @@ target_include_directories(Window PUBLIC
 )
 
 target_link_libraries(Window
+    Qt6::Core
+    Qt6::Gui
     glfw
     Aio::Common
     Aio::Base

@@ -9,6 +9,11 @@
 #include "ApertureIO/Context.hpp"
 #include "ApertureIO/Command.hpp"
 
+const uint32_t UNIFORM_BINDING_POINT = 0;
+const uint32_t STORAGE_BINDING_POINT = 1;
+const uint32_t TEXTURE_BINDING_POINT = 2;
+const uint32_t STORAGE_IMAGE_BINDING_POINT = 3;
+
 namespace Aio {
 
 class VulkanContext;
@@ -26,6 +31,7 @@ public:
     void ResetPools(uint32_t currentFrame);
 
     VkDevice GetVkDevice();
+    VkPhysicalDevice GetVkPhysicalDevice();
     vkb::Device GetVkBootStrapDevice();
 
     VkSampler GetGlobalVkSampler();

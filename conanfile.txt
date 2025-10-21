@@ -1,4 +1,5 @@
 [requires]
+qt/6.7.3
 glfw/3.4
 assimp/5.4.3
 

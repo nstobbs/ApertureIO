@@ -3,6 +3,7 @@ add_executable(TestApplication
 )
 
 target_link_libraries(TestApplication PUBLIC
+        Qt6::Gui
         Aio::Base
         Aio::Common
         Aio::RenderGraph

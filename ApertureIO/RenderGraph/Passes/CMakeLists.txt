@@ -3,6 +3,9 @@ add_library(Passes STATIC
                 ReadAssimp.cpp
                 PhongLighting.cpp
                 AsciiImage.cpp
+                CameraManager.cpp
+                ViewportGrid.cpp
+                MergeLayers.cpp
 )
 
 target_include_directories(Passes PUBLIC 
