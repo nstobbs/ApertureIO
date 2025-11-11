@@ -1,6 +1,11 @@
 #include <ApertureIO/ReadAssimp.hpp>
 #include <chrono>
 
+namespace {
+    const std::string kModelFilePathKnobName = "Model_FilePath";
+    const std::string kTextureFilePathKnobName = "Texture_FilePath";
+}
+
 namespace Aio
 {
 
@@ -55,6 +60,43 @@ ReadAssimp::ReadAssimp()
 
     _outPorts.emplace("geo", geoOut);
 };
+
+void ReadAssimp::BuildKnobs()
+{
+    if (auto knob = _knobManager->CreateKnob(KnobType::String, kModelFilePathKnobName)) {
+        KnobUI ui = {.displayName = "Model FilePath:",
+                     .isHidden = false,
+                     .tooltip = "File Path to the Asset to Read." };
+
+        KnobInfo info {.type = KnobType::String,
+                       .name = kModelFilePathKnobName,
+                       .ui = ui,
+                       .canAnimate = false };
+        knob->SetInfo(info);
+        _filePathKnob = dynamic_cast<StringKnob*>(knob);
+    };
+
+    if (auto knob = _knobManager->CreateKnob(KnobType::String, kTextureFilePathKnobName)) {
+        KnobUI ui = {.displayName = "Texture FilePath:",
+                     .isHidden = false,
+                     .tooltip = "File Path to the Asset to Read." };
+
+        KnobInfo info {.type = KnobType::String,
+                       .name = kTextureFilePathKnobName,
+                       .ui = ui,
+                       .canAnimate = false };
+        knob->SetInfo(info);
+        _textureFilePathKnob = dynamic_cast<StringKnob*>(knob);
+    };
+};
+
+void ReadAssimp::OnKnobChange(IKnob* knob)
+ {
+    if (knob == _knobManager->GetKnob(kModelFilePathKnobName) ||
+        knob == _knobManager->GetKnob(kTextureFilePathKnobName)) {
+            ReadFile(_filePathKnob->GetValue(), _textureFilePathKnob->GetValue());
+    }
+ };
 
 void ReadAssimp::ReadFile(const std::string& modelFilePath, const std::string& textureFilePath)
 {

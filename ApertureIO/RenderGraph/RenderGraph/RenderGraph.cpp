@@ -1,5 +1,6 @@
 #include "ApertureIO/RenderGraph.hpp"
 #include "ApertureIO/Logger.hpp"
+#include "ApertureIO/Knob.hpp"
 
 #include <set>
 #include <stack>
@@ -96,11 +97,12 @@ void RenderGraph::CompileGraph(RenderEngine* renderEngine)
             };
         };
 
+        // Build RenderPass
+        renderPass->BuildKnobs();
         if (initPasses.find(renderPass) != initPasses.end())
         {
             renderPass->AllocateResources(renderEngine);
         };
-
         renderPass->BindResources(renderEngine);
     };
 };
@@ -116,6 +118,7 @@ void RenderGraph::ExecuteGraph(RenderEngine* renderEngine)
 
     for (auto renderPass : taskOrder)
     {
+        renderPass->GetKnobManger()->CheckForKnobChange();
         renderPass->Execute(renderEngine);
         lastRenderPass = renderPass;
     };

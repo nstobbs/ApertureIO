@@ -9,9 +9,13 @@ class ViewportGrid : public RenderPass
 {
 public:
     ViewportGrid();
+    void BuildKnobs() override;
+    void OnKnobChange(IKnob* knob) override;
     void AllocateResources(RenderEngine*  renderEngine) override; /* Allocated Required Resources */
     void BindResources(RenderEngine* renderEngine) override; /* Bind Resources to the RenderContext */
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
+private:
+    IntKnob* _pGridSizeKnob;
 };
 
 };

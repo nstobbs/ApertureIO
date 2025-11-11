@@ -19,7 +19,9 @@ struct TestUniformStruct
 class BasicRenderPass : public RenderPass
 {
 public:
-    BasicRenderPass(); 
+    BasicRenderPass();
+    void BuildKnobs() override;
+    void OnKnobChange(IKnob* knob) override;
     void AllocateResources(RenderEngine* renderEngine) override;
     void BindResources(RenderEngine* renderEngine) override; 
     void Execute(RenderEngine* renderEngine) override;

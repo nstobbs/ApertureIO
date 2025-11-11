@@ -24,6 +24,8 @@ class ReadAssimp : public RenderPass
 {
 public:
     ReadAssimp();
+    void BuildKnobs() override;
+    void OnKnobChange(IKnob* knob) override;
     void AllocateResources(RenderEngine*  renderEngine) override; /* Allocated Required Resources */
     void BindResources(RenderEngine* renderEngine) override; /* Bind Resources to the RenderContext */
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
@@ -32,6 +34,10 @@ public:
     void rotateModel(RenderEngine* renderEngine);
 
 private:
+    /* Knobs */
+    StringKnob* _filePathKnob = {nullptr};
+    StringKnob* _textureFilePathKnob = {nullptr};
+
     std::vector<aiNode*> findNodesContainingMeshes(aiNode* node);
 
     std::string _modelFilePath;

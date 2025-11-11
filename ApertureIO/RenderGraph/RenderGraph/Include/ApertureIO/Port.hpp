@@ -3,6 +3,11 @@
 #include <vector>
 #include <string>
 
+/* Const Port Names*/
+const std::string CAMERA_PORT = "camera";
+const std::string IMAGE_PORT = "image";
+const std::string GEOMETRY_PORT  = "geo";
+
 namespace Aio
 {
 

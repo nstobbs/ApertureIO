@@ -1,4 +1,5 @@
 add_library(RenderGraph STATIC
+                Knob.cpp
                 Port.cpp
                 RenderPass.cpp
                 RenderPassFactory.cpp
@@ -11,6 +12,7 @@ target_include_directories(RenderGraph PUBLIC
 )
 
 target_link_libraries(RenderGraph
+        Qt6::Core
         Aio::Base
         Aio::Passes
         Aio::Common

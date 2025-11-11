@@ -1,13 +1,22 @@
 [requires]
+
+# Platform Packages 
 qt/6.7.3
 glfw/3.4
-assimp/5.4.3
 
+# IO Packages
+assimp/5.4.3
+nlohmann_json/3.11.3
+efsw/1.4.1
+
+# Graphics Packages
 volk/1.3.296.0
 glm/1.0.1
 shaderc/2024.1
-efsw/1.4.1
+
+# Utilities Packages 
 boost/1.88.0
+
 [generators]
 CMakeDeps
 CMakeToolchain

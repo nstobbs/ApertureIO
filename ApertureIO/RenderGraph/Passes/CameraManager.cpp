@@ -1,6 +1,10 @@
 #include "ApertureIO/CameraManager.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
+namespace {
+    const std::string kActiveCameraKnobName = "Active_Camera";
+}
+
 namespace Aio
 {
 
@@ -81,6 +85,29 @@ CameraManager::CameraManager()
 
     Port cameraOut(this);
     _outPorts.emplace("camera", cameraOut);
+};
+
+void CameraManager::BuildKnobs()
+{
+   if (auto knob = _knobManager->CreateKnob(KnobType::String, kActiveCameraKnobName)) {
+        KnobUI ui = {.displayName = "Active Camera:",
+                     .isHidden = false,
+                     .tooltip = "Set the Active Camera for the output Cam pipe." };
+
+        KnobInfo info {.type = KnobType::String,
+                       .name = kActiveCameraKnobName,
+                       .ui = ui,
+                       .canAnimate = false };
+        knob->SetInfo(info);
+        _activeCameraKnob = dynamic_cast<StringKnob*>(knob);
+    }; 
+};
+
+void CameraManager::OnKnobChange(IKnob* knob)
+{
+    if (knob == GetKnobManger()->GetKnob(kActiveCameraKnobName)) {
+        SetActiveCamera(_activeCameraKnob->GetValue());
+    }
 };
 
 void CameraManager::AllocateResources(RenderEngine*  renderEngine)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ApertureIO/Knob.hpp"
 #include "ApertureIO/Port.hpp"
 #include "ApertureIO/RenderEngine.hpp"
 
@@ -53,12 +54,18 @@ class Port;
 class RenderPass
 {
 public:
+    RenderPass();
+    virtual void BuildKnobs() = 0; /* Builds Knobs for Adjusting Parameters of the RenderPass */
+    virtual void OnKnobChange(IKnob* knob) = 0; /* Callback Function for Knob Changes */
     virtual void AllocateResources(RenderEngine*  renderEngine) = 0; /* Allocated Required Resources */
     virtual void BindResources(RenderEngine* renderEngine) = 0; /* Bind Resources to the RenderContext */
     virtual void Execute(RenderEngine* renderEngine) = 0; /* Sumbits the Pass for Rendering */
     
     std::vector<ResourceAccess> GetResourcesAccess();
     RenderContext& GetRenderContext();
+
+    KnobManager* GetKnobManger();
+    IKnob* GetKnob(const std::string& name);
 
     /* Connections */
     Port* GetInPort(const std::string& name);
@@ -73,6 +80,9 @@ protected:
     std::string _name;
     RenderPassType _type;
     std::vector<ResourceAccess> _resourcesAccess;
+
+    /* Parameters */
+    UniquePtr<KnobManager> _knobManager;
     
     /* Connections */
     std::unordered_map<std::string, Port> _inPorts;

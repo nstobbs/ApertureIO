@@ -3,6 +3,11 @@
 namespace Aio
 {
 
+RenderPass::RenderPass()
+{
+    _knobManager = std::make_unique<KnobManager>(this);
+};
+
 std::vector<ResourceAccess> RenderPass::GetResourcesAccess()
 {
     return _resourcesAccess;
@@ -48,6 +53,16 @@ std::vector<Port*> RenderPass::GetAllOutPorts()
 std::string& RenderPass::GetName()
 {
     return _name;
+};
+
+IKnob* RenderPass::GetKnob(const std::string& name)
+{
+    return _knobManager->GetKnob(name);
+};
+
+KnobManager* RenderPass::GetKnobManger()
+{
+    return _knobManager.get();
 };
 
 };

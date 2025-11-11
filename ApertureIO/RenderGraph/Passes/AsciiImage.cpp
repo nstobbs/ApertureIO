@@ -51,6 +51,8 @@ AsciiImage::AsciiImage()
     _outPorts.emplace("image", imageOut);
 };
 
+void AsciiImage::BuildKnobs()
+
 void AsciiImage::updateUniformBuffer(RenderEngine* renderEngine)
 {
     renderEngine->GetBufferPtr("asciiImageSettings")->UploadToDevice(&_settings);

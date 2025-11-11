@@ -52,6 +52,8 @@ class CameraManager : public RenderPass
 {
 public:
     CameraManager();
+    void BuildKnobs() override;
+    void OnKnobChange(IKnob* knob) override;
     void AllocateResources(RenderEngine*  renderEngine) override; /* Allocated Required Resources */
     void BindResources(RenderEngine* renderEngine) override; /* Bind Resources to the RenderContext */
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
@@ -64,8 +66,10 @@ public:
     Camera* GetActiveCamera();
 
 private:
-    bool doesCameraExist(const std::string& name);
+    /* Knob */
+    StringKnob* _activeCameraKnob;
 
+    bool doesCameraExist(const std::string& name);
     std::unordered_map<std::string, UniquePtr<Camera>> _cameras;
     std::string _active = {"None"};
     std::string _bufferName = {"CameraBuffer"};

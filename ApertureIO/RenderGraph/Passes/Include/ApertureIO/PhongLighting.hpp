@@ -31,6 +31,8 @@ class PhongLighting : public RenderPass
 {
 public:
     PhongLighting();
+    void BuildKnobs() override;
+    void OnKnobChange(IKnob* knob) override;
     void AllocateResources(RenderEngine*  renderEngine) override; /* Allocated Required Resources */
     void BindResources(RenderEngine* renderEngine) override; /* Bind Resources to the RenderContext */
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
@@ -41,6 +43,13 @@ public:
 private:
     std::vector<PointLight> _lights;
     uint32_t _numOfLights;
+
+    /* Knobs */
+    IntKnob* _numOfLightsKnob;
+    FloatKnob* _specularKnob;
+    FloatKnob* _diffuseKnob;
+    FloatKnob* _ambientKnob;
+    FloatKnob* _shininessKnob;
 };
 
 };

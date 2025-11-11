@@ -39,6 +39,13 @@ ViewportGrid::ViewportGrid()
     _outPorts.emplace("image", imageOut);
 };
 
+void ViewportGrid::BuildKnobs()
+{
+    if (auto knob = _knobManager->CreateKnob(KnobType::Int, "GridSize")) {
+        _pGridSizeKnob = dynamic_cast<IntKnob*>(knob);
+    };
+};
+
 void ViewportGrid::AllocateResources(RenderEngine*  renderEngine)
 {
     ShaderCreateInfo shaderInfo{};
