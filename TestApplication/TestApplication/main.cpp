@@ -103,7 +103,7 @@ int main()
     mainCam->SetAspectRatio(aspectRatio);
 
     dynamic_cast<Aio::CameraManager*>(cameras)->AddCamera("mainCam", std::move(mainCam));
-    dynamic_cast<Aio::CameraManager*>(cameras)->SetActiveCamera("mainCam");
+    dynamic_cast<Aio::StringKnob*>(cameras->GetKnob("Active_Camera"))->SetValue("mainCam");
     //dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/sponza.obj", "./Textures/1K_Test_PNG_Texture.png");
     
     engine.LoadGraph("ReadModel", std::move(graph));

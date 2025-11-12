@@ -58,7 +58,7 @@ IKnob* KnobManager::GetKnob(const std::string& name)
 KnobType KnobManager::GetKnobType(const std::string& name)
 {
     if (_knobs.find(name) != _knobs.end()) {
-        return _knobs.at(name)->type();
+        return _knobs.at(name)->GetType();
     };
     return KnobType::None;
 };
@@ -70,27 +70,35 @@ IKnob* KnobManager::CreateKnob(const KnobType type, const std::string& name)
         switch (type) {
             case KnobType::Bool:
                 _knobs.emplace(name, std::make_unique<BoolKnob>);
+                break;
 
             case KnobType::Int:
                 _knobs.emplace(name, std::make_unique<IntKnob>);
-
+                break;
+                
             case KnobType::Float:
                 _knobs.emplace(name, std::make_unique<FloatKnob>);
+                break;
 
             case KnobType::String:
                 _knobs.emplace(name, std::make_unique<StringKnob>);
-
+                break;
+                
             case KnobType::Vec2:
                 _knobs.emplace(name, std::make_unique<Vec2Knob>);
-
+                break;
+                
             case KnobType::Vec3:
                 _knobs.emplace(name, std::make_unique<Vec3Knob>);
+                break;
 
             case KnobType::Vec4:
                 _knobs.emplace(name, std::make_unique<Vec4Knob>);
+                break;
 
             case KnobType::Mat4:
                 _knobs.emplace(name, std::make_unique<Vec4Knob>);
+                break;
         }
     }
     return GetKnob(name);

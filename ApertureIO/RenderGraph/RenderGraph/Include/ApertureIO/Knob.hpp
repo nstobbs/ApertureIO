@@ -2,6 +2,7 @@
 
 #include "ApertureIO/Pointers.hpp"
 
+#include <vector>
 #include <glm/glm.hpp>
 #include <QJsonDocument>
 #include <string>
@@ -59,9 +60,8 @@ class IKnob
 {
 public:
     virtual ~IKnob() = default;
-    virtual KnobType type() = 0;
-    virtual void toJson(QJsonDocument* inDoc) = 0;
-    virtual void fromJson(QJsonDocument* outDoc) = 0;
+    virtual KnobType GetType() = 0;
+    virtual std::string GetName() = 0;
 
     bool IsValid() { return _isValid; }
     void Validate() { _isValid = true; }
@@ -82,7 +82,8 @@ public:
     T GetValue();
     void SetValue(T value);
 
-    KnobType type() override { return _info.type; }
+    KnobType GetType() override { return _info.type; }
+    std::string GetName() override { return _info.name; }
     void toJson(QJsonDocument* inDoc) override;
     void fromJson(QJsonDocument* outDoc) override;
 
@@ -102,6 +103,7 @@ friend IKnob;
 public:
     KnobManager(RenderPass* pass);
     IKnob* GetKnob(const std::string& name);
+    std::vector<IKnob*> GetAllKnobs();
     KnobType GetKnobType(const std::string& name);
     IKnob* CreateKnob(KnobType type, const std::string& name);
     size_t CalculateHash();

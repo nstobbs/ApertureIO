@@ -7,5 +7,6 @@ project(ApertureIO)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(ApertureIO)
+add_subdirectory(ApertureIOEditor)
 add_subdirectory(TestApplication)
 add_subdirectory(ThirdParty)

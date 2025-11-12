@@ -4,10 +4,139 @@
 
 #include <set>
 #include <stack>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QFile>
 
 
 namespace Aio
 {
+
+UniquePtr<RenderGraph> RenderGraph::ReadFromJsonFile(const std::string& filePath)
+{
+    auto graphPtr = std::make_unique<RenderGraph>();
+
+
+};
+
+void RenderGraph::WriteToJsonFile(const std::string& filename)
+{
+    // Header Metadata
+    // RenderGraph Name
+    QJsonObject rootObj;
+    rootObj["RenderGraph_Name"] = "TestGraph";
+
+    /* Pre RenderPass */
+    QJsonArray  passesArray;
+    auto passes = sortGraph();
+    for (auto pass : passes) {
+        QJsonObject passObj;
+        
+        // RenderPass Name & ID
+        passObj["Name"] = pass->GetName();
+        passObj["ID"] = pass->GetID();
+
+        // RenderPass InPorts
+        QJsonArray inPortsArray;
+        auto inPorts = pass->GetAllInPortNames();
+        for (auto name : inPorts) {
+            QJsonObject inPort;
+            inPort["Name"] = name;
+            inPortsArray.append(inPort);
+        };
+        passObj["InPorts"] = inPortsArray;
+
+        // RenderPass OutPorts
+        QJsonArray outPortArray;
+        auto outPorts = pass->GetAllOutPortNames();
+        for (auto name : outPorts) {
+            QJsonObject outPort;
+            outPort["Name"] = name;
+            outPortArray.append(outPort);
+        };
+        passObj["OutPorts"] = outPortArray;
+
+        // RenderPass Knobs
+        auto knobs = pass->GetKnobManger()->GetAllKnobs();
+        QJsonArray knobArray;
+        for (auto knob : knobs) {
+            QJsonObject knobObj;
+            knobObj["Type"] = knob->GetType();
+            knobObj["Name"] = knob->GetName();
+            switch(knob->GetType()) {
+                case KnobType::Bool:
+                    knobObj["Value"] = dynamic_cast<BoolKnob*>(knob)->GetValue();
+                    break;
+
+                case KnobType::Int:
+                    knobObj["Value"] = dynamic_cast<IntKnob*>(knob)->GetValue();
+                    break;
+                case KnobType::Float:
+                    knobObj["Value"] = dynamic_cast<FloatKnob*>(knob)->GetValue();
+                    break;
+
+                case KnobType::String:
+                    knobObj["Value"] = dynamic_cast<StringKnob*>(knob)->GetValue().c_str();
+                    break;
+
+                case KnobType::Vec2:
+                    QJsonObject valueObj;
+                    auto value = dynamic_cast<Vec2Knob*>(knob)->GetValue();
+                    valueObj["x"] = value.x;
+                    valueObj["y"] = value.y;
+                    knobObj["Value"] = valueObj;
+                    break;
+
+                case KnobType::Vec3:
+                    QJsonObject valueObj;
+                    auto value = dynamic_cast<Vec3Knob*>(knob)->GetValue();
+                    valueObj["x"] = value.x;
+                    valueObj["y"] = value.y;
+                    valueObj["z"] = value.z;
+                    knobObj["Value"] = valueObj;
+                    break;
+
+                case KnobType::Vec4:
+                    QJsonObject valueObj;
+                    auto value = dynamic_cast<Vec4Knob*>(knob)->GetValue();
+                    valueObj["x"] = value.x;
+                    valueObj["y"] = value.y;
+                    valueObj["z"] = value.z;
+                    valueObj["w"] = value.w;
+                    knobObj["Value"] = valueObj;
+                    break;
+
+                case KnobType::Mat4:
+                    Logger::LogWarn("Don't Support Writing Mat4Knobs Yet!");
+                    break;
+            }
+            knobArray.append(knobObj);
+        }
+        passObj["Knobs"] = knobArray;
+        passesArray.append(passObj);
+    }
+    rootObj["RenderPasses"] = passesArray;
+
+    // Port Connections
+    QJsonObject connectionsObj;
+    for (auto pass : passes) {
+        pass
+    }
+
+    // Write to File
+    QByteArray byteArray;
+    byteArray = QJsonDocument(rootObj).toJson();
+
+    QFile file;
+    file.setFileName(filename.c_str());
+    if (!file.open(QIODevice::WriteOnly)) {
+        Logger::LogWarn("Can't Write to File");
+        return;
+    }
+
+    file.write(byteArray);
+    file.close();
+};
 
 void RenderGraph::AddRenderPass(RenderPass* renderPass)
 {

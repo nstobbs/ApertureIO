@@ -10,6 +10,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <QJsonDocument>
 
 namespace Aio
 {
@@ -20,6 +21,8 @@ class RenderEngine;
 class RenderGraph
 {
 public:
+    static UniquePtr<RenderGraph> ReadFromJsonFile(const std::string& filename);
+    void WriteToJsonFile(const std::string& filePath);
     void AddRenderPass(RenderPass* renderPass);
     RenderPass* CreateRenderPass(const std::string& name);
     //void RemoveRenderPass(RenderPass* renderPass);

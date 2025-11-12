@@ -4,14 +4,14 @@
 #include "ApertureIO/Device.hpp"
 #include "ApertureIO/Shader.hpp"
 
-/* The RenderEngine is that main system for rendering these Graphs.
+/* The RenderEngine is that main system for rendering these RenderGraphs.
 When LoadGraph is called, RenderEngine will begin allocating needed
-resources and prepping the graph for execution.
+resources and prepping the RenderGraphs for execution.
 
-RenderPass = A Tasks
+RenderPass = A Task
 Port = Connections to other RenderPasses
-RenderGraph = Collection of Tasks
-RenderEngine = Manages Resources and Executes Graphs*/
+RenderGraph = Collection of RenderPasses
+RenderEngine = Manages Resources and Executes RenderGraphs */
 
 namespace Aio
 {
@@ -28,6 +28,7 @@ public:
 
     void SetActive(const std::string& name);
     void LoadGraph(const std::string& name, UniquePtr<RenderGraph> renderGraph);
+    void LoadGraph(QJsonDocument fileIn);
     void RemoveGraph(const std::string& name);
 
     void StoreBufferPtr(std::string name, UniquePtr<Buffer>pBuffer);

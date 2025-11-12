@@ -50,7 +50,7 @@ std::vector<Port*> RenderPass::GetAllOutPorts()
     return ports; 
 };
 
-std::string& RenderPass::GetName()
+std::string RenderPass::GetName()
 {
     return _name;
 };

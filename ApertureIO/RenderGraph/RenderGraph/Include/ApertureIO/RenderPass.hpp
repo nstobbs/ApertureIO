@@ -73,11 +73,16 @@ public:
     std::vector<Port*> GetAllInPorts();
     std::vector<Port*> GetAllOutPorts();
 
-    std::string& GetName();
+    std::vector<std::string> GetAllInPortNames();
+    std::vector<std::string> GetAllOutPortNames();
+
+    std::string GetName();
+    uint32_t GetID();
 
 protected:
     /* RenderPass Info  */
     std::string _name;
+    uint32_t _ID;
     RenderPassType _type;
     std::vector<ResourceAccess> _resourcesAccess;
 
