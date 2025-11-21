@@ -92,6 +92,8 @@ int main()
 
     cameras->GetOutPort("camera")->Connect(grid->GetInPort("camera"));
 
+    graph->WriteToJsonFile("./TestGraph_v001.json");
+
     //cameras->GetOutPort("camera")->Connect(read->GetInPort("camera")); 
     //read->GetOutPort("geo")->Connect(lights->GetInPort("geo")); 
     //cameras->GetOutPort("camera")->Connect(lights->GetInPort("camera")); 

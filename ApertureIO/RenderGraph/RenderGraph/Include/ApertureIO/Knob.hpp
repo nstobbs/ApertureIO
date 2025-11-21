@@ -28,6 +28,8 @@ enum class KnobType
     Mat4
 };
 
+std::string to_string(KnobType type);
+
 /* Knob Range */
 struct KnobRange
 {
@@ -79,13 +81,12 @@ template<typename T, KnobType knobType>
 class Knob : IKnob
 {
 public:
+    ~Knob() = default;
     T GetValue();
     void SetValue(T value);
 
     KnobType GetType() override { return _info.type; }
     std::string GetName() override { return _info.name; }
-    void toJson(QJsonDocument* inDoc) override;
-    void fromJson(QJsonDocument* outDoc) override;
 
 private:
     T _value;

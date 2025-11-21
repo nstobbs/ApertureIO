@@ -20,16 +20,10 @@ public:
 
     void sourceFileModified() override;
 
-    //TODO: need some stuff of sub class for images. For shadred stuff like FrameBuffer and Textures. Just VulkanImage related.
-    void setImageLayout(VkImageLayout targetLayout);
-
 private:
-    TextureHandle storeTextureHandle(); //TODO: Maybe this store texture handles should be virtual in texture class and these becomes override funcs instead ?
-
     VulkanDevice* _pDevice;
     VulkanContext* _pContext;
     
-
     UniquePtr<VulkanImage> _image;
 };
 

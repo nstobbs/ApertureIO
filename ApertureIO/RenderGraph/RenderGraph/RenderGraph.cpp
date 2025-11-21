@@ -15,8 +15,7 @@ namespace Aio
 UniquePtr<RenderGraph> RenderGraph::ReadFromJsonFile(const std::string& filePath)
 {
     auto graphPtr = std::make_unique<RenderGraph>();
-
-
+    return graphPtr;
 };
 
 void RenderGraph::WriteToJsonFile(const std::string& filename)
@@ -31,17 +30,17 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
     auto passes = sortGraph();
     for (auto pass : passes) {
         QJsonObject passObj;
-        
+
         // RenderPass Name & ID
-        passObj["Name"] = pass->GetName();
-        passObj["ID"] = pass->GetID();
+        passObj["Name"] = pass->GetName().c_str();
+        passObj["ID"] = std::to_string(pass->GetID()).c_str();
 
         // RenderPass InPorts
         QJsonArray inPortsArray;
         auto inPorts = pass->GetAllInPortNames();
         for (auto name : inPorts) {
             QJsonObject inPort;
-            inPort["Name"] = name;
+            inPort["Name"] = name.c_str();
             inPortsArray.append(inPort);
         };
         passObj["InPorts"] = inPortsArray;
@@ -51,7 +50,7 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
         auto outPorts = pass->GetAllOutPortNames();
         for (auto name : outPorts) {
             QJsonObject outPort;
-            outPort["Name"] = name;
+            outPort["Name"] = name.c_str();
             outPortArray.append(outPort);
         };
         passObj["OutPorts"] = outPortArray;
@@ -61,42 +60,37 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
         QJsonArray knobArray;
         for (auto knob : knobs) {
             QJsonObject knobObj;
-            knobObj["Type"] = knob->GetType();
-            knobObj["Name"] = knob->GetName();
+            knobObj["Type"] = to_string(knob->GetType()).c_str();
+            knobObj["Name"] = knob->GetName().c_str();
             switch(knob->GetType()) {
-                case KnobType::Bool:
+                case KnobType::Bool: {
                     knobObj["Value"] = dynamic_cast<BoolKnob*>(knob)->GetValue();
-                    break;
-
-                case KnobType::Int:
+                }
+                case KnobType::Int: {
                     knobObj["Value"] = dynamic_cast<IntKnob*>(knob)->GetValue();
-                    break;
-                case KnobType::Float:
+                }
+                case KnobType::Float: {
                     knobObj["Value"] = dynamic_cast<FloatKnob*>(knob)->GetValue();
-                    break;
-
-                case KnobType::String:
+                }
+                case KnobType::String: {
                     knobObj["Value"] = dynamic_cast<StringKnob*>(knob)->GetValue().c_str();
-                    break;
-
-                case KnobType::Vec2:
+                }
+                case KnobType::Vec2: {
                     QJsonObject valueObj;
                     auto value = dynamic_cast<Vec2Knob*>(knob)->GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     knobObj["Value"] = valueObj;
-                    break;
-
-                case KnobType::Vec3:
+                }
+                case KnobType::Vec3: {
                     QJsonObject valueObj;
                     auto value = dynamic_cast<Vec3Knob*>(knob)->GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     valueObj["z"] = value.z;
                     knobObj["Value"] = valueObj;
-                    break;
-
-                case KnobType::Vec4:
+                }
+                case KnobType::Vec4: {
                     QJsonObject valueObj;
                     auto value = dynamic_cast<Vec4Knob*>(knob)->GetValue();
                     valueObj["x"] = value.x;
@@ -104,11 +98,10 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                     valueObj["z"] = value.z;
                     valueObj["w"] = value.w;
                     knobObj["Value"] = valueObj;
-                    break;
-
-                case KnobType::Mat4:
+                }
+                case KnobType::Mat4: {
                     Logger::LogWarn("Don't Support Writing Mat4Knobs Yet!");
-                    break;
+                }
             }
             knobArray.append(knobObj);
         }
@@ -118,10 +111,40 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
     rootObj["RenderPasses"] = passesArray;
 
     // Port Connections
-    QJsonObject connectionsObj;
+    QJsonArray connectionsArray;
     for (auto pass : passes) {
-        pass
+        QJsonObject passObj;
+        QJsonObject inPortsObj;
+        QJsonObject outPortsObj;
+        auto inPortNames = pass->GetAllInPortNames();
+        auto outPortNames = pass->GetAllOutPortNames();
+
+        for (auto portName : inPortNames) {
+            if (auto port = pass->GetInPort(portName)) {
+                auto incomingPorts = port->GetConnectedPorts();
+                for (auto incomingPort : incomingPorts) {
+                    if (auto connectedPass = incomingPort->GetRenderPass()) {
+                        inPortsObj.insert(portName.c_str(), std::to_string(connectedPass->GetID()).c_str());
+                    }
+                }
+            }
+        }
+
+        for (auto portName : outPortNames) {
+            if (auto port = pass->GetOutPort(portName)) {
+                auto incomingPorts = port->GetConnectedPorts();
+                for (auto incomingPort : incomingPorts) {
+                    if (auto connectedPass = incomingPort->GetRenderPass()) {
+                        outPortsObj.insert(portName.c_str(), std::to_string(connectedPass->GetID()).c_str());
+                    }
+                }
+            }
+        }
+        passObj["inPorts"] = inPortsObj;
+        passObj["outPorts"] = inPortsObj;
+        connectionsArray.append(passObj);
     }
+    rootObj["Connections"] = connectionsArray;
 
     // Write to File
     QByteArray byteArray;

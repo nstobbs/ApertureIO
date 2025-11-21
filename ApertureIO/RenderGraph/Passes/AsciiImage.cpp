@@ -52,6 +52,9 @@ AsciiImage::AsciiImage()
 };
 
 void AsciiImage::BuildKnobs()
+{
+    
+};
 
 void AsciiImage::updateUniformBuffer(RenderEngine* renderEngine)
 {

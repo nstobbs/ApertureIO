@@ -11,16 +11,16 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     /* Create VkImage */
     UniquePtr<VulkanImage> imagePtr = std::make_unique<VulkanImage>();
     imagePtr->_count = createInfo.count;
-    imagePtr->_format = createInfo.format;
-    imagePtr->_height = createInfo.height;
-    imagePtr->_width = createInfo.width;
-    imagePtr->_pVulkanDevice = createInfo.pVulkanDevice;
+    imagePtr->_format = createInfo.params.format;
+    imagePtr->_height = createInfo.params.height;
+    imagePtr->_width = createInfo.params.width;
+    imagePtr->_pVulkanDevice = createInfo.params.pVulkanDevice;
 
     auto device = imagePtr->_pVulkanDevice;
 
     /* Checks Format is Valid */
     std::vector<VkFormat> requestedFormats;
-    requestedFormats.push_back(createInfo.format);
+    requestedFormats.push_back(createInfo.params.format);
     if (findFirstSupportedFormat(device->GetVkPhysicalDevice(), requestedFormats) == VK_FORMAT_UNDEFINED)
     {
         auto error = "Couldn't Find a Supported Format for Requested Image\n";
@@ -30,12 +30,12 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = createInfo.width;
-    imageInfo.extent.height = createInfo.height;
+    imageInfo.extent.width = createInfo.params.width;
+    imageInfo.extent.height = createInfo.params.height;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 1;
-    imageInfo.format = createInfo.format;
+    imageInfo.format = createInfo.params.format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 
     /* TODO: Need to add better logic for knowing if this is going be used as a FrameBuffer
@@ -77,29 +77,22 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
     for (int i = 0; i < createInfo.count; i++)
     {
-        VmaAllocation imageAllocation; //TODO: store this on the class......
+        VmaAllocation imageAllocation;
         VkImage image;
 
         VK_ASSERT(vmaCreateImage(device->GetVmaAllocator(), &imageInfo, &imageAllocationInfo, &image, &imageAllocation, nullptr),
                                 VK_SUCCESS, "VulkanTexture: Failed to Create VkImage...");
 
-        if (imagePtr->_forTextureReading)
-        {
-            /* TODO: Copy Texture File to Image
-            Create a new VkImage
-            Copy Temp VkImage to VkImage
-            Destroy Temp VkImage */
-        };
-        
         imagePtr->_images.push_back(image);
         imagePtr->_currentLayouts.push_back(VK_IMAGE_LAYOUT_UNDEFINED);
+        imagePtr->_imageAllocation.push_back(imageAllocation);
         
          /* Create the VkImageViews */
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = image;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = createInfo.format;
+        viewInfo.format = createInfo.params.format;
         viewInfo.subresourceRange.aspectMask = (!imagePtr->_forDepthStencil) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT
                                                                                                          | VK_IMAGE_ASPECT_STENCIL_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
@@ -108,7 +101,7 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
         viewInfo.subresourceRange.layerCount = 1;   
 
         VkImageView imageView;
-        VK_ASSERT(vkCreateImageView(createInfo.pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
+        VK_ASSERT(vkCreateImageView(createInfo.params.pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
         imagePtr->_imageViews.push_back(imageView);
 
         if (imagePtr->_forDepthStencil)
@@ -126,16 +119,118 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
     return imagePtr;
 };
 
+UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageTextureInfo& textureInfo)
+{
+    /* Create VulkanImage */
+    UniquePtr<VulkanImage> imagePtr = std::make_unique<VulkanImage>();
+    
+    imagePtr->_format = textureInfo.params.format;
+    imagePtr->_height = textureInfo.params.height;
+    imagePtr->_width = textureInfo.params.width;
+    imagePtr->_count = 1;
+    imagePtr->_pVulkanDevice = textureInfo.params.pVulkanDevice;
+    imagePtr->_forTextureReading = true;
+    
+    imagePtr->_imageSize = textureInfo.params.height *
+                           textureInfo.params.width *
+                           textureInfo.channels;
+
+    /* Create VkBuffer TODO: use VulkanBuffer instead */
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = imagePtr->_imageSize;
+    bufferInfo.usage = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo allocationInfo{};
+    allocationInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+    VK_ASSERT(vmaCreateBuffer(textureInfo.params.pVulkanDevice->GetVmaAllocator(), &bufferInfo, &allocationInfo, &imagePtr->_buffer, &imagePtr->_bufferAllocation, nullptr),
+                             VK_SUCCESS, "VulkanImage: Failed to Create VkBuffer For Copying Texture to...");
+
+    /* Checks Format is Valid */
+    std::vector<VkFormat> requestedFormats;
+    requestedFormats.push_back(textureInfo.params.format);
+    if (findFirstSupportedFormat(textureInfo.params.pVulkanDevice->GetVkPhysicalDevice(), requestedFormats) == VK_FORMAT_UNDEFINED)
+    {
+        auto error = "Couldn't Find a Supported Format for Requested Image\n";
+        Logger::LogError(error);
+    };
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = textureInfo.params.width;
+    imageInfo.extent.height = textureInfo.params.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = textureInfo.params.format;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                            VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.flags = 0;
+
+    /* Expects Data is Ready for Copy */
+    void* toPtr;
+    vmaMapMemory(imagePtr->_pVulkanDevice->GetVmaAllocator(), imagePtr->_bufferAllocation, &toPtr);
+    memcpy(toPtr, textureInfo.dataPtr, imagePtr->_imageSize);
+    vmaUnmapMemory(imagePtr->_pVulkanDevice->GetVmaAllocator(), imagePtr->_bufferAllocation);
+
+    /* Create VkImage */
+    VkImage image;
+    VmaAllocation imageAllocation;
+    VmaAllocationCreateInfo imageAllocationInfo{};
+    imageAllocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+    VK_ASSERT(vmaCreateImage(imagePtr->_pVulkanDevice->GetVmaAllocator(), &imageInfo, &imageAllocationInfo, &image, &imageAllocation, nullptr),
+                                VK_SUCCESS, "VulkanTexture: Failed to Create VkImage...");
+    imagePtr->_images.push_back(image);
+    imagePtr->_currentLayouts.push_back(VK_IMAGE_LAYOUT_UNDEFINED);
+    imagePtr->_imageAllocation.push_back(imageAllocation);
+
+    /* Copy Buffer To Image */
+    imagePtr->SetImageLayout(0, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, false);
+    VulkanCommand::CopyBufferToImage(imagePtr->_pVulkanDevice, imagePtr->_buffer, imagePtr->GetImage(0), imagePtr->_width, imagePtr->_height);
+    imagePtr->SetImageLayout(0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+
+    /* Delete Buffer */
+    vmaDestroyBuffer(textureInfo.params.pVulkanDevice->GetVmaAllocator(), imagePtr->_buffer, imagePtr->_bufferAllocation);
+
+    /* Create Image Views */
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = imagePtr->GetImage(0);
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = imagePtr->GetFormat();
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    VkImageView imageView;
+    VK_ASSERT(vkCreateImageView(imagePtr->_pVulkanDevice->GetVkDevice(), &viewInfo, nullptr, &imageView), VK_SUCCESS, "VulkanTexture: Failed to create VkImageView...");
+    imagePtr->_imageViews.push_back(imageView);
+
+    auto handle = imagePtr->createTextureHandle(0, imagePtr->GetImage(0), imagePtr->GetImageView(0));
+    imagePtr->_textureHandles.push_back(handle);
+
+    return imagePtr;
+};
+
 UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo)
 {
     UniquePtr<VulkanImage> imagePtr = std::make_unique<VulkanImage>();
-    imagePtr->_height = ingestInfo.height;
-    imagePtr->_width = ingestInfo.width;
-    imagePtr->_format = ingestInfo.format;
-    imagePtr->_currentLayouts.assign(ingestInfo.count, ingestInfo.layout);
+    imagePtr->_height = ingestInfo.params.height;
+    imagePtr->_width = ingestInfo.params.width;
+    imagePtr->_format = ingestInfo.params.format;
+    imagePtr->_currentLayouts.assign(ingestInfo.count, ingestInfo.params.layout);
     imagePtr->_images = ingestInfo.images;
     imagePtr->_imageViews = ingestInfo.imageViews;
-    imagePtr->_pVulkanDevice = ingestInfo.pVulkanDevice;
+    imagePtr->_pVulkanDevice = ingestInfo.params.pVulkanDevice;
 
     return imagePtr;
 };
@@ -415,7 +510,7 @@ VkFormat VulkanImage::findFirstSupportedFormat(VkPhysicalDevice device, std::vec
 
 TextureHandle VulkanImage::GetStorageImageHandle(uint32_t index)
 {
-    return _handles.at(index);
+    return _storageHandles.at(index);
 };
 
 VkImage VulkanImage::GetImage(uint32_t index)

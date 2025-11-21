@@ -38,14 +38,18 @@ VulkanFrameBuffer::VulkanFrameBuffer(const FrameBufferCreateInfo& createInfo)
         _width = _extent.width;
         _height = _extent.height;
 
+        VulkanImageCommonParameter commonInfo{};
+        commonInfo.pVulkanDevice = _pDevice;
+        commonInfo.height = _height;
+        commonInfo.width = _width;
+        commonInfo.format = _bootstrapSwapchain.image_format;
+        commonInfo.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
         VulkanImageSwapChainInfo swapChainInfo{};
         swapChainInfo.images = _bootstrapSwapchain.get_images().value();
         swapChainInfo.imageViews = _bootstrapSwapchain.get_image_views().value();
-        swapChainInfo.width = _width;
-        swapChainInfo.height = _height;
-        swapChainInfo.format = _bootstrapSwapchain.image_format;
         swapChainInfo.count = swapChainInfo.images.size();
-        swapChainInfo.pVulkanDevice = _pDevice;
+        swapChainInfo.params = commonInfo;
         
         /* SwapChain Attachment For Presenting to Screen */
         std::string name = "Viewer";
@@ -74,13 +78,16 @@ void VulkanFrameBuffer::createVulkanImages()
         auto layerFormat = layer.second;
         if (layerName != "Viewer")
         {
+            VulkanImageCommonParameter commonInfo{};
+            commonInfo.pVulkanDevice = _pDevice;
+            commonInfo.height = _height;
+            commonInfo.width = _width;
+            commonInfo.format = VulkanImage::toVkFormat(_pDevice, layerFormat);
+            commonInfo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
             VulkanImageCreateInfo createInfo{};
-            createInfo.pVulkanDevice = _pDevice;
-            createInfo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            createInfo.width = _width;
-            createInfo.height = _height;
+            createInfo.params = commonInfo;
             createInfo.count = _pContext->getMaxFramesInFlight();
-            createInfo.format = VulkanImage::toVkFormat(_pDevice, layerFormat);
             _vulkanImagesMap.emplace(layerName, std::move(VulkanImage::CreateVulkanImage(createInfo)));
         };
     };

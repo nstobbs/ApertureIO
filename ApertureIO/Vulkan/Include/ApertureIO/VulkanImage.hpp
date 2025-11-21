@@ -7,26 +7,36 @@
 namespace Aio
 {
 
-struct VulkanImageCreateInfo
+struct VulkanImageCommonParameter
 {
     VulkanDevice* pVulkanDevice;
+
     uint32_t height;
     uint32_t width;
-    uint32_t count;
+
     VkFormat format;
     VkImageLayout layout;
 };
 
+struct VulkanImageCreateInfo
+{
+    VulkanImageCommonParameter params;
+    uint32_t count;
+};
+
 struct VulkanImageSwapChainInfo
 {
-    VulkanDevice* pVulkanDevice;
-    uint32_t height;
-    uint32_t width;
+    VulkanImageCommonParameter params;
     uint32_t count;
-    VkFormat format;
-    VkImageLayout layout;
     std::vector<VkImage> images;
     std::vector<VkImageView> imageViews;
+};
+
+struct VulkanImageTextureInfo
+{
+    VulkanImageCommonParameter params;
+    uint32_t channels; // channels = RGBA = 4
+    void* dataPtr = {nullptr};
 };
 
 /* Notes: VulkanImage can be stored and accessed two different ways.
@@ -37,8 +47,9 @@ access.*/
 class VulkanImage
 {
 public:
-    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageCreateInfo& createInfo);
-    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo);
+    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageCreateInfo& createInfo); /* Create Images for Rendering */
+    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageSwapChainInfo& ingestInfo); /* Create Images for "Present" */
+    static UniquePtr<VulkanImage> CreateVulkanImage(const VulkanImageTextureInfo& textureInfo); /* Create Images for Reading from Disk */
     static VkFormat toVkFormat(VulkanDevice* device, FrameBufferPixelFormat format);
 
     TextureHandle GetStorageImageHandle(uint32_t index);
@@ -66,9 +77,15 @@ private:
     uint32_t _count;
     VkFormat _format;
 
+    /* For Copying Texture From the CPU to GPU */
+    VkDeviceSize _imageSize;
+    VkBuffer _buffer;
+    VmaAllocation _bufferAllocation;
+
     std::vector<VkImage> _images;
     std::vector<VkImageView> _imageViews;
     std::vector<VkImageLayout> _currentLayouts;
+    std::vector<VmaAllocation> _imageAllocation;
 
     std::vector<TextureHandle> _storageHandles;
     std::vector<TextureHandle> _textureHandles;

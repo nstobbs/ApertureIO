@@ -3,8 +3,30 @@
 
 namespace Aio
 {
-/* Interface Knob */
 
+std::string to_string(KnobType type)
+{
+    switch (type) {
+        case KnobType::Bool:
+            return "Bool";
+        case KnobType::Int:
+            return "Int";
+        case KnobType::Float:
+            return "Float";
+        case KnobType::String:
+            return "String";
+        case KnobType::Vec2:
+            return "Vec2";
+        case KnobType::Vec3:
+            return "Vec3";
+        case KnobType::Vec4:
+            return "Vec4";
+        case KnobType::Mat4:
+            return "Mat4";
+    }
+};
+
+/* Interface Knob */
 void IKnob::SetInfo(KnobInfo info)
 {
     _info = info;
@@ -29,17 +51,6 @@ void Knob<T, knobType>::SetValue(T value)
     _value = value;
 };
 
-template<typename T, KnobType knobType>
-void Knob<T, knobType>::toJson(QJsonDocument* inDoc)
-{
-
-};
-
-template<typename T, KnobType knobType>
-void Knob<T, knobType>::fromJson(QJsonDocument* outDoc)
-{
-
-};
 
 /* KnobManager */
 KnobManager::KnobManager(RenderPass* pass)
@@ -68,38 +79,40 @@ IKnob* KnobManager::CreateKnob(const KnobType type, const std::string& name)
     if (type != KnobType::None) {
         _knobCount++;
         switch (type) {
-            case KnobType::Bool:
-                _knobs.emplace(name, std::make_unique<BoolKnob>);
-                break;
-
+            case KnobType::Bool:{
+                auto knob = std::make_unique<BoolKnob>();
+                _knobs.emplace(name, std::move(knob));
+            }
+                
+            /* 
             case KnobType::Int:
-                _knobs.emplace(name, std::make_unique<IntKnob>);
+                _knobs.emplace(name, std::make_unique<IntKnob>());
                 break;
                 
             case KnobType::Float:
-                _knobs.emplace(name, std::make_unique<FloatKnob>);
+                _knobs.emplace(name, std::make_unique<FloatKnob>());
                 break;
 
             case KnobType::String:
-                _knobs.emplace(name, std::make_unique<StringKnob>);
+                _knobs.emplace(name, std::make_unique<StringKnob>());
                 break;
                 
             case KnobType::Vec2:
-                _knobs.emplace(name, std::make_unique<Vec2Knob>);
+                _knobs.emplace(name, std::make_unique<Vec2Knob>());
                 break;
                 
             case KnobType::Vec3:
-                _knobs.emplace(name, std::make_unique<Vec3Knob>);
+                _knobs.emplace(name, std::make_unique<Vec3Knob>());
                 break;
 
             case KnobType::Vec4:
-                _knobs.emplace(name, std::make_unique<Vec4Knob>);
+                _knobs.emplace(name, std::make_unique<Vec4Knob>());
                 break;
 
             case KnobType::Mat4:
-                _knobs.emplace(name, std::make_unique<Vec4Knob>);
+                _knobs.emplace(name, std::make_unique<Mat4Knob>());
                 break;
-        }
+        */} 
     }
     return GetKnob(name);
 };
