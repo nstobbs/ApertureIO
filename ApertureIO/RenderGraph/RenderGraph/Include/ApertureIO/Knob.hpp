@@ -2,11 +2,13 @@
 
 #include "ApertureIO/Pointers.hpp"
 
-#include <vector>
 #include <glm/glm.hpp>
 #include <QJsonDocument>
+
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <variant>
 
 namespace Aio
 {
@@ -15,17 +17,19 @@ namespace Aio
 using KnobID = uint32_t;
 
 /* Knob Types */
+// This order has to match the order of the
+// variant knob!
 enum class KnobType
 {
-    None,
-    Bool,
-    Int,
-    Float,
-    String,
-    Vec2,
-    Vec3,
-    Vec4,
-    Mat4
+    None = -1,
+    Bool = 0,
+    Int = 1,
+    Float = 2,
+    String = 3,
+    Vec2 = 4,
+    Vec3 = 5,
+    Vec4 = 6,
+    Mat4 = 7
 };
 
 std::string to_string(KnobType type);
@@ -57,13 +61,18 @@ struct KnobInfo
     bool canAnimate = {false};
 };
 
-/* Knob Interface */
-class IKnob
+/* Knob */
+template<typename T, KnobType knobType>
+class Knob
 {
 public:
-    virtual ~IKnob() = default;
-    virtual KnobType GetType() = 0;
-    virtual std::string GetName() = 0;
+    Knob() = default;
+    ~Knob() = default;
+    T GetValue();
+    void SetValue(T value);
+
+    KnobType GetType() { return _info.type; }
+    std::string GetName() { return _info.name; }
 
     bool IsValid() { return _isValid; }
     void Validate() { _isValid = true; }
@@ -71,49 +80,37 @@ public:
     void SetInfo(KnobInfo info);
     KnobInfo GetInfo();
 
-protected:
+private:
     bool _isValid = {false};
     KnobInfo _info;
+    T _value;
 };
 
 /* Knob */
 template<typename T, KnobType knobType>
-class Knob : IKnob
+void Knob<T, knobType>::SetInfo(KnobInfo info)
 {
-public:
-    ~Knob() = default;
-    T GetValue();
-    void SetValue(T value);
-
-    KnobType GetType() override { return _info.type; }
-    std::string GetName() override { return _info.name; }
-
-private:
-    T _value;
+    _info = info;
 };
 
-/* Forward Declares */
-class RenderPass;
-
-/* Knob Manager */
-class KnobManager
+template<typename T, KnobType knobType>
+KnobInfo Knob<T, knobType>::GetInfo()
 {
+    return _info;
+};
 
-friend IKnob;
 
-public:
-    KnobManager(RenderPass* pass);
-    IKnob* GetKnob(const std::string& name);
-    std::vector<IKnob*> GetAllKnobs();
-    KnobType GetKnobType(const std::string& name);
-    IKnob* CreateKnob(KnobType type, const std::string& name);
-    size_t CalculateHash();
-    void CheckForKnobChange();
-private:
-    RenderPass* _pPass;
-    std::unordered_map<std::string, UniquePtr<IKnob>> _knobs;
-    uint32_t _knobCount = {0};
-    size_t _hash;
+template<typename T, KnobType knobType>
+T Knob<T, knobType>::GetValue()
+{
+    return _value;
+};
+
+template<typename T, KnobType knobType>
+void Knob<T, knobType>::SetValue(T value)
+{
+    _isValid = false;
+    _value = value;
 };
 
 /* Defined Knobs */
@@ -126,5 +123,32 @@ using Vec3Knob = Knob<glm::vec3, KnobType::Vec3>;
 using Vec4Knob = Knob<glm::vec4, KnobType::Vec4>;
 using Mat4Knob = Knob<glm::mat4, KnobType::Mat4>;
 
-using ColourKnob = Vec4Knob;
+// FIXME: Start using ColourKnobs Like RGBA or something!
+using ColourKnob = Vec4Knob; 
+
+using KnobGeneric = std::variant<BoolKnob, IntKnob, FloatKnob, StringKnob, Vec2Knob, Vec3Knob, Vec4Knob, Mat4Knob>;
+
+/* Forward Declares */
+class RenderPass;
+
+/* Knob Manager */
+class KnobManager
+{
+
+public:
+    KnobManager(RenderPass* pass);
+    ~KnobManager() = default;
+    KnobGeneric* GetKnob(const std::string& name);
+    std::vector<KnobGeneric*> GetAllKnobs();
+    KnobType GetKnobType(const std::string& name);
+    KnobGeneric* CreateKnob(KnobType type, const std::string& name);
+    size_t CalculateHash();
+    void CheckForKnobChange();
+    
+private:
+    RenderPass* _pPass;
+    std::unordered_map<std::string, KnobGeneric> _knobs;
+    uint32_t _knobCount = {0};
+    size_t _hash;
+};
 };

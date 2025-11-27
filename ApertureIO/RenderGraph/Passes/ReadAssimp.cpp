@@ -72,8 +72,9 @@ void ReadAssimp::BuildKnobs()
                        .name = kModelFilePathKnobName,
                        .ui = ui,
                        .canAnimate = false };
-        knob->SetInfo(info);
-        _filePathKnob = dynamic_cast<StringKnob*>(knob);
+        auto stringKnob = std::get<StringKnob>(*knob);
+        stringKnob.SetInfo(info);
+        _filePathKnob = &stringKnob;
     };
 
     if (auto knob = _knobManager->CreateKnob(KnobType::String, kTextureFilePathKnobName)) {
@@ -85,16 +86,21 @@ void ReadAssimp::BuildKnobs()
                        .name = kTextureFilePathKnobName,
                        .ui = ui,
                        .canAnimate = false };
-        knob->SetInfo(info);
-        _textureFilePathKnob = dynamic_cast<StringKnob*>(knob);
+        auto stringKnob = std::get<StringKnob>(*knob);
+        stringKnob.SetInfo(info);
+        _textureFilePathKnob = &stringKnob;
     };
 };
 
-void ReadAssimp::OnKnobChange(IKnob* knob)
+void ReadAssimp::OnKnobChange(KnobGeneric* knob)
  {
-    if (knob == _knobManager->GetKnob(kModelFilePathKnobName) ||
-        knob == _knobManager->GetKnob(kTextureFilePathKnobName)) {
+    auto type = static_cast<KnobType>(knob->index());
+    if (type == KnobType::String) {
+        auto stringKnob = std::get<StringKnob>(*knob);
+        if (stringKnob.GetName() == kModelFilePathKnobName ||
+            stringKnob.GetName() == kTextureFilePathKnobName) {
             ReadFile(_filePathKnob->GetValue(), _textureFilePathKnob->GetValue());
+        };
     }
  };
 

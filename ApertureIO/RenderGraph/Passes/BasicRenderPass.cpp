@@ -45,6 +45,16 @@ BasicRenderPass::BasicRenderPass()
     _outPorts.emplace("image", imageOut);
 };
 
+void BasicRenderPass::BuildKnobs()
+{
+
+};
+
+void BasicRenderPass::OnKnobChange(KnobGeneric* knob)
+{
+    
+};
+
 void BasicRenderPass::AllocateResources(RenderEngine* renderEngine)
 {
     /* Create Shader */

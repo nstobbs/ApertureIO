@@ -42,8 +42,14 @@ ViewportGrid::ViewportGrid()
 void ViewportGrid::BuildKnobs()
 {
     if (auto knob = _knobManager->CreateKnob(KnobType::Int, "GridSize")) {
-        _pGridSizeKnob = dynamic_cast<IntKnob*>(knob);
+        auto intKnob = std::get<IntKnob>(*knob);
+        _pGridSizeKnob = &intKnob;
     };
+};
+
+void ViewportGrid::OnKnobChange(KnobGeneric* knob)
+{
+    
 };
 
 void ViewportGrid::AllocateResources(RenderEngine*  renderEngine)

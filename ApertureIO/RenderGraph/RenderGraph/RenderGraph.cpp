@@ -60,31 +60,39 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
         QJsonArray knobArray;
         for (auto knob : knobs) {
             QJsonObject knobObj;
-            knobObj["Type"] = to_string(knob->GetType()).c_str();
-            knobObj["Name"] = knob->GetName().c_str();
-            switch(knob->GetType()) {
+            // Get Knob Info
+            std::string knobName = std::visit([](auto&& thisKnob){
+                return thisKnob.GetName();
+            }, *knob);
+            KnobType knobType = std::visit([](auto&& thisKnob){
+                return thisKnob.GetType();
+            }, *knob);
+
+            knobObj["Type"] = to_string(knobType).c_str();
+            knobObj["Name"] = knobName.c_str();
+            switch(knobType) {
                 case KnobType::Bool: {
-                    knobObj["Value"] = dynamic_cast<BoolKnob*>(knob)->GetValue();
+                    knobObj["Value"] = std::get<BoolKnob>(*knob).GetValue();
                 }
                 case KnobType::Int: {
-                    knobObj["Value"] = dynamic_cast<IntKnob*>(knob)->GetValue();
+                    knobObj["Value"] = std::get<IntKnob>(*knob).GetValue();
                 }
                 case KnobType::Float: {
-                    knobObj["Value"] = dynamic_cast<FloatKnob*>(knob)->GetValue();
+                    knobObj["Value"] = std::get<FloatKnob>(*knob).GetValue();
                 }
                 case KnobType::String: {
-                    knobObj["Value"] = dynamic_cast<StringKnob*>(knob)->GetValue().c_str();
+                    knobObj["Value"] = std::get<StringKnob>(*knob).GetValue().c_str();
                 }
                 case KnobType::Vec2: {
                     QJsonObject valueObj;
-                    auto value = dynamic_cast<Vec2Knob*>(knob)->GetValue();
+                    auto value = std::get<Vec2Knob>(*knob).GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     knobObj["Value"] = valueObj;
                 }
                 case KnobType::Vec3: {
                     QJsonObject valueObj;
-                    auto value = dynamic_cast<Vec3Knob*>(knob)->GetValue();
+                    auto value = std::get<Vec3Knob>(*knob).GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     valueObj["z"] = value.z;
@@ -92,7 +100,7 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                 }
                 case KnobType::Vec4: {
                     QJsonObject valueObj;
-                    auto value = dynamic_cast<Vec4Knob*>(knob)->GetValue();
+                    auto value = std::get<Vec4Knob>(*knob).GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     valueObj["z"] = value.z;

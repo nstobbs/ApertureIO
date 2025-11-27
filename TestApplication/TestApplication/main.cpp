@@ -92,8 +92,6 @@ int main()
 
     cameras->GetOutPort("camera")->Connect(grid->GetInPort("camera"));
 
-    graph->WriteToJsonFile("./TestGraph_v001.json");
-
     //cameras->GetOutPort("camera")->Connect(read->GetInPort("camera")); 
     //read->GetOutPort("geo")->Connect(lights->GetInPort("geo")); 
     //cameras->GetOutPort("camera")->Connect(lights->GetInPort("camera")); 
@@ -105,10 +103,14 @@ int main()
     mainCam->SetAspectRatio(aspectRatio);
 
     dynamic_cast<Aio::CameraManager*>(cameras)->AddCamera("mainCam", std::move(mainCam));
-    dynamic_cast<Aio::StringKnob*>(cameras->GetKnob("Active_Camera"))->SetValue("mainCam");
     //dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/sponza.obj", "./Textures/1K_Test_PNG_Texture.png");
+
+    graph->WriteToJsonFile("./SavedGraphs/TestGraph_v001.json");
     
     engine.LoadGraph("ReadModel", std::move(graph));
+
+    std::get<Aio::StringKnob>(*cameras->GetKnob("Active_Camera")).SetValue("mainCam");
+
     engine.SetActive("ReadModel");
     
     while(!window->shouldClose())

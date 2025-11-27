@@ -23,34 +23,9 @@ std::string to_string(KnobType type)
             return "Vec4";
         case KnobType::Mat4:
             return "Mat4";
-    }
+    };
+    return "None";
 };
-
-/* Interface Knob */
-void IKnob::SetInfo(KnobInfo info)
-{
-    _info = info;
-};
-
-KnobInfo IKnob::GetInfo()
-{
-    return _info;
-};
-
-/* Knob */
-template<typename T, KnobType knobType>
-T Knob<T, knobType>::GetValue()
-{
-    return _value;
-};
-
-template<typename T, KnobType knobType>
-void Knob<T, knobType>::SetValue(T value)
-{
-    _isValid = false;
-    _value = value;
-};
-
 
 /* KnobManager */
 KnobManager::KnobManager(RenderPass* pass)
@@ -58,79 +33,96 @@ KnobManager::KnobManager(RenderPass* pass)
     _pPass = pass;
 };
 
-IKnob* KnobManager::GetKnob(const std::string& name)
+KnobGeneric* KnobManager::GetKnob(const std::string& name)
 {
     if (_knobs.find(name) != _knobs.end()) {
-        return _knobs.at(name).get();
+        return &_knobs.at(name);
     };
     return nullptr;
 };
 
+std::vector<KnobGeneric*> KnobManager::GetAllKnobs()
+{
+    std::vector<KnobGeneric*> output;
+    for (auto knob : _knobs) {
+        output.push_back(&knob.second);
+    }
+    return output;
+};
+
 KnobType KnobManager::GetKnobType(const std::string& name)
 {
-    if (_knobs.find(name) != _knobs.end()) {
-        return _knobs.at(name)->GetType();
+    if (auto knob = GetKnob(name)) {
+        KnobType type = static_cast<KnobType>(knob->index());
+        return type;
     };
     return KnobType::None;
 };
 
-IKnob* KnobManager::CreateKnob(const KnobType type, const std::string& name)
+KnobGeneric* KnobManager::CreateKnob(const KnobType type, const std::string& name)
 {
     if (type != KnobType::None) {
         _knobCount++;
         switch (type) {
-            case KnobType::Bool:{
-                auto knob = std::make_unique<BoolKnob>();
-                _knobs.emplace(name, std::move(knob));
+            case KnobType::Bool: {
+                KnobGeneric knob = BoolKnob();
+                _knobs.emplace(name, knob);
             }
-                
-            /* 
-            case KnobType::Int:
-                _knobs.emplace(name, std::make_unique<IntKnob>());
-                break;
-                
-            case KnobType::Float:
-                _knobs.emplace(name, std::make_unique<FloatKnob>());
-                break;
-
-            case KnobType::String:
-                _knobs.emplace(name, std::make_unique<StringKnob>());
-                break;
-                
-            case KnobType::Vec2:
-                _knobs.emplace(name, std::make_unique<Vec2Knob>());
-                break;
-                
-            case KnobType::Vec3:
-                _knobs.emplace(name, std::make_unique<Vec3Knob>());
-                break;
-
-            case KnobType::Vec4:
-                _knobs.emplace(name, std::make_unique<Vec4Knob>());
-                break;
-
-            case KnobType::Mat4:
-                _knobs.emplace(name, std::make_unique<Mat4Knob>());
-                break;
-        */} 
+            case KnobType::Int: {
+                KnobGeneric knob = IntKnob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::Float: {
+                KnobGeneric knob = FloatKnob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::String: {
+                KnobGeneric knob = StringKnob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::Vec2: {
+                KnobGeneric knob = Vec2Knob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::Vec3: {
+                KnobGeneric knob = Vec3Knob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::Vec4: {
+                KnobGeneric knob = Vec4Knob();
+                _knobs.emplace(name, knob);
+            }
+            case KnobType::Mat4: {
+                KnobGeneric knob = Mat4Knob();
+                _knobs.emplace(name, knob);
+            }
+        } 
     }
     return GetKnob(name);
 };
 
 size_t KnobManager::CalculateHash()
 {
-
+    return size_t(0x00);
 };
 
 void KnobManager::CheckForKnobChange()
 {
     auto& context = _pPass->GetRenderContext();
-    for (const auto& knob : _knobs) {
-        IKnob* currentKnob = knob.second.get();
-        if (currentKnob->IsValid() == false) {
+    for (const auto knob : _knobs) {
+
+        KnobGeneric currentKnob = knob.second;
+        bool validState = std::visit([](auto&& thisKnob) {
+            return thisKnob.IsValid();
+        }, currentKnob);
+
+        if (validState == false) {
             context.PauseRendering();
-            _pPass->OnKnobChange(currentKnob);
-            currentKnob->Validate();
+            _pPass->OnKnobChange(&currentKnob);
+
+            std::visit([](auto&& thisKnob) {
+                thisKnob.Validate();
+            }, currentKnob);
             context.UnpauseRendering();
         }
     };

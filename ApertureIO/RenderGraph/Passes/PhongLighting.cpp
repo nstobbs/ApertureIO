@@ -118,6 +118,16 @@ void PhongLighting::UpdateLightsBuffer(RenderEngine* renderEngine)
     renderEngine->GetBufferPtr("gMetadataBuffer")->UploadToDevice(&data);
 };
 
+void PhongLighting::BuildKnobs()
+{
+    
+};
+
+void PhongLighting::OnKnobChange(KnobGeneric* knob)
+{
+
+};
+
 void PhongLighting::AllocateResources(RenderEngine*  renderEngine)
 {
     /* Shader Allocation */

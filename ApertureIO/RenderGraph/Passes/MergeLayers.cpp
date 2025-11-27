@@ -29,6 +29,16 @@ MergeLayers::MergeLayers()
     _outPorts.emplace("image", imageOut);
 };
 
+void MergeLayers::BuildKnobs()
+{
+
+};
+
+void MergeLayers::OnKnobChange(KnobGeneric* knob)
+{
+    
+};
+
 void MergeLayers::AllocateResources(RenderEngine*  renderEngine)
 {
     ShaderCreateInfo shaderInfo{};

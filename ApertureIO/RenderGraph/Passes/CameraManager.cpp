@@ -1,4 +1,5 @@
 #include "ApertureIO/CameraManager.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace {
@@ -98,15 +99,20 @@ void CameraManager::BuildKnobs()
                        .name = kActiveCameraKnobName,
                        .ui = ui,
                        .canAnimate = false };
-        knob->SetInfo(info);
-        _activeCameraKnob = dynamic_cast<StringKnob*>(knob);
+        //FIXME: This seems very wrong to me...
+        auto activeCamKnob = std::get_if<StringKnob>(knob);
+        activeCamKnob->SetInfo(info);
     }; 
 };
 
-void CameraManager::OnKnobChange(IKnob* knob)
+void CameraManager::OnKnobChange(KnobGeneric* knob)
 {
-    if (knob == GetKnobManger()->GetKnob(kActiveCameraKnobName)) {
-        SetActiveCamera(_activeCameraKnob->GetValue());
+    auto type = static_cast<KnobType>(knob->index());
+    if (type == KnobType::String) {
+        auto stringKnob = std::get<StringKnob>(*knob);
+        if (stringKnob.GetName() == kActiveCameraKnobName) {
+            SetActiveCamera(stringKnob.GetValue());
+        }
     }
 };
 

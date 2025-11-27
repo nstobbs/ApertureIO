@@ -1,11 +1,16 @@
 #include "ApertureIO/RenderPass.hpp"
 
+namespace {
+    uint32_t globalRenderPassCount = {0};
+}
+
 namespace Aio
 {
 
 RenderPass::RenderPass()
 {
     _knobManager = std::make_unique<KnobManager>(this);
+    _ID = globalRenderPassCount++;
 };
 
 std::vector<ResourceAccess> RenderPass::GetResourcesAccess()
@@ -50,12 +55,35 @@ std::vector<Port*> RenderPass::GetAllOutPorts()
     return ports; 
 };
 
+std::vector<std::string> RenderPass::GetAllInPortNames()
+{
+    std::vector<std::string> names;
+    for (auto port : _inPorts) {
+        names.push_back(port.first);
+    }
+    return names;
+};
+
+std::vector<std::string> RenderPass::GetAllOutPortNames()
+{
+    std::vector<std::string> names;
+    for (auto port : _outPorts) {
+        names.push_back(port.first);
+    }
+    return names;
+};
+
 std::string RenderPass::GetName()
 {
     return _name;
 };
 
-IKnob* RenderPass::GetKnob(const std::string& name)
+uint32_t RenderPass::GetID()
+{
+    return _ID;
+};
+
+KnobGeneric* RenderPass::GetKnob(const std::string& name)
 {
     return _knobManager->GetKnob(name);
 };

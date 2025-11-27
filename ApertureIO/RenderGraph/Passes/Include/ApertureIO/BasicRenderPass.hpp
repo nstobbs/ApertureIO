@@ -21,7 +21,7 @@ class BasicRenderPass : public RenderPass
 public:
     BasicRenderPass();
     void BuildKnobs() override;
-    void OnKnobChange(IKnob* knob) override;
+    void OnKnobChange(KnobGeneric* knob) override;
     void AllocateResources(RenderEngine* renderEngine) override;
     void BindResources(RenderEngine* renderEngine) override; 
     void Execute(RenderEngine* renderEngine) override;

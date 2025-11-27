@@ -56,7 +56,7 @@ class RenderPass
 public:
     RenderPass();
     virtual void BuildKnobs() = 0; /* Builds Knobs for Adjusting Parameters of the RenderPass */
-    virtual void OnKnobChange(IKnob* knob) = 0; /* Callback Function for Knob Changes */
+    virtual void OnKnobChange(KnobGeneric* knob) = 0; /* Callback Function for Knob Changes */
     virtual void AllocateResources(RenderEngine*  renderEngine) = 0; /* Allocated Required Resources */
     virtual void BindResources(RenderEngine* renderEngine) = 0; /* Bind Resources to the RenderContext */
     virtual void Execute(RenderEngine* renderEngine) = 0; /* Sumbits the Pass for Rendering */
@@ -65,7 +65,7 @@ public:
     RenderContext& GetRenderContext();
 
     KnobManager* GetKnobManger();
-    IKnob* GetKnob(const std::string& name);
+    KnobGeneric* GetKnob(const std::string& name);
 
     /* Connections */
     Port* GetInPort(const std::string& name);

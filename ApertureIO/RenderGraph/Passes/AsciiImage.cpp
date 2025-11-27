@@ -53,6 +53,11 @@ AsciiImage::AsciiImage()
 
 void AsciiImage::BuildKnobs()
 {
+
+};
+
+void AsciiImage::OnKnobChange(KnobGeneric* knob)
+{
     
 };
 

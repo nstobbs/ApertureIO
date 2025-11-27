@@ -513,6 +513,11 @@ TextureHandle VulkanImage::GetStorageImageHandle(uint32_t index)
     return _storageHandles.at(index);
 };
 
+TextureHandle VulkanImage::GetTextureHandle(uint32_t index)
+{
+    return _textureHandles.at(index);
+};
+
 VkImage VulkanImage::GetImage(uint32_t index)
 {
     return _images.at(index);
