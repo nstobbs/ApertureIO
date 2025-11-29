@@ -93,8 +93,7 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
         viewInfo.image = image;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = createInfo.params.format;
-        viewInfo.subresourceRange.aspectMask = (!imagePtr->_forDepthStencil) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT
-                                                                                                         | VK_IMAGE_ASPECT_STENCIL_BIT;
+        viewInfo.subresourceRange.aspectMask = (!imagePtr->_forDepthStencil) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -106,8 +105,9 @@ UniquePtr<VulkanImage> VulkanImage::CreateVulkanImage(const VulkanImageCreateInf
 
         if (imagePtr->_forDepthStencil)
         {
-            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_GENERAL, false);
             imagePtr->_textureHandles.push_back(imagePtr->createTextureHandle(i, image, imageView));
+            imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
         } else {
             /* Create Storage Image Handles For Compute Shaders */
             imagePtr->SetImageLayout(i, VK_IMAGE_LAYOUT_GENERAL, false);

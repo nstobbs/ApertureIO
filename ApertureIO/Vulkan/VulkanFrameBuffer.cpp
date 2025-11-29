@@ -76,14 +76,31 @@ void VulkanFrameBuffer::createVulkanImages()
     {
         auto layerName = layer.first;
         auto layerFormat = layer.second;
+        VkImageLayout layout;
         if (layerName != "Viewer")
         {
+            /* Pick Vk Layout */
+            switch (layer.second) {
+                case FrameBufferPixelFormat::COLOR_RGBA_8888:
+                    layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    break;
+                case FrameBufferPixelFormat::DEPTH_STENCIL_D32_S8:
+                    layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                    break;
+                case FrameBufferPixelFormat::COLOR_RGBA_16161616_sFloat:
+                    layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    break;
+                case FrameBufferPixelFormat::NONE_PIXEL_FORMAT:
+                    layout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    break;
+            }
+
             VulkanImageCommonParameter commonInfo{};
             commonInfo.pVulkanDevice = _pDevice;
             commonInfo.height = _height;
             commonInfo.width = _width;
             commonInfo.format = VulkanImage::toVkFormat(_pDevice, layerFormat);
-            commonInfo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            commonInfo.layout = layout;
 
             VulkanImageCreateInfo createInfo{};
             createInfo.params = commonInfo;
