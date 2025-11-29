@@ -79,18 +79,20 @@ int main()
 
     /* RenderEngine */
     Aio::RenderEngine engine(GPU.get(), context.get(), framebuffer.get());
-    UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
+
 
     /* Build Graph */
-    auto cameras = graph->CreateRenderPass("CameraManager");
+    UniquePtr<Aio::RenderGraph> graph = Aio::RenderGraph::ReadFromJsonFile("./SavedGraphs/EmptyViewport.json");
+    //UniquePtr<Aio::RenderGraph> graph = std::make_unique<Aio::RenderGraph>();
+    //auto cameras = graph->CreateRenderPass("CameraManager");
     //auto read = graph->CreateRenderPass("ReadAssimp");
 
-    auto grid = graph->CreateRenderPass("ViewportGrid");
+    //auto grid = graph->CreateRenderPass("ViewportGrid");
 
     //auto lights = graph->CreateRenderPass("PhongLighting");
     //auto asciiArt = graph->CreateRenderPass("AsciiImage");
 
-    cameras->GetOutPort("camera")->Connect(grid->GetInPort("camera"));
+    //cameras->GetOutPort("camera")->Connect(grid->GetInPort("camera"));
 
     //cameras->GetOutPort("camera")->Connect(read->GetInPort("camera")); 
     //read->GetOutPort("geo")->Connect(lights->GetInPort("geo")); 
@@ -102,16 +104,16 @@ int main()
     float aspectRatio = float(framebuffer->GetWidth()) / float(framebuffer->GetHeight()); 
     mainCam->SetAspectRatio(aspectRatio);
 
+
+    auto cameras = graph->FindRenderPass("CameraManager0");
     dynamic_cast<Aio::CameraManager*>(cameras)->AddCamera("mainCam", std::move(mainCam));
     //dynamic_cast<Aio::ReadAssimp*>(read)->ReadFile("./Models/sponza.obj", "./Textures/1K_Test_PNG_Texture.png");
-
-    graph->WriteToJsonFile("./SavedGraphs/TestGraph_v001.json");
     
-    engine.LoadGraph("ReadModel", std::move(graph));
+    engine.LoadGraph("EmptyViewport", std::move(graph));
 
-    std::get<Aio::StringKnob>(*cameras->GetKnob("Active_Camera")).SetValue("mainCam");
-
-    engine.SetActive("ReadModel");
+    //std::get<Aio::StringKnob>(*cameras->GetKnob("Active_Camera")).SetValue("mainCam");
+    //engine.GetRenderGraph("ReadModel")->WriteToJsonFile("./SavedGraphs/EmptyViewport.json");
+    engine.SetActive("EmptyViewport");
     
     while(!window->shouldClose())
     {

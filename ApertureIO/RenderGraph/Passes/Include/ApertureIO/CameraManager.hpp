@@ -73,6 +73,9 @@ private:
     std::unordered_map<std::string, UniquePtr<Camera>> _cameras;
     std::string _active = {"None"};
     std::string _bufferName = {"CameraBuffer"};
+
+    /* Knobs */
+    StringKnob* _pActiveKnob = {nullptr};
 };
 
 };

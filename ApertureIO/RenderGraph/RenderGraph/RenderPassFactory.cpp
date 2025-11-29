@@ -22,34 +22,38 @@ namespace Aio
 
 UniquePtr<RenderPass> RenderPassFactory::CreateRenderPass(const std::string& name)
 {
+    UniquePtr<RenderPass> renderPass;
 
     if (name == "BasicRenderPass")
     {
-        return std::make_unique<BasicRenderPass>();
+        renderPass = std::make_unique<BasicRenderPass>();
     } 
     else if (name == "ReadAssimp")
     {
-        return std::make_unique<ReadAssimp>();
+        renderPass = std::make_unique<ReadAssimp>();
     }
     else if (name == "PhongLighting")
     {
-        return std::make_unique<PhongLighting>();
+        renderPass = std::make_unique<PhongLighting>();
     }
     else if (name == "AsciiImage")
     {
-        return std::make_unique<AsciiImage>();
+        renderPass = std::make_unique<AsciiImage>();
     }
     else if (name == "CameraManager")
     {
-        return std::make_unique<CameraManager>();
+        renderPass =  std::make_unique<CameraManager>();
     }
     else if (name == "MergeLayers")
     {
-        return std::make_unique<MergeLayers>();
+        renderPass =  std::make_unique<MergeLayers>();
     }
     else if (name == "ViewportGrid")
     {
-        return std::make_unique<ViewportGrid>();
+        renderPass =  std::make_unique<ViewportGrid>();
     };
+
+    renderPass->BuildKnobs();
+    return renderPass;
 };
 };

@@ -78,6 +78,8 @@ public:
 
     std::string GetName();
     uint32_t GetID();
+    void SetID(uint32_t id); // FIXME: workaround for reading from json file. 
+    std::string GetUniqueName(); /* Name + ID = UniqueName*/
 
 protected:
     /* RenderPass Info  */

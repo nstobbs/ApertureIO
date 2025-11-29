@@ -1,5 +1,8 @@
 #include "ApertureIO/RenderPass.hpp"
 
+//FIXME: Need to Find a Unique way of Creating this
+// ID number without creating an Pass with the Same
+// Name and ID number.
 namespace {
     uint32_t globalRenderPassCount = {0};
 }
@@ -82,6 +85,17 @@ uint32_t RenderPass::GetID()
 {
     return _ID;
 };
+
+void RenderPass::SetID(uint32_t id)
+{
+    _ID = id;
+};
+
+std::string RenderPass::GetUniqueName()
+{
+    /* Name + ID = UniqueName*/
+    return std::string(GetName() + std::to_string(GetID()));
+}; 
 
 KnobGeneric* RenderPass::GetKnob(const std::string& name)
 {

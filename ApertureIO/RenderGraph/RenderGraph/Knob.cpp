@@ -27,6 +27,29 @@ std::string to_string(KnobType type)
     return "None";
 };
 
+KnobType to_KnobType(const std::string& knobTypeStr)
+{
+    if (knobTypeStr == "Bool") {
+        return KnobType::Bool;
+    } else if (knobTypeStr == "Int") {
+        return KnobType::Int;
+    } else if (knobTypeStr == "Float") {
+        return KnobType::Float;
+    } else if (knobTypeStr == "String") {
+        return KnobType::String;
+    } else if (knobTypeStr == "Vec2") {
+        return KnobType::Vec2;
+    } else if (knobTypeStr == "Vec3") {
+        return KnobType::Vec3;
+    } else if (knobTypeStr == "Vec4") {
+        return KnobType::Vec4;
+    } else if (knobTypeStr == "Mat4") {
+        return KnobType::Mat4;
+    } else {
+        return KnobType::None;
+    }
+};
+
 /* KnobManager */
 KnobManager::KnobManager(RenderPass* pass)
 {
@@ -44,7 +67,7 @@ KnobGeneric* KnobManager::GetKnob(const std::string& name)
 std::vector<KnobGeneric*> KnobManager::GetAllKnobs()
 {
     std::vector<KnobGeneric*> output;
-    for (auto knob : _knobs) {
+    for (auto& knob : _knobs) {
         output.push_back(&knob.second);
     }
     return output;
@@ -109,20 +132,24 @@ size_t KnobManager::CalculateHash()
 void KnobManager::CheckForKnobChange()
 {
     auto& context = _pPass->GetRenderContext();
-    for (const auto knob : _knobs) {
+    for (auto& knob : _knobs) {
 
-        KnobGeneric currentKnob = knob.second;
         bool validState = std::visit([](auto&& thisKnob) {
             return thisKnob.IsValid();
-        }, currentKnob);
+        }, knob.second);
 
-        if (validState == false) {
+        if (!validState) {
+            auto info = "KnobManager: Knob " + knob.first + " isn't valid!";
+            Logger::LogInfo(info);
+
+            /* Apply Knob Changes */
             context.PauseRendering();
-            _pPass->OnKnobChange(&currentKnob);
+            _pPass->OnKnobChange(&knob.second);
 
+            /* Set CurrentKnob as Valid */
             std::visit([](auto&& thisKnob) {
                 thisKnob.Validate();
-            }, currentKnob);
+            }, knob.second);
             context.UnpauseRendering();
         }
     };

@@ -1,0 +1,40 @@
+{
+    "RenderGraphName": "EmptyViewport",
+    "RenderPassConnections": [
+        {
+            "RenderPassUniqueID": "CameraManager0",
+            "inPorts": {
+            },
+            "outPorts": {
+                "camera": "ViewportGrid1"
+            }
+        },
+        {
+            "RenderPassUniqueID": "ViewportGrid1",
+            "inPorts": {
+                "camera": "CameraManager0"
+            },
+            "outPorts": {
+            }
+        }
+    ],
+    "RenderPasses": [
+        {
+            "RenderPassID": "0",
+            "RenderPassKnobs": [
+                {
+                    "KnobName": "Active_Camera",
+                    "KnobType": "String",
+                    "KnobValue": "mainCam"
+                }
+            ],
+            "RenderPassName": "CameraManager"
+        },
+        {
+            "RenderPassID": "1",
+            "RenderPassKnobs": [
+            ],
+            "RenderPassName": "ViewportGrid"
+        }
+    ]
+}

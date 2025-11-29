@@ -15,7 +15,7 @@ public:
     void BindResources(RenderEngine* renderEngine) override; /* Bind Resources to the RenderContext */
     void Execute(RenderEngine* renderEngine) override; /* Sumbits the Pass for Rendering */
 private:
-    IntKnob* _pGridSizeKnob;
+
 };
 
 };

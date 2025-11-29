@@ -14,8 +14,134 @@ namespace Aio
 
 UniquePtr<RenderGraph> RenderGraph::ReadFromJsonFile(const std::string& filePath)
 {
-    auto graphPtr = std::make_unique<RenderGraph>();
-    return graphPtr;
+    QFile file;
+    file.setFileName(filePath.c_str());
+    if(!file.open(QIODevice::ReadOnly)) {
+        auto err = "RenderGraph: Failed to Read Json File - " + filePath;
+        Logger::LogError(err);
+    }
+
+    QByteArray byteArray;
+    byteArray = file.readAll();
+    file.close();
+
+    //FIXME: this could be written better...
+    QJsonParseError parseError;
+    QJsonDocument jsonDoc;
+    jsonDoc = QJsonDocument::fromJson(byteArray, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        auto err = "RenderGraph: Error while Parsing :" + 
+        std::to_string(parseError.offset) + ":" + parseError.errorString().toStdString();
+        Logger::LogError(err);
+    };
+
+    QJsonObject rootObj = jsonDoc.object();
+
+    std::string renderGraphName = rootObj.value("RenderGraphName").toString().toStdString();
+    QJsonArray passesArray = rootObj["RenderPasses"].toArray();
+    QJsonArray connectionsArray = rootObj["RenderPassConnections"].toArray();
+
+    auto graph = std::make_unique<RenderGraph>();
+    std::unordered_map<std::string, RenderPass*> createdPasses;
+
+    for (auto pass : passesArray) {
+        /* Create RenderPass */
+        QJsonObject passObj = pass.toObject();
+        auto passName = passObj.value("RenderPassName").toString().toStdString();
+        auto passID = std::stoi(passObj.value("RenderPassID").toString().toStdString());
+        auto currentPass = graph->CreateRenderPass(passName);
+        currentPass->SetID(passID);
+        createdPasses.emplace(currentPass->GetUniqueName(), currentPass);
+
+        /* Set Knobs */
+        QJsonArray knobArray = passObj.value("RenderPassKnobs").toArray();
+        for (auto knob : knobArray) {
+            QJsonObject knobObj = knob.toObject();
+            auto knobName = knobObj.value("KnobName").toString().toStdString();
+            auto knobType = to_KnobType(knobObj.value("KnobType").toString().toStdString());
+            auto currentKnob = currentPass->GetKnob(knobName);
+
+            switch (knobType) {
+                case KnobType::Bool: {
+                    bool value = knobObj.value("KnobValue").toBool();
+                    std::get_if<BoolKnob>(currentKnob)->SetValue(value);
+                    break;
+                }
+                
+                case KnobType::Float: {
+                    float value = static_cast<float>(knobObj.value("KnobValue").toDouble());
+                    std::get_if<FloatKnob>(currentKnob)->SetValue(value);
+                    break;
+                }
+
+                case KnobType::Int: {
+                    int value = knobObj.value("KnobValue").toInt();
+                    std::get_if<IntKnob>(currentKnob)->SetValue(value);
+                    break;
+                }
+
+                case KnobType::String: {
+                    QString value = knobObj.value("KnobValue").toString();
+                    std::get_if<StringKnob>(currentKnob)->SetValue(value.toStdString());
+                    break;
+                }
+                
+                case KnobType::Vec2: {
+                    QJsonObject valueObj = knobObj.value("KnobValue").toObject();
+                    glm::vec2 value = glm::vec2(valueObj.value("x").toDouble(),
+                                                valueObj.value("y").toDouble());
+                    std::get_if<Vec2Knob>(currentKnob)->SetValue(value);
+                }
+
+                case KnobType::Vec3: {
+                    QJsonObject valueObj = knobObj.value("KnobValue").toObject();
+                    glm::vec3 value;
+                    value.x = valueObj.value("x").toDouble();
+                    value.y = valueObj.value("y").toDouble();
+                    value.z = valueObj.value("z").toDouble();
+                    std::get_if<Vec3Knob>(currentKnob)->SetValue(value);
+                }
+
+                case KnobType::Vec4: {
+                    QJsonObject valueObj = knobObj.value("KnobValue").toObject();
+                    glm::vec4 value;
+                    value.x = valueObj.value("x").toDouble();
+                    value.y = valueObj.value("y").toDouble();
+                    value.z = valueObj.value("z").toDouble();
+                    value.w = valueObj.value("w").toDouble();
+                    std::get_if<Vec4Knob>(currentKnob)->SetValue(value);
+                }
+
+                case KnobType::Mat4: {
+                    Logger::LogWarn("Don't Support Reading Mat4Knobs Yet!");
+                    break;
+                }
+            }
+        }
+    }
+
+    /* Connect Ports */
+    /* Go over all of the OutPorts and connect them 
+    to the InPort. */
+    /* This Part of the File Reading is gonna be slow as hell 
+    and really needs rethinking. As this won't scale well at all.*/
+    for (auto connection : connectionsArray) {
+        QJsonObject connectionObj = connection.toObject();
+        QJsonObject outPortsObj = connectionObj.value("outPorts").toObject();
+        auto passUniqueName = connectionObj.value("RenderPassUniqueID").toString().toStdString();
+        auto currentPass = createdPasses.at(passUniqueName);
+        auto outPortNames = currentPass->GetAllOutPortNames();
+
+        for (auto portName : outPortNames) {
+            if (outPortsObj.find(portName.c_str()) != outPortsObj.end()) {
+                auto incomingPassUniqueID = outPortsObj.value(portName.c_str()).toString().toStdString();
+                auto incomingPass = createdPasses.at(incomingPassUniqueID);
+                currentPass->GetOutPort(portName)->Connect(incomingPass->GetInPort(portName));
+            }
+        }
+    }
+
+    return graph;
 };
 
 void RenderGraph::WriteToJsonFile(const std::string& filename)
@@ -23,37 +149,46 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
     // Header Metadata
     // RenderGraph Name
     QJsonObject rootObj;
-    rootObj["RenderGraph_Name"] = "TestGraph";
 
-    /* Pre RenderPass */
+    /* Get the Filename without File Extension from FilePath */
+    std::string baseFilenameWithExt = filename.substr(filename.find_last_of("/\\") + 1);
+    std::string::size_type const lastDot(baseFilenameWithExt.find_last_of('.'));
+    std::string baseFilename = baseFilenameWithExt.substr(0, lastDot);
+
+    rootObj["RenderGraphName"] = baseFilename.c_str();
+    
+    /* Per RenderPass */
     QJsonArray  passesArray;
     auto passes = sortGraph();
     for (auto pass : passes) {
         QJsonObject passObj;
 
         // RenderPass Name & ID
-        passObj["Name"] = pass->GetName().c_str();
-        passObj["ID"] = std::to_string(pass->GetID()).c_str();
+        passObj["RenderPassName"] = pass->GetName().c_str();
+        passObj["RenderPassID"] = std::to_string(pass->GetID()).c_str();
 
+        /* Don't think we need to save what all of the ports are for each pass.
+        Since these will be created by the Default Constructor of each pass. We just 
+        need to know what they are connected to in the Connection List.*/
         // RenderPass InPorts
-        QJsonArray inPortsArray;
-        auto inPorts = pass->GetAllInPortNames();
-        for (auto name : inPorts) {
-            QJsonObject inPort;
-            inPort["Name"] = name.c_str();
-            inPortsArray.append(inPort);
-        };
-        passObj["InPorts"] = inPortsArray;
+        //QJsonArray inPortsArray;
+        //auto inPorts = pass->GetAllInPortNames();
+        //for (auto name : inPorts) {
+        //    QJsonObject inPort;
+        //    inPort["InPortName"] = name.c_str();
+        //    inPortsArray.append(inPort);
+        //};
+        //passObj["RenderPassInPorts"] = inPortsArray;
 
         // RenderPass OutPorts
-        QJsonArray outPortArray;
-        auto outPorts = pass->GetAllOutPortNames();
-        for (auto name : outPorts) {
-            QJsonObject outPort;
-            outPort["Name"] = name.c_str();
-            outPortArray.append(outPort);
-        };
-        passObj["OutPorts"] = outPortArray;
+        //QJsonArray outPortArray;
+        //auto outPorts = pass->GetAllOutPortNames();
+        //for (auto name : outPorts) {
+        //    QJsonObject outPort;
+        //    outPort["OutPortName"] = name.c_str();
+        //    outPortArray.append(outPort);
+        //};
+        //passObj["RenderPassOutPorts"] = outPortArray;
 
         // RenderPass Knobs
         auto knobs = pass->GetKnobManger()->GetAllKnobs();
@@ -68,27 +203,32 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                 return thisKnob.GetType();
             }, *knob);
 
-            knobObj["Type"] = to_string(knobType).c_str();
-            knobObj["Name"] = knobName.c_str();
+            knobObj["KnobType"] = to_string(knobType).c_str();
+            knobObj["KnobName"] = knobName.c_str();
             switch(knobType) {
                 case KnobType::Bool: {
-                    knobObj["Value"] = std::get<BoolKnob>(*knob).GetValue();
+                    knobObj["KnobValue"] = std::get<BoolKnob>(*knob).GetValue();
+                    break;
                 }
                 case KnobType::Int: {
-                    knobObj["Value"] = std::get<IntKnob>(*knob).GetValue();
+                    knobObj["KnobValue"] = std::get<IntKnob>(*knob).GetValue();
+                    break;
                 }
                 case KnobType::Float: {
-                    knobObj["Value"] = std::get<FloatKnob>(*knob).GetValue();
+                    knobObj["KnobValue"] = std::get<FloatKnob>(*knob).GetValue();
+                    break;
                 }
                 case KnobType::String: {
-                    knobObj["Value"] = std::get<StringKnob>(*knob).GetValue().c_str();
+                    knobObj["KnobValue"] = std::get<StringKnob>(*knob).GetValue().c_str();
+                    break;
                 }
                 case KnobType::Vec2: {
                     QJsonObject valueObj;
                     auto value = std::get<Vec2Knob>(*knob).GetValue();
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
-                    knobObj["Value"] = valueObj;
+                    knobObj["KnobValue"] = valueObj;
+                    break;
                 }
                 case KnobType::Vec3: {
                     QJsonObject valueObj;
@@ -96,7 +236,8 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                     valueObj["x"] = value.x;
                     valueObj["y"] = value.y;
                     valueObj["z"] = value.z;
-                    knobObj["Value"] = valueObj;
+                    knobObj["KnobValue"] = valueObj;
+                    break;
                 }
                 case KnobType::Vec4: {
                     QJsonObject valueObj;
@@ -105,15 +246,17 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                     valueObj["y"] = value.y;
                     valueObj["z"] = value.z;
                     valueObj["w"] = value.w;
-                    knobObj["Value"] = valueObj;
+                    knobObj["KnobValue"] = valueObj;
+                    break;
                 }
                 case KnobType::Mat4: {
                     Logger::LogWarn("Don't Support Writing Mat4Knobs Yet!");
+                    break;
                 }
             }
             knobArray.append(knobObj);
         }
-        passObj["Knobs"] = knobArray;
+        passObj["RenderPassKnobs"] = knobArray;
         passesArray.append(passObj);
     }
     rootObj["RenderPasses"] = passesArray;
@@ -127,12 +270,17 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
         auto inPortNames = pass->GetAllInPortNames();
         auto outPortNames = pass->GetAllOutPortNames();
 
+        /* RenderPassName + ID = RenderPassUnique */
+        std::string CurrentRenderPassUnique = pass->GetName() + std::to_string(pass->GetID());
+        passObj["RenderPassUniqueID"] = CurrentRenderPassUnique.c_str();
+
         for (auto portName : inPortNames) {
             if (auto port = pass->GetInPort(portName)) {
                 auto incomingPorts = port->GetConnectedPorts();
                 for (auto incomingPort : incomingPorts) {
                     if (auto connectedPass = incomingPort->GetRenderPass()) {
-                        inPortsObj.insert(portName.c_str(), std::to_string(connectedPass->GetID()).c_str());
+                        std::string RenderPassUnique = connectedPass->GetName() + std::to_string(connectedPass->GetID());
+                        inPortsObj.insert(portName.c_str(), RenderPassUnique.c_str());
                     }
                 }
             }
@@ -143,16 +291,18 @@ void RenderGraph::WriteToJsonFile(const std::string& filename)
                 auto incomingPorts = port->GetConnectedPorts();
                 for (auto incomingPort : incomingPorts) {
                     if (auto connectedPass = incomingPort->GetRenderPass()) {
-                        outPortsObj.insert(portName.c_str(), std::to_string(connectedPass->GetID()).c_str());
+                        /* RenderPassName + ID = RenderPassUnique */
+                        std::string RenderPassUnique = connectedPass->GetName() + std::to_string(connectedPass->GetID());
+                        outPortsObj.insert(portName.c_str(), RenderPassUnique.c_str());
                     }
                 }
             }
         }
         passObj["inPorts"] = inPortsObj;
-        passObj["outPorts"] = inPortsObj;
+        passObj["outPorts"] = outPortsObj;
         connectionsArray.append(passObj);
     }
-    rootObj["Connections"] = connectionsArray;
+    rootObj["RenderPassConnections"] = connectionsArray;
 
     // Write to File
     QByteArray byteArray;
@@ -178,6 +328,17 @@ RenderPass* RenderGraph::CreateRenderPass(const std::string& name)
 {
     _renderPasses.push_back(std::move(RenderPassFactory::CreateRenderPass(name)));
     return _renderPasses.back().get();
+};
+
+RenderPass* RenderGraph::FindRenderPass(const std::string& UniqueID)
+{
+    for (auto& pass :  _renderPasses) {
+        auto uniqueName = pass->GetUniqueName();
+        if (uniqueName == UniqueID) {
+            return pass.get();
+        }
+    }
+    return nullptr;
 };
 
 std::vector<RenderPass*> RenderGraph::sortGraph()
@@ -257,8 +418,6 @@ void RenderGraph::CompileGraph(RenderEngine* renderEngine)
             };
         };
 
-        // Build RenderPass
-        renderPass->BuildKnobs();
         if (initPasses.find(renderPass) != initPasses.end())
         {
             renderPass->AllocateResources(renderEngine);

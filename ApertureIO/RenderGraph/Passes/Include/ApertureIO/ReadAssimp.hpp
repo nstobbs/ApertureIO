@@ -35,8 +35,8 @@ public:
 
 private:
     /* Knobs */
-    StringKnob* _filePathKnob = {nullptr};
-    StringKnob* _textureFilePathKnob = {nullptr};
+    StringKnob* _pFilePathKnob = {nullptr};
+    StringKnob* _pTextureFilePathKnob = {nullptr};
 
     std::vector<aiNode*> findNodesContainingMeshes(aiNode* node);
 

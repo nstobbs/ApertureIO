@@ -33,6 +33,7 @@ enum class KnobType
 };
 
 std::string to_string(KnobType type);
+KnobType to_KnobType(const std::string& knobTypeStr);
 
 /* Knob Range */
 struct KnobRange
@@ -75,7 +76,7 @@ public:
     std::string GetName() { return _info.name; }
 
     bool IsValid() { return _isValid; }
-    void Validate() { _isValid = true; }
+    void Validate() { this->_isValid = true; }
 
     void SetInfo(KnobInfo info);
     KnobInfo GetInfo();

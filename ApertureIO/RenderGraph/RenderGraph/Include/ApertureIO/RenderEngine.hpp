@@ -29,6 +29,7 @@ public:
     void SetActive(const std::string& name);
     void LoadGraph(const std::string& name, UniquePtr<RenderGraph> renderGraph);
     void RemoveGraph(const std::string& name);
+    RenderGraph* GetRenderGraph(const std::string& name);
 
     void StoreBufferPtr(std::string name, UniquePtr<Buffer>pBuffer);
     void StoreTexturePtr(std::string name, UniquePtr<Texture> pTexture);

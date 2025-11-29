@@ -46,6 +46,13 @@ void RenderEngine::RemoveGraph(const std::string& name)
     }
 };
 
+RenderGraph* RenderEngine::GetRenderGraph(const std::string& name) {
+    if (_loadedGraphs.find(name) != _loadedGraphs.end()) {
+        return _loadedGraphs.at(name).get();
+    }
+    return nullptr;
+};
+
 /*
 TODO: Not really sure if these functions should be passing around UniquePtr.
 We only want to store them an unique ptr. Maybe it's fine like this....

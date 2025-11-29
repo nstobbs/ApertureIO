@@ -99,9 +99,9 @@ void CameraManager::BuildKnobs()
                        .name = kActiveCameraKnobName,
                        .ui = ui,
                        .canAnimate = false };
-        //FIXME: This seems very wrong to me...
-        auto activeCamKnob = std::get_if<StringKnob>(knob);
-        activeCamKnob->SetInfo(info);
+
+        _pActiveKnob = std::get_if<StringKnob>(knob);
+        _pActiveKnob->SetInfo(info);
     }; 
 };
 
@@ -109,9 +109,14 @@ void CameraManager::OnKnobChange(KnobGeneric* knob)
 {
     auto type = static_cast<KnobType>(knob->index());
     if (type == KnobType::String) {
-        auto stringKnob = std::get<StringKnob>(*knob);
-        if (stringKnob.GetName() == kActiveCameraKnobName) {
-            SetActiveCamera(stringKnob.GetValue());
+        /* Active Camera Knob*/
+        /*FIXME: I don't understand what's happening
+        here with the pointers. I would expect
+        that our private knob ptr and this string knob
+        would be the same pointer. But it isn't??*/
+        auto *ptr = std::get_if<StringKnob>(knob);
+        if (ptr->GetName() == _pActiveKnob->GetName()) {
+            SetActiveCamera(_pActiveKnob->GetValue());
         }
     }
 };
@@ -144,11 +149,15 @@ void CameraManager::BindResources(RenderEngine* renderEngine)
 void CameraManager::Execute(RenderEngine* renderEngine)
 {
     /* Upload Current Camera */
-    GetActiveCamera()->rotateCamera();
-    CameraData data{};
-    data.view = GetActiveCamera()->GetViewMatrix();
-    data.proj = GetActiveCamera()->GetProjectionMatrix();
-    renderEngine->GetBufferPtr(_bufferName)->UploadToDevice(&data);
+    if (GetActiveCamera()) {
+        GetActiveCamera()->rotateCamera();
+        CameraData data{};
+        data.view = GetActiveCamera()->GetViewMatrix();
+        data.proj = GetActiveCamera()->GetProjectionMatrix();
+        renderEngine->GetBufferPtr(_bufferName)->UploadToDevice(&data);
+    } else {
+        Logger::LogWarn("CameraManager: Requested Active Camera but was None!");
+    };
 };
 
 bool CameraManager::doesCameraExist(const std::string& name)

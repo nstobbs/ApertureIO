@@ -25,6 +25,7 @@ public:
     void WriteToJsonFile(const std::string& filePath);
     void AddRenderPass(RenderPass* renderPass);
     RenderPass* CreateRenderPass(const std::string& name);
+    RenderPass* FindRenderPass(const std::string& UniqueID);
     //void RemoveRenderPass(RenderPass* renderPass);
     
     void CompileGraph(RenderEngine* renderEngine); /* Preps the Graph for Rendering, allocate required resources. */
