@@ -15,4 +15,4 @@ target_link_libraries(Application
     Aio::Vulkan
 )
 
-add_library(ApertureIOEditor:Application ALIAS Application) 
+add_library(Aio:Application ALIAS Application) 
